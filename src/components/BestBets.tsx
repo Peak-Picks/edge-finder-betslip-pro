@@ -16,7 +16,7 @@ export const BestBets = () => {
       projectedValue: 28.3,
       bookmaker: "DraftKings",
       gameTime: "8:00 PM ET",
-      reasoning: "LeBron averaging 31.2 vs GSW, improved matchup"
+      reasoning: "LeBron is averaging 31.2 points per game against the Warriors this season and is coming off a three-game 35+ point streak. Warriors struggle to defend high-usage forwards (allowing 2.5 points per attempt above league average), and LeBron’s usage increases by 9% in games projected to finish within 5 points. Simulated outcomes project him over 25.5 in 68% of AI model runs. Injury report is favorable and reported defensive assignments increase his scoring ceiling."
     },
     {
       id: 2,
@@ -28,7 +28,7 @@ export const BestBets = () => {
       projectedValue: 3.1,
       bookmaker: "FanDuel",
       gameTime: "4:25 PM ET",
-      reasoning: "Bills defense allows 2.8 passing TDs/game"
+      reasoning: "Mahomes faces a Bills defense allowing 2.8 passing TDs per game over their last 5. AI analysis factors in offensive line strength, red zone efficiency (Chiefs top 5), and game script projecting above league-average pass attempts. Simulations project 3.14 TDs on average. Weather: Clear, moderate winds, which correlates with a 7% uptick in passing efficiency for Mahomes at home. AI model gives a 65% probability for the over."
     },
     {
       id: 3,
@@ -40,7 +40,7 @@ export const BestBets = () => {
       projectedValue: 9.8,
       bookmaker: "BetMGM",
       gameTime: "7:30 PM ET",
-      reasoning: "Heat missing key rebounders, Tatum trending up"
+      reasoning: "AI projects Tatum for 10+ rebounds in this matchup due to increased time at power forward and Miami’s key frontcourt injuries. Past 10 games, Heat allow the 2nd most rebounds to AI-profiled comparable forwards. Celtics’ pace increases against fast break teams, further boosting rebounding opportunities. Model shows 59% hit rate at this line."
     }
   ];
 
@@ -61,7 +61,7 @@ export const BestBets = () => {
           <h2 className="text-lg font-semibold">Today's Best Bets</h2>
         </div>
         <Badge variant="secondary" className="bg-emerald-500/20 text-emerald-400">
-          3 Available
+          {bestBets.length} Available
         </Badge>
       </div>
 
@@ -99,7 +99,7 @@ export const BestBets = () => {
             </div>
 
             <div className="bg-slate-700/30 rounded-lg p-3 mb-3">
-              <p className="text-xs text-slate-300">{bet.reasoning}</p>
+              <p className="text-xs text-emerald-100">{bet.reasoning}</p>
             </div>
 
             <div className="flex gap-2">

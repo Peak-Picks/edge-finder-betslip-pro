@@ -411,77 +411,80 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
 
             {/* Sidebar - Takes 1 column */}
             <div className="space-y-3">
-              {/* Line Movement */}
-              <Card className="bg-slate-700/50 border-slate-600 p-2">
-                <h3 className="font-semibold text-pink-400 mb-2 text-sm">Line movement</h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="text-xs text-slate-400">Updated</p>
-                      <p className="text-xs text-white">8:59 AM Today</p>
+              {/* Line Movement and Key Defense - Side by Side */}
+              <div className="grid grid-cols-2 gap-2">
+                {/* Line Movement */}
+                <Card className="bg-slate-700/50 border-slate-600 p-2">
+                  <h3 className="font-semibold text-pink-400 mb-2 text-xs">Line movement</h3>
+                  <div className="space-y-1">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-xs text-slate-400">Updated</p>
+                        <p className="text-xs text-white">8:59 AM Today</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-slate-400">Line</p>
+                        <p className="text-xs text-red-400">{getCurrentLine(selectedStat)} ▼-1</p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-xs text-slate-400">Line</p>
-                      <p className="text-xs text-red-400">{getCurrentLine(selectedStat)} ▼-1</p>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-xs text-white">10:26 PM Jun 14</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-white">{parseFloat(getCurrentLine(selectedStat)) + 1}</p>
+                        <p className="text-xs text-slate-400">Open</p>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="text-xs text-white">10:26 PM Jun 14</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-white">{parseFloat(getCurrentLine(selectedStat)) + 1}</p>
-                      <p className="text-xs text-slate-400">Open</p>
-                    </div>
-                  </div>
-                </div>
-                <Button variant="link" className="text-slate-400 text-xs p-0 mt-1 h-auto">
-                  SHOW MORE
-                </Button>
-              </Card>
+                  <Button variant="link" className="text-slate-400 text-xs p-0 mt-1 h-auto">
+                    SHOW MORE
+                  </Button>
+                </Card>
 
-              {/* Matchup Analysis */}
-              <Card className="bg-slate-700/50 border-slate-600 p-2">
-                <div className="flex items-center gap-2 mb-2">
-                  <Target className="w-4 h-4 text-orange-400" />
-                  <h3 className="font-semibold text-orange-400 text-sm">Key {player.team} defense</h3>
-                </div>
-                
-                <Tabs defaultValue="overall" className="w-full">
-                  <TabsList className="grid w-full grid-cols-4 bg-slate-600/50 text-xs h-6">
-                    <TabsTrigger value="overall" className="text-xs">Overall</TabsTrigger>
-                    <TabsTrigger value="vsg" className="text-xs">vs G</TabsTrigger>
-                    <TabsTrigger value="vsf" className="text-xs">vs F</TabsTrigger>
-                    <TabsTrigger value="vsc" className="text-xs">vs C</TabsTrigger>
-                  </TabsList>
+                {/* Key Defense */}
+                <Card className="bg-slate-700/50 border-slate-600 p-2">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Target className="w-4 h-4 text-orange-400" />
+                    <h3 className="font-semibold text-orange-400 text-sm">Key {player.team} defense</h3>
+                  </div>
                   
-                  <TabsContent value="overall" className="mt-2">
-                    <div className="space-y-1">
-                      <div className="flex justify-between">
-                        <span className="text-slate-400 text-xs">Points</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-emerald-400 font-bold text-xs">{matchupAnalysis.overall.rank}</span>
-                          <span className="text-white text-xs">{matchupAnalysis.overall.value}</span>
+                  <Tabs defaultValue="overall" className="w-full">
+                    <TabsList className="grid w-full grid-cols-4 bg-slate-600/50 text-xs h-6">
+                      <TabsTrigger value="overall" className="text-xs">Overall</TabsTrigger>
+                      <TabsTrigger value="vsg" className="text-xs">vs G</TabsTrigger>
+                      <TabsTrigger value="vsf" className="text-xs">vs F</TabsTrigger>
+                      <TabsTrigger value="vsc" className="text-xs">vs C</TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="overall" className="mt-2">
+                      <div className="space-y-1">
+                        <div className="flex justify-between">
+                          <span className="text-slate-400 text-xs">Points</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-emerald-400 font-bold text-xs">{matchupAnalysis.overall.rank}</span>
+                            <span className="text-white text-xs">{matchupAnalysis.overall.value}</span>
+                          </div>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-400 text-xs">Rebounds</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-emerald-400 font-bold text-xs">{matchupAnalysis.vsGuards.rank}</span>
+                            <span className="text-white text-xs">{matchupAnalysis.vsGuards.value}</span>
+                          </div>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-400 text-xs">Assists</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-emerald-400 font-bold text-xs">{matchupAnalysis.vsForwards.rank}</span>
+                            <span className="text-white text-xs">{matchupAnalysis.vsForwards.value}</span>
+                          </div>
                         </div>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-400 text-xs">Rebounds</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-emerald-400 font-bold text-xs">{matchupAnalysis.vsGuards.rank}</span>
-                          <span className="text-white text-xs">{matchupAnalysis.vsGuards.value}</span>
-                        </div>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-400 text-xs">Assists</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-emerald-400 font-bold text-xs">{matchupAnalysis.vsForwards.rank}</span>
-                          <span className="text-white text-xs">{matchupAnalysis.vsForwards.value}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </Card>
+                    </TabsContent>
+                  </Tabs>
+                </Card>
+              </div>
 
               {/* Supporting Stats - Now in 2 columns */}
               <div className="grid grid-cols-2 gap-2">

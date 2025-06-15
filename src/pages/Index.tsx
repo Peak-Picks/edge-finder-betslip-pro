@@ -14,7 +14,7 @@ import { BetBuilder } from '@/components/BetBuilder';
 import { DiscoverPage } from '@/components/DiscoverPage';
 import { ProfilePage } from '@/components/ProfilePage';
 import { BettingGuide } from '@/components/BettingGuide';
-import { TrendingUp, Target, BarChart3, Wallet, Zap } from 'lucide-react';
+import { TrendingUp, Target, BarChart3, Wallet, Zap, RefreshCw } from 'lucide-react';
 import TutorialModal from '@/components/TutorialModal';
 import { BetSlipProvider, useBetSlipContext } from "@/components/BetSlipContext";
 
@@ -22,6 +22,7 @@ const THREE_WEEKS_MS = 21 * 24 * 60 * 60 * 1000;
 
 const HomeContent = ({ currentView, setCurrentView }: { currentView: string; setCurrentView: (view: string) => void }) => {
   const { savedBetSlips } = useBetSlipContext();
+  const [refreshing, setRefreshing] = useState(false);
 
   const calculateROI = () => {
     const settled = savedBetSlips.filter(slip => slip.status !== 'pending');
@@ -30,6 +31,14 @@ const HomeContent = ({ currentView, setCurrentView }: { currentView: string; set
     const profit = totalReturns - totalWagered;
     const roi = totalWagered > 0 ? (profit / totalWagered) * 100 : 0;
     return roi;
+  };
+
+  const handleRefreshData = async () => {
+    setRefreshing(true);
+    // Add a small delay to show the loading state
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
   };
 
   const roi = calculateROI();
@@ -53,6 +62,15 @@ const HomeContent = ({ currentView, setCurrentView }: { currentView: string; set
               >
                 {roi >= 0 ? '+' : ''}{roi.toFixed(1)}% ROI
               </Badge>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefreshData}
+                disabled={refreshing}
+                className="border-slate-600 text-slate-300 hover:bg-slate-700"
+              >
+                <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+              </Button>
               <div className="w-8 h-8 rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400"></div>
             </div>
           </div>
@@ -106,7 +124,7 @@ const HomeContent = ({ currentView, setCurrentView }: { currentView: string; set
             <WizPicks />
           </TabsContent>
           <TabsContent value="props" className="mt-2">
-            <Props />
+            <Props onRefreshData={handleRefreshData} />
           </TabsContent>
           <TabsContent value="game-lines" className="mt-2">
             <GameLines />

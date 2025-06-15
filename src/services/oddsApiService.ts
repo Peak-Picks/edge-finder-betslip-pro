@@ -1,4 +1,3 @@
-
 export interface OddsApiProp {
   id: string;
   sport_key: string;
@@ -140,6 +139,11 @@ export class OddsApiService {
     });
 
     return processedProps.slice(0, 15);
+  }
+
+  // Make the mock generation method public
+  public generateMockWNBAProps(): ProcessedProp[] {
+    return this.generateMockWNBAProps();
   }
 
   private generateMockWNBAProps(): ProcessedProp[] {

@@ -9,20 +9,29 @@ import { useBetSlipContext } from './BetSlipContext';
 import { dynamicPicksGenerator, GeneratedPick } from '../services/dynamicPicksGenerator';
 import { createOddsApiService, ProcessedProp } from '../services/oddsApiService';
 
-export const PlayerProps = () => {
+interface PlayerPropsProps {
+  onRefreshData?: () => void;
+}
+
+export const PlayerProps = ({ onRefreshData }: PlayerPropsProps) => {
   const [selectedSport, setSelectedSport] = useState('wnba');
   const [selectedProp, setSelectedProp] = useState<any>(null);
   const [insightsOpen, setInsightsOpen] = useState(false);
   const [playerProps, setPlayerProps] = useState<{nba: GeneratedPick[], nfl: GeneratedPick[], wnba: ProcessedProp[]}>({nba: [], nfl: [], wnba: []});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const { addToBetSlip, betSlip } = useBetSlipContext();
 
   const API_KEY = '70f59ac60558d2b4dee1200bdaa2f2f3';
 
+  // Initialize with mock data on first load
   useEffect(() => {
-    loadPlayerProps();
+    const nbaProps = dynamicPicksGenerator.generatePlayerProps('nba');
+    const nflProps = dynamicPicksGenerator.generatePlayerProps('nfl');
+    const oddsService = createOddsApiService(API_KEY);
+    const mockWnbaProps = oddsService.generateMockWNBAProps();
+    setPlayerProps({ nba: nbaProps, nfl: nflProps, wnba: mockWnbaProps });
   }, []);
 
   const loadPlayerProps = async () => {
@@ -37,6 +46,11 @@ export const PlayerProps = () => {
       const wnbaProps = await oddsService.getWNBAProps();
       
       setPlayerProps({ nba: nbaProps, nfl: nflProps, wnba: wnbaProps });
+      
+      // Call parent refresh callback if provided
+      if (onRefreshData) {
+        onRefreshData();
+      }
     } catch (error) {
       console.error('Error loading player props:', error);
       setError('Failed to load WNBA props. Using sample data.');
@@ -54,7 +68,9 @@ export const PlayerProps = () => {
       loadPlayerProps();
     } else {
       dynamicPicksGenerator.refreshAllPicks();
-      loadPlayerProps();
+      const nbaProps = dynamicPicksGenerator.generatePlayerProps('nba');
+      const nflProps = dynamicPicksGenerator.generatePlayerProps('nfl');
+      setPlayerProps(prev => ({ ...prev, nba: nbaProps, nfl: nflProps }));
     }
   };
 
@@ -115,9 +131,10 @@ export const PlayerProps = () => {
               size="sm" 
               onClick={refreshPicks}
               className="border-slate-600 text-slate-300"
+              disabled={loading}
             >
-              <RefreshCw className="w-4 h-4 mr-1" />
-              Refresh
+              <RefreshCw className={`w-4 h-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
+              {loading ? 'Loading...' : 'Refresh'}
             </Button>
             <Button variant="outline" size="sm" className="border-slate-600 text-slate-300">
               <Filter className="w-4 h-4 mr-1" />

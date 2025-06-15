@@ -2,7 +2,7 @@
 import React, { createContext, useState, useContext, ReactNode } from "react";
 
 export interface Bet {
-  id: number;
+  id: string;
   type: string;
   description?: string;
   title?: string;
@@ -16,7 +16,7 @@ interface BetSlipContextProps {
   betSlip: Bet[];
   setBetSlip: React.Dispatch<React.SetStateAction<Bet[]>>;
   addToBetSlip: (bet: Bet) => void;
-  removeFromBetSlip: (betId: number) => void;
+  removeFromBetSlip: (betId: string) => void;
   clearBetSlip: () => void;
 
   savedBetSlips: { bets: Bet[]; amount: string; timestamp: number }[];
@@ -41,7 +41,7 @@ export function BetSlipProvider({ children }: { children: ReactNode }) {
     );
   };
 
-  const removeFromBetSlip = (betId: number) => {
+  const removeFromBetSlip = (betId: string) => {
     setBetSlip(prev => prev.filter(bet => bet.id !== betId));
   };
 

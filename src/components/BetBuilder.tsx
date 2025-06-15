@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -22,14 +23,14 @@ export const BetBuilder = () => {
   // Simulate available bets for possible future use or quick add
   const availableBets = [
     {
-      id: 2,
+      id: "2",
       type: "Spread",
       description: "Lakers -3.5",
       odds: "-115",
       edge: 3.8
     },
     {
-      id: 3,
+      id: "3",
       type: "Total",
       description: "Over 225.5 Points",
       odds: "-110",
@@ -37,13 +38,47 @@ export const BetBuilder = () => {
     }
   ];
 
-  const calculatePayout = () => {
-    const amount = parseFloat(betAmount) || 0;
-    // Dummy payout formula (should eventually calculate actual odds from bets)
-    return (amount * 2.5).toFixed(2);
+  // Convert American odds to decimal odds
+  const oddsToDecimal = (americanOdds: string) => {
+    const odds = parseInt(americanOdds);
+    if (odds > 0) {
+      return (odds / 100) + 1;
+    } else {
+      return (100 / Math.abs(odds)) + 1;
+    }
   };
 
-  const handlePlaceBet = () => {
+  // Calculate combined odds and payout
+  const calculatePayout = () => {
+    const amount = parseFloat(betAmount) || 0;
+    if (betSlip.length === 0) return amount.toFixed(2);
+    
+    // Calculate combined decimal odds for parlay
+    const combinedDecimalOdds = betSlip.reduce((acc, bet) => {
+      return acc * oddsToDecimal(bet.odds);
+    }, 1);
+    
+    const payout = amount * combinedDecimalOdds;
+    return payout.toFixed(2);
+  };
+
+  // Calculate combined American odds for display
+  const getCombinedOdds = () => {
+    if (betSlip.length === 0) return "+100";
+    
+    const combinedDecimalOdds = betSlip.reduce((acc, bet) => {
+      return acc * oddsToDecimal(bet.odds);
+    }, 1);
+    
+    // Convert back to American odds
+    if (combinedDecimalOdds >= 2) {
+      return `+${Math.round((combinedDecimalOdds - 1) * 100)}`;
+    } else {
+      return `-${Math.round(100 / (combinedDecimalOdds - 1))}`;
+    }
+  };
+
+  const handleSaveSlip = () => {
     if (betSlip.length === 0) return;
     addSavedBetSlip(betSlip, betAmount);
     clearBetSlip();
@@ -136,13 +171,13 @@ export const BetBuilder = () => {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-400">Combined Odds:</span>
-                        <span className="text-white">+250</span>
+                        <span className="text-white">{getCombinedOdds()}</span>
                       </div>
                     </div>
 
-                    <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handlePlaceBet}>
+                    <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleSaveSlip}>
                       <Calculator className="w-4 h-4 mr-2" />
-                      Place Bet
+                      Save Slip
                     </Button>
                   </Card>
                 </>

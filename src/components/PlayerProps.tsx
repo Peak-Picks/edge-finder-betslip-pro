@@ -1,57 +1,42 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Filter, TrendingUp } from 'lucide-react';
+import { Plus, Filter, TrendingUp, RefreshCw } from 'lucide-react';
 import { PlayerPropInsights } from './PlayerPropInsights';
 import { useBetSlipContext } from './BetSlipContext';
+import { dynamicPicksGenerator, GeneratedPick } from '../services/dynamicPicksGenerator';
 
 export const PlayerProps = () => {
   const [selectedSport, setSelectedSport] = useState('nba');
   const [selectedProp, setSelectedProp] = useState<any>(null);
   const [insightsOpen, setInsightsOpen] = useState(false);
+  const [playerProps, setPlayerProps] = useState<{nba: GeneratedPick[], nfl: GeneratedPick[]}>({nba: [], nfl: []});
+  const [loading, setLoading] = useState(true);
 
   const { addToBetSlip, betSlip } = useBetSlipContext();
 
-  const playerProps = {
-    nba: [
-      {
-        player: "Luka Dončić",
-        team: "DAL",
-        prop: "Points",
-        line: 28.5,
-        type: "Over",
-        odds: "-110",
-        edge: 11.2,
-        projected: 31.8,
-        confidence: "high"
-      },
-      {
-        player: "Giannis Antetokounmpo",
-        team: "MIL",
-        prop: "Rebounds",
-        line: 11.5,
-        type: "Over",
-        odds: "+105",
-        edge: 7.8,
-        projected: 12.9,
-        confidence: "medium"
-      }
-    ],
-    nfl: [
-      {
-        player: "Josh Allen",
-        team: "BUF",
-        prop: "Passing Yards",
-        line: 267.5,
-        type: "Over",
-        odds: "-115",
-        edge: 9.4,
-        projected: 285.2,
-        confidence: "high"
-      }
-    ]
+  useEffect(() => {
+    loadPlayerProps();
+  }, []);
+
+  const loadPlayerProps = () => {
+    setLoading(true);
+    try {
+      const nbaProps = dynamicPicksGenerator.generatePlayerProps('nba');
+      const nflProps = dynamicPicksGenerator.generatePlayerProps('nfl');
+      setPlayerProps({ nba: nbaProps, nfl: nflProps });
+    } catch (error) {
+      console.error('Error loading player props:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const refreshPicks = () => {
+    dynamicPicksGenerator.refreshAllPicks();
+    loadPlayerProps();
   };
 
   const getConfidenceColor = (confidence: string) => {
@@ -63,24 +48,58 @@ export const PlayerProps = () => {
     }
   };
 
-  const handlePropClick = (prop: any) => {
-    setSelectedProp(prop);
+  const handlePropClick = (prop: GeneratedPick) => {
+    setSelectedProp({
+      player: prop.player,
+      team: prop.team,
+      prop: prop.title,
+      line: prop.line,
+      type: "Over",
+      odds: prop.odds,
+      edge: prop.edge,
+      projected: prop.projected,
+      confidence: prop.confidence >= 4 ? "high" : prop.confidence >= 2 ? "medium" : "low"
+    });
     setInsightsOpen(true);
   };
 
-  // Unique ID: always a string for betslip
-  const getPropId = (prop: any) =>
-    (prop.player + '-' + prop.prop + '-' + String(prop.line) + '-' + prop.team).replace(/\s+/g, '');
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Loading Player Props...</h2>
+        </div>
+        <div className="space-y-3">
+          {[1, 2].map(i => (
+            <Card key={i} className="bg-slate-800/50 border-slate-700/50 p-4 animate-pulse">
+              <div className="h-20 bg-slate-700/50 rounded"></div>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Player Props</h2>
-          <Button variant="outline" size="sm" className="border-slate-600 text-slate-300">
-            <Filter className="w-4 h-4 mr-1" />
-            Filter
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={refreshPicks}
+              className="border-slate-600 text-slate-300"
+            >
+              <RefreshCw className="w-4 h-4 mr-1" />
+              Refresh
+            </Button>
+            <Button variant="outline" size="sm" className="border-slate-600 text-slate-300">
+              <Filter className="w-4 h-4 mr-1" />
+              Filter
+            </Button>
+          </div>
         </div>
 
         <Tabs value={selectedSport} onValueChange={setSelectedSport}>
@@ -102,8 +121,7 @@ export const PlayerProps = () => {
           <TabsContent value={selectedSport} className="mt-4">
             <div className="space-y-3">
               {playerProps[selectedSport as keyof typeof playerProps].map((prop, index) => {
-                const betId = getPropId(prop);
-                // betId is always string, comparison against string
+                const betId = `${prop.id}-${index}`;
                 const alreadyAdded = betSlip.some(b => b.id === betId);
                 return (
                   <Card 

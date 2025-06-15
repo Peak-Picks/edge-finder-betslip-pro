@@ -1,0 +1,314 @@
+
+import { PicksCalculationEngine, PlayerStats, GameData } from './picksCalculation';
+import { mockDataService } from './mockDataService';
+
+export interface GeneratedPick {
+  id: string;
+  player?: string;
+  team?: string;
+  title: string;
+  sport: string;
+  game: string;
+  description: string;
+  odds: string;
+  platform: string;
+  confidence: number;
+  insights: string;
+  category: string;
+  edge: number;
+  type: string;
+  matchup?: string;
+  gameTime?: string;
+  line?: number;
+  projected?: number;
+}
+
+export class DynamicPicksGenerator {
+  private calculationEngine: PicksCalculationEngine;
+
+  constructor() {
+    this.calculationEngine = new PicksCalculationEngine();
+  }
+
+  generateBestBets(): GeneratedPick[] {
+    const picks: GeneratedPick[] = [];
+    const games = mockDataService.getGameData();
+    const platforms = ['DraftKings', 'FanDuel', 'BetMGM', 'Caesars'];
+
+    // LeBron James points prop
+    const lebronData = mockDataService.getPlayerStats('lebron-james');
+    const lakersGame = games.find(g => g.homeTeam === 'LAL' || g.awayTeam === 'LAL');
+    
+    if (lebronData && lakersGame) {
+      const opponent = lakersGame.homeTeam === 'LAL' ? lakersGame.awayTeam : lakersGame.homeTeam;
+      const calculation = this.calculationEngine.calculatePlayerProp(lebronData, 'points', opponent, lakersGame);
+      const bookLine = 25.5;
+      const edge = this.calculationEngine.calculateEdge(calculation.projection, bookLine, 'over');
+      
+      picks.push({
+        id: 'lebron-points-best',
+        player: lebronData.name,
+        team: lebronData.team,
+        title: `Over ${bookLine} Points`,
+        sport: 'Basketball - NBA',
+        game: `${lakersGame.gameTime}`,
+        description: `${lebronData.name} to score over ${bookLine} points against the ${opponent}.`,
+        odds: edge > 8 ? '+110' : '+105',
+        platform: platforms[Math.floor(Math.random() * platforms.length)],
+        confidence: Math.min(5, Math.max(1, Math.floor(calculation.confidence / 2))),
+        insights: this.calculationEngine.generateInsights(calculation.factors, edge, 'high'),
+        category: 'Top Prop',
+        edge: Math.round(edge * 10) / 10,
+        type: 'Player Prop',
+        line: bookLine,
+        projected: calculation.projection
+      });
+    }
+
+    // Patrick Mahomes passing TDs
+    const mahomesData = mockDataService.getPlayerStats('patrick-mahomes');
+    const chiefsGame = games.find(g => g.homeTeam === 'KC' || g.awayTeam === 'KC');
+    
+    if (mahomesData && chiefsGame) {
+      const opponent = chiefsGame.homeTeam === 'KC' ? chiefsGame.awayTeam : chiefsGame.homeTeam;
+      const calculation = this.calculationEngine.calculatePlayerProp(mahomesData, 'passing_tds', opponent, chiefsGame);
+      const bookLine = 2.5;
+      const edge = this.calculationEngine.calculateEdge(calculation.projection, bookLine, 'over');
+      
+      picks.push({
+        id: 'mahomes-tds-best',
+        player: mahomesData.name,
+        team: mahomesData.team,
+        title: `Over ${bookLine} Passing TDs`,
+        sport: 'Football - NFL',
+        game: `${chiefsGame.gameTime}`,
+        description: `${mahomesData.name} to throw over ${bookLine} passing touchdowns against the ${opponent}.`,
+        odds: edge > 6 ? '-115' : '-120',
+        platform: platforms[Math.floor(Math.random() * platforms.length)],
+        confidence: Math.min(5, Math.max(1, Math.floor(calculation.confidence / 2))),
+        insights: this.calculationEngine.generateInsights(calculation.factors, edge, 'high'),
+        category: 'Best Value',
+        edge: Math.round(edge * 10) / 10,
+        type: 'Player Prop',
+        line: bookLine,
+        projected: calculation.projection
+      });
+    }
+
+    // Jayson Tatum rebounds
+    const tatumData = mockDataService.getPlayerStats('jayson-tatum');
+    const celticsGame = games.find(g => g.homeTeam === 'BOS' || g.awayTeam === 'BOS');
+    
+    if (tatumData && celticsGame) {
+      const opponent = celticsGame.homeTeam === 'BOS' ? celticsGame.awayTeam : celticsGame.homeTeam;
+      const calculation = this.calculationEngine.calculatePlayerProp(tatumData, 'rebounds', opponent, celticsGame);
+      const bookLine = 8.5;
+      const edge = this.calculationEngine.calculateEdge(calculation.projection, bookLine, 'over');
+      
+      picks.push({
+        id: 'tatum-rebounds-best',
+        player: tatumData.name,
+        team: tatumData.team,
+        title: `Over ${bookLine} Rebounds`,
+        sport: 'Basketball - NBA',
+        game: `${celticsGame.gameTime}`,
+        description: `${tatumData.name} to grab over ${bookLine} rebounds against the ${opponent}.`,
+        odds: edge > 7 ? '+125' : '+115',
+        platform: platforms[Math.floor(Math.random() * platforms.length)],
+        confidence: Math.min(5, Math.max(1, Math.floor(calculation.confidence / 3))),
+        insights: this.calculationEngine.generateInsights(calculation.factors, edge, 'medium'),
+        category: 'Trending',
+        edge: Math.round(edge * 10) / 10,
+        type: 'Player Prop',
+        line: bookLine,
+        projected: calculation.projection
+      });
+    }
+
+    return picks;
+  }
+
+  generateLongShots(): GeneratedPick[] {
+    const picks: GeneratedPick[] = [];
+    const games = mockDataService.getGameData();
+    const platforms = ['DraftKings', 'FanDuel', 'BetMGM'];
+
+    // Generate higher-variance picks with better odds
+    const players = ['lebron-james', 'luka-doncic', 'connor-mcdavid'];
+    
+    players.forEach(playerId => {
+      const playerData = mockDataService.getPlayerStats(playerId);
+      if (!playerData) return;
+
+      const game = games.find(g => 
+        g.homeTeam === playerData.team || g.awayTeam === playerData.team
+      );
+      if (!game) return;
+
+      const opponent = game.homeTeam === playerData.team ? game.awayTeam : game.homeTeam;
+      
+      let prop: string;
+      let bookLine: number;
+      let sportName: string;
+
+      if (playerId === 'connor-mcdavid') {
+        prop = 'shots';
+        bookLine = 3.5;
+        sportName = 'Hockey - NHL';
+      } else if (playerData.seasonAverages.points) {
+        prop = 'points';
+        bookLine = (playerData.seasonAverages.points || 0) + 2; // Higher line for long shot
+        sportName = 'Basketball - NBA';
+      } else {
+        return;
+      }
+
+      const calculation = this.calculationEngine.calculatePlayerProp(playerData, prop, opponent, game);
+      const edge = this.calculationEngine.calculateEdge(calculation.projection, bookLine, 'over');
+      
+      if (edge > 3) { // Only include if there's some edge
+        picks.push({
+          id: `${playerId}-${prop}-longshot`,
+          player: playerData.name,
+          team: playerData.team,
+          title: `Over ${bookLine} ${prop === 'shots' ? 'Shots on Goal' : prop.charAt(0).toUpperCase() + prop.slice(1)}`,
+          sport: sportName,
+          game: `${game.gameTime}`,
+          description: `${playerData.name} to ${prop === 'shots' ? 'have over' : 'score over'} ${bookLine} ${prop === 'shots' ? 'shots on goal' : prop}.`,
+          odds: edge > 8 ? '-115' : edge > 5 ? '-140' : '+150',
+          platform: platforms[Math.floor(Math.random() * platforms.length)],
+          confidence: Math.min(5, Math.max(1, Math.floor(calculation.confidence / 2))),
+          insights: this.calculationEngine.generateInsights(calculation.factors, edge, 'medium'),
+          category: 'Top Prop',
+          edge: Math.round(edge * 10) / 10,
+          type: 'Long Shot',
+          line: bookLine,
+          projected: calculation.projection
+        });
+      }
+    });
+
+    return picks.slice(0, 3);
+  }
+
+  generateGameBasedPicks(): GeneratedPick[] {
+    const picks: GeneratedPick[] = [];
+    const games = mockDataService.getGameData();
+    const platforms = ['DraftKings', 'FanDuel', 'BetMGM'];
+
+    games.forEach(game => {
+      // Generate spread pick
+      const spreadCalc = this.calculationEngine.calculateGameProp(game, 'spread');
+      const bookSpread = -3.5;
+      const spreadEdge = this.calculationEngine.calculateEdge(Math.abs(spreadCalc.projection), Math.abs(bookSpread));
+      
+      if (spreadEdge > 3) {
+        picks.push({
+          id: `${game.gameId}-spread`,
+          matchup: `${game.awayTeam} vs ${game.homeTeam}`,
+          title: `${game.homeTeam} ${bookSpread}`,
+          sport: game.sport.toUpperCase(),
+          game: game.gameTime,
+          description: `${game.homeTeam} to cover the ${bookSpread} point spread.`,
+          odds: '-110',
+          platform: platforms[Math.floor(Math.random() * platforms.length)],
+          confidence: Math.min(5, Math.max(1, Math.floor(spreadCalc.confidence / 2))),
+          insights: this.calculationEngine.generateInsights(spreadCalc.factors, spreadEdge, 'medium'),
+          category: 'Game Pick',
+          edge: Math.round(spreadEdge * 10) / 10,
+          type: 'Spread',
+          gameTime: game.gameTime
+        });
+      }
+
+      // Generate total pick
+      const totalCalc = this.calculationEngine.calculateGameProp(game, 'total');
+      const bookTotal = game.sport === 'nba' ? 218.5 : 48.5;
+      const totalEdge = this.calculationEngine.calculateEdge(totalCalc.projection, bookTotal, 'under');
+      
+      if (totalEdge > 2) {
+        picks.push({
+          id: `${game.gameId}-total`,
+          matchup: `${game.awayTeam} vs ${game.homeTeam}`,
+          title: `Under ${bookTotal}`,
+          sport: game.sport.toUpperCase(),
+          game: game.gameTime,
+          description: `Total points to go under ${bookTotal}.`,
+          odds: '-115',
+          platform: platforms[Math.floor(Math.random() * platforms.length)],
+          confidence: Math.min(5, Math.max(1, Math.floor(totalCalc.confidence / 2))),
+          insights: this.calculationEngine.generateInsights(totalCalc.factors, totalEdge, 'high'),
+          category: 'Game Pick',
+          edge: Math.round(totalEdge * 10) / 10,
+          type: 'Total',
+          gameTime: game.gameTime
+        });
+      }
+    });
+
+    return picks.slice(0, 3);
+  }
+
+  generatePlayerProps(sport: 'nba' | 'nfl'): GeneratedPick[] {
+    const picks: GeneratedPick[] = [];
+    const games = mockDataService.getGameData().filter(g => g.sport === sport);
+    const platforms = ['DraftKings', 'FanDuel', 'BetMGM'];
+
+    const playerIds = sport === 'nba' 
+      ? ['luka-doncic', 'giannis-antetokounmpo'] 
+      : ['josh-allen'];
+
+    playerIds.forEach(playerId => {
+      const playerData = mockDataService.getPlayerStats(playerId);
+      if (!playerData) return;
+
+      const game = games.find(g => 
+        g.homeTeam === playerData.team || g.awayTeam === playerData.team
+      );
+      if (!game) return;
+
+      const opponent = game.homeTeam === playerData.team ? game.awayTeam : game.homeTeam;
+      
+      const props = sport === 'nba' 
+        ? [{ prop: 'points', line: 28.5 }, { prop: 'rebounds', line: 11.5 }]
+        : [{ prop: 'passing_yards', line: 267.5 }];
+
+      props.forEach(({ prop, line }) => {
+        const calculation = this.calculationEngine.calculatePlayerProp(playerData, prop, opponent, game);
+        const edge = this.calculationEngine.calculateEdge(calculation.projection, line, 'over');
+        
+        if (edge > 2) {
+          const confidence = this.calculationEngine.calculateConfidence(edge, calculation.confidence, 8);
+          
+          picks.push({
+            id: `${playerId}-${prop}-prop`,
+            player: playerData.name,
+            team: playerData.team,
+            title: `Over ${line} ${prop.replace('_', ' ')}`,
+            sport: sport.toUpperCase(),
+            game: game.gameTime,
+            description: `${playerData.name} ${prop} over ${line}`,
+            odds: edge > 7 ? '+105' : '-115',
+            platform: platforms[Math.floor(Math.random() * platforms.length)],
+            confidence: confidence === 'high' ? 5 : confidence === 'medium' ? 3 : 2,
+            insights: this.calculationEngine.generateInsights(calculation.factors, edge, confidence),
+            category: 'Player Prop',
+            edge: Math.round(edge * 10) / 10,
+            type: 'Player Prop',
+            line: line,
+            projected: calculation.projection
+          });
+        }
+      });
+    });
+
+    return picks;
+  }
+
+  // Method to refresh all picks (simulate real-time updates)
+  refreshAllPicks(): void {
+    mockDataService.simulateDataUpdate();
+  }
+}
+
+export const dynamicPicksGenerator = new DynamicPicksGenerator();

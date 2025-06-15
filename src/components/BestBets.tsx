@@ -1,54 +1,44 @@
 
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, Plus, Star } from 'lucide-react';
+import { TrendingUp, Plus, Star, RefreshCw } from 'lucide-react';
 import { useBetSlipContext } from './BetSlipContext';
+import { dynamicPicksGenerator, GeneratedPick } from '../services/dynamicPicksGenerator';
 
 export const BestBets = () => {
   const { addToBetSlip, betSlip } = useBetSlipContext();
+  const [bestBets, setBestBets] = useState<GeneratedPick[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const bestBets = [
-    {
-      id: "1",
-      player: "LeBron James",
-      title: "Over 25.5 Points",
-      sport: "Basketball - NBA",
-      game: "Jun 10, 8:00 PM",
-      description: "LeBron James to score over 25.5 points against the Golden State Warriors.",
-      odds: "+110",
-      platform: "DraftKings",
-      confidence: 4,
-      insights: "LeBron is averaging 31.2 points per game against the Warriors this season and is coming off a three-game 35+ point streak. Warriors struggle to defend high-usage forwards (allowing 2.5 points per attempt above league average), and LeBron's usage increases by 9% in games projected to finish within 5 points.",
-      category: "Top Prop"
-    },
-    {
-      id: "2",
-      player: "Patrick Mahomes",
-      title: "Over 2.5 Passing TDs",
-      sport: "Football - NFL",
-      game: "Jun 11, 4:25 PM",
-      description: "Patrick Mahomes to throw over 2.5 passing touchdowns against the Bills.",
-      odds: "-115",
-      platform: "FanDuel",
-      confidence: 5,
-      insights: "Mahomes faces a Bills defense allowing 2.8 passing TDs per game over their last 5. AI analysis factors in offensive line strength, red zone efficiency (Chiefs top 5), and game script projecting above league-average pass attempts.",
-      category: "Best Value"
-    },
-    {
-      id: "3",
-      player: "Jayson Tatum",
-      title: "Over 8.5 Rebounds",
-      sport: "Basketball - NBA",
-      game: "Jun 12, 7:30 PM",
-      description: "Jayson Tatum to grab over 8.5 rebounds against the Heat.",
-      odds: "+125",
-      platform: "BetMGM",
-      confidence: 3,
-      insights: "AI projects Tatum for 10+ rebounds in this matchup due to increased time at power forward and Miami's key frontcourt injuries. Past 10 games, Heat allow the 2nd most rebounds to AI-profiled comparable forwards.",
-      category: "Trending"
+  useEffect(() => {
+    loadBestBets();
+    
+    // Refresh picks every 30 seconds
+    const interval = setInterval(() => {
+      refreshPicks();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const loadBestBets = () => {
+    setLoading(true);
+    try {
+      const picks = dynamicPicksGenerator.generateBestBets();
+      setBestBets(picks);
+    } catch (error) {
+      console.error('Error loading best bets:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  const refreshPicks = () => {
+    dynamicPicksGenerator.refreshAllPicks();
+    loadBestBets();
+  };
 
   const getConfidenceStars = (confidence: number) => {
     return Array.from({ length: 5 }, (_, i) => (
@@ -73,6 +63,23 @@ export const BestBets = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Loading Best Bets...</h2>
+        </div>
+        <div className="space-y-3">
+          {[1, 2, 3].map(i => (
+            <Card key={i} className="bg-slate-800/50 border-slate-700/50 p-4 animate-pulse">
+              <div className="h-20 bg-slate-700/50 rounded"></div>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -80,9 +87,19 @@ export const BestBets = () => {
           <Star className="w-5 h-5 text-emerald-400" />
           <h2 className="text-lg font-semibold">Today's Best Bets</h2>
         </div>
-        <Badge variant="secondary" className="bg-emerald-500/20 text-emerald-400">
-          {bestBets.length} Available
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="bg-emerald-500/20 text-emerald-400">
+            {bestBets.length} Available
+          </Badge>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={refreshPicks}
+            className="border-slate-600 text-slate-300 hover:bg-slate-700"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-3">
@@ -94,6 +111,9 @@ export const BestBets = () => {
                   <h3 className="font-bold text-white text-lg">{bet.player} {bet.title}</h3>
                   <Badge className={getCategoryColor(bet.category)}>
                     {bet.category}
+                  </Badge>
+                  <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs">
+                    {bet.edge}% Edge
                   </Badge>
                 </div>
                 <div className="text-sm text-slate-400 mb-1">
@@ -109,6 +129,12 @@ export const BestBets = () => {
             <div className="bg-slate-700/30 rounded-lg p-3 mb-3">
               <h4 className="text-emerald-400 font-medium text-sm mb-2">AI Insights:</h4>
               <p className="text-xs text-slate-300">{bet.insights}</p>
+              {bet.projected && bet.line && (
+                <div className="flex justify-between mt-2 text-xs">
+                  <span className="text-slate-400">Our Projection: <span className="text-emerald-400">{bet.projected}</span></span>
+                  <span className="text-slate-400">Book Line: <span className="text-white">{bet.line}</span></span>
+                </div>
+              )}
             </div>
 
             <div className="flex items-center justify-between mb-3">
@@ -132,10 +158,10 @@ export const BestBets = () => {
                 size="sm"
                 onClick={() => addToBetSlip({
                   id: bet.id,
-                  type: "Best Bet",
+                  type: bet.type,
                   description: `${bet.player} ${bet.title}`,
                   odds: bet.odds,
-                  edge: 0
+                  edge: bet.edge
                 })}
                 disabled={betSlip.some(b => b.id === bet.id)}
               >

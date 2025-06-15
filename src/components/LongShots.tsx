@@ -1,54 +1,36 @@
-
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, Plus, Star } from 'lucide-react';
+import { TrendingUp, Plus, Star, RefreshCw } from 'lucide-react';
 import { useBetSlipContext } from './BetSlipContext';
+import { dynamicPicksGenerator, GeneratedPick } from '../services/dynamicPicksGenerator';
 
 export const LongShots = () => {
   const { addToBetSlip, betSlip } = useBetSlipContext();
+  const [longShots, setLongShots] = useState<GeneratedPick[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const longShots = [
-    {
-      id: "ls1",
-      player: "LeBron James",
-      title: "Over 27.5 Points",
-      sport: "Basketball - NBA",
-      game: "Jun 10, 3:00 PM",
-      description: "LeBron James to score over 27.5 points against the Golden State Warriors.",
-      odds: "-115",
-      platform: "DraftKings",
-      confidence: 4,
-      insights: "LeBron has been averaging 30.2 points in his last 5 games. Warriors rank 23rd in opponent points per game. High-stakes game likely means more usage for LeBron.",
-      category: "Top Prop"
-    },
-    {
-      id: "ls2", 
-      player: "Nikola Jokic",
-      title: "Triple-Double",
-      sport: "Basketball - NBA",
-      game: "Jun 11, 4:30 PM",
-      description: "Nikola Jokic to record a triple-double against the Phoenix Suns.",
-      odds: "+150",
-      platform: "FanDuel",
-      confidence: 3,
-      insights: "Jokic has 5 triple-doubles in his last 10 games. Suns allow the 5th most assists to centers. Jokic's all-around game makes this a strong possibility.",
-      category: "Top Prop"
-    },
-    {
-      id: "ls3",
-      player: "Connor McDavid", 
-      title: "Over 3.5 Shots on Goal",
-      sport: "Hockey - NHL",
-      game: "Jun 12, 3:30 PM",
-      description: "Connor McDavid to have over 3.5 shots on goal.",
-      odds: "-140",
-      platform: "DraftKings",
-      confidence: 5,
-      insights: "McDavid is averaging 4.2 shots per game this season and faces a team that allows a high volume of shots. He's hit this line in 7 of his last 10 games.",
-      category: "Top Prop"
+  useEffect(() => {
+    loadLongShots();
+  }, []);
+
+  const loadLongShots = () => {
+    setLoading(true);
+    try {
+      const picks = dynamicPicksGenerator.generateLongShots();
+      setLongShots(picks);
+    } catch (error) {
+      console.error('Error loading long shots:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  const refreshPicks = () => {
+    dynamicPicksGenerator.refreshAllPicks();
+    loadLongShots();
+  };
 
   const getConfidenceStars = (confidence: number) => {
     return Array.from({ length: 5 }, (_, i) => (
@@ -64,6 +46,23 @@ export const LongShots = () => {
     return isPositive ? 'text-emerald-400' : 'text-red-400';
   };
 
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Loading Long Shots...</h2>
+        </div>
+        <div className="space-y-3">
+          {[1, 2, 3].map(i => (
+            <Card key={i} className="bg-slate-800/50 border-slate-700/50 p-4 animate-pulse">
+              <div className="h-24 bg-slate-700/50 rounded"></div>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -71,9 +70,19 @@ export const LongShots = () => {
           <TrendingUp className="w-5 h-5 text-purple-400" />
           <h2 className="text-lg font-semibold">Long Shot Picks</h2>
         </div>
-        <Badge variant="secondary" className="bg-purple-500/20 text-purple-400">
-          {longShots.length} Available
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="bg-purple-500/20 text-purple-400">
+            {longShots.length} Available
+          </Badge>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={refreshPicks}
+            className="border-slate-600 text-slate-300 hover:bg-slate-700"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-3">

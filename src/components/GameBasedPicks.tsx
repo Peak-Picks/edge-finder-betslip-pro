@@ -1,50 +1,36 @@
-
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, Plus, BarChart3, Clock } from 'lucide-react';
+import { TrendingUp, Plus, BarChart3, Clock, RefreshCw } from 'lucide-react';
 import { useBetSlipContext } from './BetSlipContext';
+import { dynamicPicksGenerator, GeneratedPick } from '../services/dynamicPicksGenerator';
 
 export const GameBasedPicks = () => {
   const { addToBetSlip, betSlip } = useBetSlipContext();
-  const gamePicks = [
-    {
-      id: "101",
-      matchup: 'Lakers vs Warriors',
-      type: 'Spread',
-      pick: 'Lakers -3.5',
-      odds: '-110',
-      edge: 4.9,
-      confidence: 'medium',
-      bookmaker: 'DraftKings',
-      gameTime: '8:00 PM ET',
-      aiInsight: "The AI model projects the Lakers to outperform the spread due to significant rebound and transition advantages against a Warriors defense ranked in the bottom third for defensive rating on the road. Lakers' adjusted +6.2 net rating at home and LeBron's stronger on/off splits increase expected point margin. Simulations have Lakers covering this spread 61% of the time. Additional factors: Warriors' top scorer's ankle injury affects expected pace. LA's preferred switching defense is expected to limit Golden State's drives, while betting market consensus projects a line closer to -5."
-    },
-    {
-      id: "102",
-      matchup: 'Celtics vs Heat',
-      type: 'Total',
-      pick: 'Under 218.5',
-      odds: '-115',
-      edge: 6.7,
-      confidence: 'high',
-      bookmaker: 'BetMGM',
-      gameTime: '7:30 PM ET',
-      aiInsight: "AI predicts a defensive-focused contest, with both teams in the top 6 for defensive efficiency over the last 10 games. The Heat's pace drops significantly against top-tier opponents, and recent injury adjustments forecast a 211 total. Historical data shows 8 of the last 10 meetings finishing under this line. 74% model confidence. Weather: No impact. AI notes: If Celtics' Robert Williams is ruled out (questionable), predicted total drops by another 2.3 points. Key On/Off metrics are baked into the total."
-    },
-    {
-      id: "103",
-      matchup: 'Chiefs vs Bills',
-      type: 'Moneyline',
-      pick: 'Chiefs ML',
-      odds: '-130',
-      edge: 7.5,
-      confidence: 'high',
-      bookmaker: 'FanDuel',
-      gameTime: '4:25 PM ET',
-      aiInsight: "After analyzing home/away splits, QB matchups, and late-season trends, AI rates Chiefs' win probability at 61%, factoring injury updates and weather. Mahomes' EPA/play increases to 0.35 at home vs. playoff teams, while Bills struggle in red zone defense (ranked 23rd last 8 games). This value is above market consensus. Noted: KC also ranks 2nd in special teams DVOA, which can swing close games; sharp money from betting exchanges has moved the line from -120 to -130."
+  const [gamePicks, setGamePicks] = useState<GeneratedPick[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadGamePicks();
+  }, []);
+
+  const loadGamePicks = () => {
+    setLoading(true);
+    try {
+      const picks = dynamicPicksGenerator.generateGameBasedPicks();
+      setGamePicks(picks);
+    } catch (error) {
+      console.error('Error loading game picks:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  const refreshPicks = () => {
+    dynamicPicksGenerator.refreshAllPicks();
+    loadGamePicks();
+  };
 
   const getConfidenceColor = (confidence: string) => {
     switch (confidence) {
@@ -55,6 +41,23 @@ export const GameBasedPicks = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Loading Game Picks...</h2>
+        </div>
+        <div className="space-y-3">
+          {[1, 2, 3].map(i => (
+            <Card key={i} className="bg-slate-800/50 border-slate-700/50 p-4 animate-pulse">
+              <div className="h-28 bg-slate-700/50 rounded"></div>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -62,9 +65,19 @@ export const GameBasedPicks = () => {
           <BarChart3 className="w-5 h-5 text-cyan-400" />
           <h2 className="text-lg font-semibold">Game-Based AI Picks</h2>
         </div>
-        <Badge variant="secondary" className="bg-cyan-500/20 text-cyan-300">
-          {gamePicks.length} Available
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="bg-cyan-500/20 text-cyan-300">
+            {gamePicks.length} Available
+          </Badge>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={refreshPicks}
+            className="border-slate-600 text-slate-300 hover:bg-slate-700"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
       <div className="space-y-3">
         {gamePicks.map((pick) => (

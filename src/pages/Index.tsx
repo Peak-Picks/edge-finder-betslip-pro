@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,11 +8,12 @@ import { BestBets } from '@/components/BestBets';
 import { PlayerProps } from '@/components/PlayerProps';
 import { TrendingParlays } from '@/components/TrendingParlays';
 import { BankrollTracker } from '@/components/BankrollTracker';
+import { GameLines } from '@/components/GameLines';
 import { PlayerPropAnalyzer } from '@/components/PlayerPropAnalyzer';
 import { BetBuilder } from '@/components/BetBuilder';
 import { DiscoverPage } from '@/components/DiscoverPage';
 import { ProfilePage } from '@/components/ProfilePage';
-import { TrendingUp, Target, Zap, Wallet } from 'lucide-react';
+import { TrendingUp, Target, Zap, Wallet, BarChart3 } from 'lucide-react';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('home');
@@ -43,7 +43,7 @@ const Index = () => {
                 </div>
 
                 <Tabs value={currentView} onValueChange={setCurrentView} className="w-full">
-                  <TabsList className="grid w-full grid-cols-4 bg-slate-800/50 border border-slate-700/50">
+                  <TabsList className="grid w-full grid-cols-5 bg-slate-800/50 border border-slate-700/50">
                     <TabsTrigger 
                       value="best-bets" 
                       className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 flex items-center gap-1 text-xs"
@@ -57,6 +57,13 @@ const Index = () => {
                     >
                       <Zap className="w-3 h-3" />
                       Props
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="game-lines" 
+                      className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 flex items-center gap-1 text-xs"
+                    >
+                      <BarChart3 className="w-3 h-3" />
+                      Lines
                     </TabsTrigger>
                     <TabsTrigger 
                       value="parlays" 
@@ -85,6 +92,9 @@ const Index = () => {
                 </TabsContent>
                 <TabsContent value="player-props" className="mt-2">
                   <PlayerProps />
+                </TabsContent>
+                <TabsContent value="game-lines" className="mt-2">
+                  <GameLines />
                 </TabsContent>
                 <TabsContent value="parlays" className="mt-2">
                   <TrendingParlays />

@@ -1,43 +1,61 @@
-
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Filter, TrendingUp, RefreshCw } from 'lucide-react';
+import { Plus, Filter, TrendingUp, RefreshCw, AlertCircle } from 'lucide-react';
 import { PlayerPropInsights } from './PlayerPropInsights';
 import { useBetSlipContext } from './BetSlipContext';
 import { dynamicPicksGenerator, GeneratedPick } from '../services/dynamicPicksGenerator';
+import { createOddsApiService, ProcessedProp } from '../services/oddsApiService';
 
 export const PlayerProps = () => {
-  const [selectedSport, setSelectedSport] = useState('nba');
+  const [selectedSport, setSelectedSport] = useState('wnba');
   const [selectedProp, setSelectedProp] = useState<any>(null);
   const [insightsOpen, setInsightsOpen] = useState(false);
-  const [playerProps, setPlayerProps] = useState<{nba: GeneratedPick[], nfl: GeneratedPick[]}>({nba: [], nfl: []});
+  const [playerProps, setPlayerProps] = useState<{nba: GeneratedPick[], nfl: GeneratedPick[], wnba: ProcessedProp[]}>({nba: [], nfl: [], wnba: []});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const { addToBetSlip, betSlip } = useBetSlipContext();
+
+  const API_KEY = '70f59ac60558d2b4dee1200bdaa2f2f3';
 
   useEffect(() => {
     loadPlayerProps();
   }, []);
 
-  const loadPlayerProps = () => {
+  const loadPlayerProps = async () => {
     setLoading(true);
+    setError(null);
     try {
       const nbaProps = dynamicPicksGenerator.generatePlayerProps('nba');
       const nflProps = dynamicPicksGenerator.generatePlayerProps('nfl');
-      setPlayerProps({ nba: nbaProps, nfl: nflProps });
+      
+      // Fetch real WNBA props
+      const oddsService = createOddsApiService(API_KEY);
+      const wnbaProps = await oddsService.getWNBAProps();
+      
+      setPlayerProps({ nba: nbaProps, nfl: nflProps, wnba: wnbaProps });
     } catch (error) {
       console.error('Error loading player props:', error);
+      setError('Failed to load WNBA props. Using sample data.');
+      // Fallback to mock data for WNBA
+      const nbaProps = dynamicPicksGenerator.generatePlayerProps('nba');
+      const nflProps = dynamicPicksGenerator.generatePlayerProps('nfl');
+      setPlayerProps({ nba: nbaProps, nfl: nflProps, wnba: [] });
     } finally {
       setLoading(false);
     }
   };
 
   const refreshPicks = () => {
-    dynamicPicksGenerator.refreshAllPicks();
-    loadPlayerProps();
+    if (selectedSport === 'wnba') {
+      loadPlayerProps();
+    } else {
+      dynamicPicksGenerator.refreshAllPicks();
+      loadPlayerProps();
+    }
   };
 
   const getConfidenceColor = (confidence: string) => {
@@ -50,12 +68,11 @@ export const PlayerProps = () => {
   };
 
   const extractPropFromTitle = (title: string): string => {
-    // Extract prop type from title like "Over 28.5 Points" -> "Points"
     const match = title.match(/Over \d+\.?\d* (.+)/);
     return match ? match[1] : title;
   };
 
-  const handlePropClick = (prop: GeneratedPick) => {
+  const handlePropClick = (prop: GeneratedPick | ProcessedProp) => {
     setSelectedProp({
       player: prop.player,
       team: prop.team,
@@ -65,7 +82,7 @@ export const PlayerProps = () => {
       odds: prop.odds,
       edge: prop.edge,
       projected: prop.projected,
-      confidence: prop.confidence >= 4 ? "high" : prop.confidence >= 2 ? "medium" : "low"
+      confidence: typeof prop.confidence === 'number' && prop.confidence >= 4 ? "high" : typeof prop.confidence === 'number' && prop.confidence >= 2 ? "medium" : "low"
     });
     setInsightsOpen(true);
   };
@@ -109,8 +126,23 @@ export const PlayerProps = () => {
           </div>
         </div>
 
+        {error && (
+          <div className="bg-yellow-500/20 border border-yellow-500/30 rounded-lg p-3 mb-4">
+            <div className="flex items-center gap-2 text-yellow-400">
+              <AlertCircle className="w-4 h-4" />
+              <span className="text-sm">{error}</span>
+            </div>
+          </div>
+        )}
+
         <Tabs value={selectedSport} onValueChange={setSelectedSport}>
-          <TabsList className="grid w-full grid-cols-2 bg-slate-800/50 border border-slate-700/50">
+          <TabsList className="grid w-full grid-cols-3 bg-slate-800/50 border border-slate-700/50">
+            <TabsTrigger 
+              value="wnba" 
+              className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400"
+            >
+              WNBA (Live)
+            </TabsTrigger>
             <TabsTrigger 
               value="nba" 
               className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400"
@@ -131,6 +163,10 @@ export const PlayerProps = () => {
                 const betId = `${prop.id}-${index}`;
                 const alreadyAdded = betSlip.some(b => b.id === betId);
                 const propType = extractPropFromTitle(prop.title);
+                const confidence = typeof prop.confidence === 'number' 
+                  ? (prop.confidence >= 4 ? 'high' : prop.confidence >= 2 ? 'medium' : 'low')
+                  : prop.confidence.toString();
+                
                 return (
                   <Card 
                     key={index} 
@@ -144,13 +180,18 @@ export const PlayerProps = () => {
                           <Badge variant="secondary" className="bg-slate-700 text-slate-300 text-xs">
                             {prop.team}
                           </Badge>
+                          {selectedSport === 'wnba' && (
+                            <Badge className="bg-emerald-500/20 text-emerald-400 text-xs">
+                              Live Data
+                            </Badge>
+                          )}
                         </div>
                         <p className="text-emerald-400 font-medium">
                           {prop.type} {prop.line} {propType}
                         </p>
                       </div>
                       <div className="text-right">
-                        <Badge className={getConfidenceColor(prop.confidence.toString())}>
+                        <Badge className={getConfidenceColor(confidence)}>
                           {prop.edge}% Edge
                         </Badge>
                         <div className="text-lg font-bold text-white mt-1">{prop.odds}</div>
@@ -198,6 +239,12 @@ export const PlayerProps = () => {
                   </Card>
                 );
               })}
+              
+              {selectedSport === 'wnba' && playerProps.wnba.length === 0 && !loading && (
+                <Card className="bg-slate-800/50 border-slate-700/50 p-6 text-center">
+                  <p className="text-slate-400">No WNBA props available this week.</p>
+                </Card>
+              )}
             </div>
           </TabsContent>
         </Tabs>

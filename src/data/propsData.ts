@@ -37,7 +37,8 @@ export const propsByLeague = {
       matchup: "vs KC",
       props: [
         { type: "Passing Yards", line: 267.5, odds: "-115", edge: 9.4 },
-        { type: "Passing TDs", line: 2.5, odds: "+105", edge: 7.2 }
+        { type: "Passing TDs", line: 2.5, odds: "+105", edge: 7.2 },
+        { type: "Rushing Yards", line: 35.5, odds: "+110", edge: 6.8 }
       ]
     },
     {
@@ -46,7 +47,17 @@ export const propsByLeague = {
       matchup: "@ BUF",
       props: [
         { type: "Passing Yards", line: 275.5, odds: "-110", edge: 11.8 },
+        { type: "Passing TDs", line: 2.5, odds: "-105", edge: 8.9 },
         { type: "Rushing Yards", line: 15.5, odds: "+125", edge: 8.3 }
+      ]
+    },
+    {
+      player: "Tyreek Hill",
+      team: "MIA",
+      matchup: "vs NYJ",
+      props: [
+        { type: "Receiving Yards", line: 78.5, odds: "-110", edge: 7.5 },
+        { type: "Receptions", line: 6.5, odds: "+105", edge: 5.9 }
       ]
     }
   ],
@@ -57,7 +68,18 @@ export const propsByLeague = {
       matchup: "vs SF",
       props: [
         { type: "Hits", line: 1.5, odds: "+110", edge: 6.7 },
-        { type: "Total Bases", line: 2.5, odds: "-105", edge: 4.9 }
+        { type: "Total Bases", line: 2.5, odds: "-105", edge: 4.9 },
+        { type: "Runs + RBIs", line: 1.5, odds: "-115", edge: 8.2 }
+      ]
+    },
+    {
+      player: "Aaron Judge",
+      team: "NYY",
+      matchup: "@ BOS",
+      props: [
+        { type: "Home Runs", line: 0.5, odds: "+180", edge: 12.4 },
+        { type: "Hits", line: 1.5, odds: "-105", edge: 5.3 },
+        { type: "RBIs", line: 1.5, odds: "+120", edge: 7.1 }
       ]
     }
   ]

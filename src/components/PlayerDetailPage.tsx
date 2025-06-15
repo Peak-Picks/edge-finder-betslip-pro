@@ -45,9 +45,102 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
   
   if (!player) return null;
 
-  // Generate dynamic data based on the player and selected stat
-  const getPlayerStats = (playerName: string, stat: string): StatData => {
+  // Determine sport based on player name and context
+  const getSportByPlayer = (playerName: string) => {
+    const nflPlayers = ['Josh Allen', 'Patrick Mahomes', 'Tyreek Hill'];
+    const mlbPlayers = ['Mookie Betts', 'Aaron Judge'];
+    
+    if (nflPlayers.includes(playerName)) return 'nfl';
+    if (mlbPlayers.includes(playerName)) return 'mlb';
+    return 'nba';
+  };
+
+  const sport = getSportByPlayer(player.name);
+
+  // Generate dynamic data based on the player, sport, and selected stat
+  const getPlayerStats = (playerName: string, stat: string, sportType: string): StatData => {
     const baseStats = {
+      'Josh Allen': {
+        'Passing Yards': {
+          overview: { average: 267.5, median: 270, last10: '80%', l5: '100%', l20: '70%', h2h: '75%', season2025: '73%', season2024: '68%' },
+          recentGames: [
+            { opponent: 'vs KC', total: 295, hit: true },
+            { opponent: 'vs MIA', total: 235, hit: false },
+            { opponent: 'vs NYJ', total: 310, hit: true },
+            { opponent: 'vs NE', total: 280, hit: true },
+            { opponent: 'vs LAC', total: 245, hit: false },
+            { opponent: 'vs HOU', total: 325, hit: true },
+            { opponent: 'vs SEA', total: 290, hit: true },
+            { opponent: 'vs DEN', total: 255, hit: false },
+            { opponent: 'vs LV', total: 275, hit: true },
+            { opponent: 'vs PIT', total: 300, hit: true }
+          ]
+        },
+        'Passing TDs': {
+          overview: { average: 2.8, median: 3, last10: '70%', l5: '80%', l20: '65%', h2h: '67%', season2025: '71%', season2024: '59%' },
+          recentGames: [
+            { opponent: 'vs KC', total: 3, hit: true },
+            { opponent: 'vs MIA', total: 2, hit: false },
+            { opponent: 'vs NYJ', total: 4, hit: true },
+            { opponent: 'vs NE', total: 3, hit: true },
+            { opponent: 'vs LAC', total: 1, hit: false },
+            { opponent: 'vs HOU', total: 3, hit: true },
+            { opponent: 'vs SEA', total: 2, hit: false },
+            { opponent: 'vs DEN', total: 3, hit: true },
+            { opponent: 'vs LV', total: 2, hit: false },
+            { opponent: 'vs PIT', total: 4, hit: true }
+          ]
+        },
+        'Rushing Yards': {
+          overview: { average: 42.3, median: 38, last10: '60%', l5: '60%', l20: '70%', h2h: '50%', season2025: '64%', season2024: '58%' },
+          recentGames: [
+            { opponent: 'vs KC', total: 55, hit: true },
+            { opponent: 'vs MIA', total: 28, hit: false },
+            { opponent: 'vs NYJ', total: 47, hit: true },
+            { opponent: 'vs NE', total: 32, hit: false },
+            { opponent: 'vs LAC', total: 39, hit: true },
+            { opponent: 'vs HOU', total: 61, hit: true },
+            { opponent: 'vs SEA', total: 25, hit: false },
+            { opponent: 'vs DEN', total: 44, hit: true },
+            { opponent: 'vs LV', total: 31, hit: false },
+            { opponent: 'vs PIT', total: 52, hit: true }
+          ]
+        }
+      },
+      'Patrick Mahomes': {
+        'Passing Yards': {
+          overview: { average: 275.5, median: 278, last10: '90%', l5: '100%', l20: '75%', h2h: '80%', season2025: '76%', season2024: '71%' },
+          recentGames: [
+            { opponent: '@ BUF', total: 315, hit: true },
+            { opponent: 'vs LAC', total: 245, hit: false },
+            { opponent: 'vs LV', total: 298, hit: true },
+            { opponent: '@ DEN', total: 266, hit: false },
+            { opponent: 'vs NO', total: 331, hit: true },
+            { opponent: '@ CLE', total: 289, hit: true },
+            { opponent: 'vs HOU', total: 285, hit: true },
+            { opponent: '@ LV', total: 278, hit: true },
+            { opponent: 'vs TB', total: 291, hit: true },
+            { opponent: '@ SF', total: 423, hit: true }
+          ]
+        }
+      },
+      'Mookie Betts': {
+        'Hits': {
+          overview: { average: 1.8, median: 2, last10: '60%', l5: '80%', l20: '65%', h2h: '70%', season2025: '67%', season2024: '58%' },
+          recentGames: [
+            { opponent: 'vs SF', total: 2, hit: true },
+            { opponent: 'vs SD', total: 1, hit: false },
+            { opponent: 'vs COL', total: 3, hit: true },
+            { opponent: '@ AZ', total: 1, hit: false },
+            { opponent: '@ AZ', total: 2, hit: true },
+            { opponent: 'vs MIL', total: 1, hit: false },
+            { opponent: 'vs MIL', total: 2, hit: true },
+            { opponent: '@ ATL', total: 2, hit: true },
+            { opponent: '@ ATL', total: 0, hit: false },
+            { opponent: 'vs WAS', total: 3, hit: true }
+          ]
+        }
+      },
       'Luka Dončić': {
         'PTS+REB+AST': {
           overview: { average: 30.9, median: 31, last10: '70%', l5: '80%', l20: '55%', h2h: '100%', season2025: '73%', season2024: '47%' },
@@ -184,77 +277,127 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
     return statData;
   };
 
-  const playerStats = getPlayerStats(player.name, selectedStat);
+  const playerStats = getPlayerStats(player.name, selectedStat, sport);
   
-  // Get player position based on name (in real app this would come from data)
-  const getPlayerPosition = (playerName: string) => {
-    const positions = {
-      'Luka Dončić': 'PG',
-      'Jayson Tatum': 'SF', 
-      'Giannis Antetokounmpo': 'PF',
-      'LeBron James': 'SF',
-      'Stephen Curry': 'PG',
-      'Kevin Durant': 'SF',
-      'Nikola Jokić': 'C',
-      'Joel Embiid': 'C'
-    };
-    return positions[playerName as keyof typeof positions] || 'PG';
-  };
-
-  const playerPosition = getPlayerPosition(player.name);
-
-  // Get position-specific defensive stats based on selected stat and player position
-  const getPositionDefensiveStats = (stat: string, position: string) => {
-    const positionLabel = {
-      'PG': 'Point Guards',
-      'SG': 'Shooting Guards', 
-      'SF': 'Small Forwards',
-      'PF': 'Power Forwards',
-      'C': 'Centers'
-    }[position] || 'Point Guards';
-
-    if (stat === 'PTS+REB+AST') {
-      // For the combo stat, show comprehensive overall defensive metrics
-      return [
-        { label: 'Overall Def Rating', rank: 12, value: '108.3' },
-        { label: 'Fantasy Pts Allow', rank: 8, value: '45.2' },
-        { label: 'Multi-Cat Defense', rank: 15, value: '76.8%' }
-      ];
-    } else if (stat.includes('PTS')) {
-      return [
-        { label: 'Points Allowed', rank: 18, value: '112.4' },
-        { label: 'Opp FG%', rank: 12, value: '47.2%' },
-        { label: 'Def Efficiency', rank: 15, value: '108.9' }
-      ];
-    } else if (stat.includes('REB')) {
-      return [
-        { label: 'Rebounds Allowed', rank: 8, value: '43.2' },
-        { label: 'Opp OReb Rate', rank: 11, value: '28.4%' },
-        { label: 'Box Out Rate', rank: 22, value: '71.8%' }
-      ];
-    } else if (stat.includes('AST')) {
-      return [
-        { label: 'Assists Allowed', rank: 14, value: '25.8' },
-        { label: 'Forced TOV Rate', rank: 9, value: '16.2%' },
-        { label: 'Steal Rate', rank: 19, value: '8.4%' }
-      ];
-    } else if (stat.includes('3PTM')) {
-      return [
-        { label: '3PM Allowed', rank: 25, value: '12.9' },
-        { label: 'Opp 3P%', rank: 17, value: '36.1%' },
-        { label: 'Contest Rate', rank: 11, value: '82.3%' }
-      ];
+  // Get player position based on name and sport
+  const getPlayerPosition = (playerName: string, sportType: string) => {
+    if (sportType === 'nfl') {
+      const positions = {
+        'Josh Allen': 'QB',
+        'Patrick Mahomes': 'QB',
+        'Tyreek Hill': 'WR'
+      };
+      return positions[playerName as keyof typeof positions] || 'QB';
+    } else if (sportType === 'mlb') {
+      const positions = {
+        'Mookie Betts': 'OF',
+        'Aaron Judge': 'OF'
+      };
+      return positions[playerName as keyof typeof positions] || 'OF';
     } else {
-      // For other combo stats, show overall defensive metrics
-      return [
-        { label: 'Total Def Rating', rank: 12, value: '110.2' },
-        { label: 'Opp Production', rank: 16, value: '89.4' },
-        { label: 'Def Efficiency', rank: 9, value: '103.7' }
-      ];
+      const positions = {
+        'Luka Dončić': 'PG',
+        'Jayson Tatum': 'SF', 
+        'Giannis Antetokounmpo': 'PF'
+      };
+      return positions[playerName as keyof typeof positions] || 'PG';
     }
   };
 
-  const relevantDefensiveStats = getPositionDefensiveStats(selectedStat, playerPosition);
+  const playerPosition = getPlayerPosition(player.name, sport);
+
+  // Get sport-specific defensive stats based on selected stat, player position, and sport
+  const getPositionDefensiveStats = (stat: string, position: string, sportType: string) => {
+    if (sportType === 'nfl') {
+      if (stat.includes('Passing Yards')) {
+        return [
+          { label: 'Pass Def Rank', rank: 18, value: '245.8' },
+          { label: 'QB Rating Allow', rank: 22, value: '98.4' },
+          { label: 'Pressure Rate', rank: 8, value: '28.7%' }
+        ];
+      } else if (stat.includes('Passing TDs')) {
+        return [
+          { label: 'Pass TDs Allow', rank: 15, value: '1.8' },
+          { label: 'Red Zone Def', rank: 12, value: '58.3%' },
+          { label: 'INT Rate', rank: 19, value: '2.1%' }
+        ];
+      } else if (stat.includes('Rushing')) {
+        return [
+          { label: 'Rush Def Rank', rank: 12, value: '118.5' },
+          { label: 'YPC Allowed', rank: 15, value: '4.2' },
+          { label: 'Rush TDs Allow', rank: 8, value: '0.9' }
+        ];
+      } else if (stat.includes('Receiving')) {
+        return [
+          { label: 'WR Coverage', rank: 25, value: '8.9' },
+          { label: 'Slot Coverage', rank: 17, value: '72.1%' },
+          { label: 'Target Share', rank: 11, value: '22.4%' }
+        ];
+      }
+    } else if (sportType === 'mlb') {
+      if (stat.includes('Hits')) {
+        return [
+          { label: 'Hits Allowed', rank: 14, value: '8.7' },
+          { label: 'BABIP Against', rank: 18, value: '.298' },
+          { label: 'Contact Rate', rank: 22, value: '78.9%' }
+        ];
+      } else if (stat.includes('Home Runs')) {
+        return [
+          { label: 'HR/9 Allowed', rank: 8, value: '1.12' },
+          { label: 'Fly Ball Rate', rank: 15, value: '38.4%' },
+          { label: 'Hard Hit Rate', rank: 20, value: '41.2%' }
+        ];
+      } else if (stat.includes('RBI')) {
+        return [
+          { label: 'RISP Defense', rank: 12, value: '.245' },
+          { label: 'Runners Scoring', rank: 16, value: '28.7%' },
+          { label: 'Clutch Defense', rank: 9, value: '67.8%' }
+        ];
+      }
+    } else {
+      // NBA logic
+      if (stat === 'PTS+REB+AST') {
+        return [
+          { label: 'Overall Def Rating', rank: 12, value: '108.3' },
+          { label: 'Fantasy Pts Allow', rank: 8, value: '45.2' },
+          { label: 'Multi-Cat Defense', rank: 15, value: '76.8%' }
+        ];
+      } else if (stat.includes('PTS')) {
+        return [
+          { label: 'Points Allowed', rank: 18, value: '112.4' },
+          { label: 'Opp FG%', rank: 12, value: '47.2%' },
+          { label: 'Def Efficiency', rank: 15, value: '108.9' }
+        ];
+      } else if (stat.includes('REB')) {
+        return [
+          { label: 'Rebounds Allowed', rank: 8, value: '43.2' },
+          { label: 'Opp OReb Rate', rank: 11, value: '28.4%' },
+          { label: 'Box Out Rate', rank: 22, value: '71.8%' }
+        ];
+      } else if (stat.includes('AST')) {
+        return [
+          { label: 'Assists Allowed', rank: 14, value: '25.8' },
+          { label: 'Forced TOV Rate', rank: 9, value: '16.2%' },
+          { label: 'Steal Rate', rank: 19, value: '8.4%' }
+        ];
+      } else if (stat.includes('3PTM')) {
+        return [
+          { label: '3PM Allowed', rank: 25, value: '12.9' },
+          { label: 'Opp 3P%', rank: 17, value: '36.1%' },
+          { label: 'Contest Rate', rank: 11, value: '82.3%' }
+        ];
+      }
+    }
+    
+    // Default fallback
+    return [
+      { label: 'Overall Defense', rank: 12, value: '110.2' },
+      { label: 'Opp Production', rank: 16, value: '89.4' },
+      { label: 'Def Efficiency', rank: 9, value: '103.7' }
+    ];
+  };
+
+  const relevantDefensiveStats = getPositionDefensiveStats(selectedStat, playerPosition, sport);
 
   const matchupAnalysis = {
     overall: { rank: 9, value: 83.9 },
@@ -268,10 +411,29 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
     defense: { avg: 48.1, rank: 15, stat: 'Opponent Points', rankStat: 20, avgStat: 110.5 }
   };
 
-  const statTabs = [
-    'PTS+REB+AST', 'PTS', '1Q PTS', '1H PTS', 'AST', 'PTS+AST', 
-    '3PTM', 'REB', '1H REB', 'PTS+REB', 'REB+AST'
-  ];
+  // Get sport-specific stat tabs
+  const getStatTabs = (sportType: string) => {
+    if (sportType === 'nfl') {
+      return ['Passing Yards', 'Passing TDs', 'Rushing Yards', 'Receiving Yards', 'Receptions', 'Rush+Rec Yards'];
+    } else if (sportType === 'mlb') {
+      return ['Hits', 'Total Bases', 'Home Runs', 'RBIs', 'Runs', 'Runs + RBIs', 'Stolen Bases'];
+    } else {
+      return ['PTS+REB+AST', 'PTS', '1Q PTS', '1H PTS', 'AST', 'PTS+AST', '3PTM', 'REB', '1H REB', 'PTS+REB', 'REB+AST'];
+    }
+  };
+
+  const statTabs = getStatTabs(sport);
+
+  // Set initial stat based on sport
+  useState(() => {
+    if (sport === 'nfl') {
+      setSelectedStat('Passing Yards');
+    } else if (sport === 'mlb') {
+      setSelectedStat('Hits');
+    } else {
+      setSelectedStat('PTS+REB+AST');
+    }
+  });
 
   const getStatDisplayName = (stat: string) => {
     const displayNames = {
@@ -285,7 +447,20 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
       '3PTM': '3-Pointers Made',
       '1H REB': '1st Half Rebounds',
       'PTS+REB': 'Points + Rebounds',
-      'REB+AST': 'Rebounds + Assists'
+      'REB+AST': 'Rebounds + Assists',
+      'Passing Yards': 'Passing Yards',
+      'Passing TDs': 'Passing Touchdowns',
+      'Rushing Yards': 'Rushing Yards',
+      'Receiving Yards': 'Receiving Yards',
+      'Receptions': 'Receptions',
+      'Rush+Rec Yards': 'Rush + Rec Yards',
+      'Hits': 'Hits',
+      'Total Bases': 'Total Bases',
+      'Home Runs': 'Home Runs',
+      'RBIs': 'RBIs',
+      'Runs': 'Runs',
+      'Runs + RBIs': 'Runs + RBIs',
+      'Stolen Bases': 'Stolen Bases'
     };
     return displayNames[stat as keyof typeof displayNames] || stat;
   };
@@ -302,7 +477,20 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
       '3PTM': '3.5',
       '1H REB': '4.5',
       'PTS+REB': '37.5',
-      'REB+AST': '17.5'
+      'REB+AST': '17.5',
+      'Passing Yards': '267.5',
+      'Passing TDs': '2.5',
+      'Rushing Yards': '35.5',
+      'Receiving Yards': '78.5',
+      'Receptions': '6.5',
+      'Rush+Rec Yards': '115.5',
+      'Hits': '1.5',
+      'Total Bases': '2.5',
+      'Home Runs': '0.5',
+      'RBIs': '1.5',
+      'Runs': '1.5',
+      'Runs + RBIs': '1.5',
+      'Stolen Bases': '0.5'
     };
     return lines[stat as keyof typeof lines] || '25.5';
   };

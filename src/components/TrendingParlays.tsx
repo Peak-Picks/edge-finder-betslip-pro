@@ -3,11 +3,14 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Plus, Users, TrendingUp, Flame } from 'lucide-react';
+import { useBetSlipContext } from './BetSlipContext';
 
 export const TrendingParlays = () => {
+  const { addToBetSlip, betSlip } = useBetSlipContext();
+
   const trendingParlays = [
     {
-      id: 1,
+      id: "parlay1",
       title: "NBA Superstar Special",
       legs: [
         "LeBron James Over 25.5 Points",
@@ -20,7 +23,7 @@ export const TrendingParlays = () => {
       edge: 5.2
     },
     {
-      id: 2,
+      id: "parlay2",
       title: "Sunday NFL Parlay",
       legs: [
         "Mahomes Over 2.5 Passing TDs",
@@ -33,7 +36,7 @@ export const TrendingParlays = () => {
       edge: 3.8
     },
     {
-      id: 3,
+      id: "parlay3",
       title: "College Basketball Boost",
       legs: [
         "Duke -2.5",
@@ -46,6 +49,17 @@ export const TrendingParlays = () => {
       edge: 7.1
     }
   ];
+
+  const handleAddParlay = (parlay: typeof trendingParlays[0]) => {
+    addToBetSlip({
+      id: parlay.id,
+      type: "Parlay",
+      description: parlay.title,
+      odds: parlay.odds,
+      edge: parlay.edge,
+      legs: parlay.legs
+    });
+  };
 
   return (
     <div className="space-y-4">
@@ -104,9 +118,11 @@ export const TrendingParlays = () => {
               <Button 
                 className="flex-1 bg-emerald-600 hover:bg-emerald-700"
                 size="sm"
+                onClick={() => handleAddParlay(parlay)}
+                disabled={betSlip.some(b => b.id === parlay.id)}
               >
                 <Plus className="w-4 h-4 mr-1" />
-                Add Parlay
+                {betSlip.some(b => b.id === parlay.id) ? "Added" : "Add Parlay"}
               </Button>
               <Button 
                 variant="outline" 

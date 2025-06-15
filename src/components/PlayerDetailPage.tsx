@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card } from '@/components/ui/card';
@@ -484,34 +483,90 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
                 </Tabs>
               </Card>
 
-              {/* Team Rankings */}
-              <Card className="bg-slate-700/50 border-slate-600 p-2">
-                <h3 className="font-semibold text-blue-400 mb-2 text-sm">Team Rankings (2025)</h3>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded bg-gradient-to-r from-orange-400 to-red-400"></div>
-                      <span className="text-xs text-white">Offense</span>
+              {/* Supporting Stats - Now in 2 columns */}
+              <div className="grid grid-cols-2 gap-2">
+                {/* Team Rankings */}
+                <Card className="bg-slate-700/50 border-slate-600 p-2">
+                  <h3 className="font-semibold text-blue-400 mb-2 text-xs">Team Rankings</h3>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 rounded bg-gradient-to-r from-orange-400 to-red-400"></div>
+                        <span className="text-xs text-white">Offense</span>
+                      </div>
+                      <TrendingUp className="w-3 h-3 text-slate-400" />
                     </div>
-                    <TrendingUp className="w-3 h-3 text-slate-400" />
+                    
+                    <div className="space-y-1 text-xs">
+                      <div className="flex justify-between">
+                        <p className="text-slate-400">Avg.</p>
+                        <p className="text-white font-medium">{teamRankings.offense.avg}</p>
+                      </div>
+                      <div className="flex justify-between">
+                        <p className="text-slate-400">Rank</p>
+                        <p className="text-white font-medium">#{teamRankings.offense.rank}</p>
+                      </div>
+                    </div>
                   </div>
-                  
-                  <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div>
-                      <p className="text-slate-400">Avg.</p>
-                      <p className="text-white font-medium">{teamRankings.offense.avg}</p>
+                </Card>
+
+                {/* Player Trends */}
+                <Card className="bg-slate-700/50 border-slate-600 p-2">
+                  <h3 className="font-semibold text-purple-400 mb-2 text-xs">Player Trends</h3>
+                  <div className="space-y-1 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Hot Streak</span>
+                      <span className="text-emerald-400 font-bold">3 games</span>
                     </div>
-                    <div>
-                      <p className="text-slate-400">Rank</p>
-                      <p className="text-white font-medium">#{teamRankings.offense.rank}</p>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Home/Away</span>
+                      <span className="text-white">65%/58%</span>
                     </div>
-                    <div>
-                      <p className="text-slate-400">Stat</p>
-                      <p className="text-white font-medium text-xs">{teamRankings.offense.stat}</p>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">B2B Games</span>
+                      <span className="text-red-400">42%</span>
                     </div>
                   </div>
-                </div>
-              </Card>
+                </Card>
+
+                {/* Weather & Conditions */}
+                <Card className="bg-slate-700/50 border-slate-600 p-2">
+                  <h3 className="font-semibold text-cyan-400 mb-2 text-xs">Game Conditions</h3>
+                  <div className="space-y-1 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Rest Days</span>
+                      <span className="text-white">2 days</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Time Zone</span>
+                      <span className="text-emerald-400">Home</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">TV Game</span>
+                      <span className="text-white">Yes</span>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Injury Report */}
+                <Card className="bg-slate-700/50 border-slate-600 p-2">
+                  <h3 className="font-semibold text-yellow-400 mb-2 text-xs">Injury Status</h3>
+                  <div className="space-y-1 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Status</span>
+                      <span className="text-emerald-400 font-bold">Healthy</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Minutes</span>
+                      <span className="text-white">35.2</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Usage</span>
+                      <span className="text-white">31.8%</span>
+                    </div>
+                  </div>
+                </Card>
+              </div>
             </div>
           </div>
         </div>

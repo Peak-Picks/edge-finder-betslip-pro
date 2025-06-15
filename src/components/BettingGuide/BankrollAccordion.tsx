@@ -6,7 +6,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 const BankrollAccordion: React.FC<{ cardClass?: string }> = ({ cardClass = "" }) => (
   <Card className={`${cardClass}`}>
     <CardHeader>
-      <CardTitle className="text-2xl">
+      <CardTitle className="text-2xl text-foreground">
         Bankroll Management
       </CardTitle>
       <CardDescription className="text-foreground">
@@ -19,7 +19,7 @@ const BankrollAccordion: React.FC<{ cardClass?: string }> = ({ cardClass = "" })
           <AccordionTrigger className="text-lg hover:no-underline">
             What is a Bankroll?
           </AccordionTrigger>
-          <AccordionContent className="text-base text-foreground leading-relaxed">
+          <AccordionContent className="text-base text-white leading-relaxed">
             Your bankroll is the total amount of money you have specifically set aside for betting. This money should be separate from your essential living expenses. Never bet with money you cannot afford to lose.
           </AccordionContent>
         </AccordionItem>
@@ -27,7 +27,7 @@ const BankrollAccordion: React.FC<{ cardClass?: string }> = ({ cardClass = "" })
           <AccordionTrigger className="text-lg hover:no-underline">
             Unit Betting (Staking Plan)
           </AccordionTrigger>
-          <AccordionContent className="text-base text-foreground leading-relaxed">
+          <AccordionContent className="text-base text-white leading-relaxed">
             A unit is a percentage of your bankroll, typically 1-5%. For example, if your bankroll is $1000 and your unit size is 1%, each unit is $10.
             <ul className="list-disc pl-5 mt-2 space-y-1">
               <li><strong>Flat Betting:</strong> Bet the same unit size on every wager, regardless of confidence. Simple and helps manage variance.</li>
@@ -40,7 +40,7 @@ const BankrollAccordion: React.FC<{ cardClass?: string }> = ({ cardClass = "" })
           <AccordionTrigger className="text-lg hover:no-underline">
             Tracking Your Bets
           </AccordionTrigger>
-          <AccordionContent className="text-base text-foreground leading-relaxed">
+          <AccordionContent className="text-base text-white leading-relaxed">
             Keep a detailed record of all your bets: date, sport, selection, odds, stake, profit/loss, and sportsbook. This helps you:
             <ul className="list-disc pl-5 mt-2 space-y-1">
               <li>Analyze your performance.</li>
@@ -54,7 +54,7 @@ const BankrollAccordion: React.FC<{ cardClass?: string }> = ({ cardClass = "" })
           <AccordionTrigger className="text-lg hover:no-underline">
             Shopping for the Best Lines
           </AccordionTrigger>
-          <AccordionContent className="text-base text-foreground leading-relaxed">
+          <AccordionContent className="text-base text-white leading-relaxed">
             Different sportsbooks may offer slightly different odds or lines for the same event. "Line shopping" means checking multiple sportsbooks to find the best possible odds for your bet.
             <br /><br />
             Even small differences can significantly impact your long-term profitability. For example, getting -105 instead of -110 consistently, or +7.5 points instead of +7, adds up. It's advisable to have accounts at a few reputable sportsbooks to take advantage of the best available lines.
@@ -64,7 +64,7 @@ const BankrollAccordion: React.FC<{ cardClass?: string }> = ({ cardClass = "" })
           <AccordionTrigger className="text-lg hover:no-underline">
             Avoiding Common Pitfalls
           </AccordionTrigger>
-          <AccordionContent className="text-base text-foreground leading-relaxed">
+          <AccordionContent className="text-base text-white leading-relaxed">
             <ul className="list-disc pl-5 space-y-1">
               <li><strong>Chasing Losses:</strong> Trying to win back lost money by increasing stakes or making impulsive bets. This is a quick way to deplete your bankroll.</li>
               <li><strong>Betting Under the Influence:</strong> Avoid betting when your judgment is impaired by alcohol or drugs.</li>
@@ -80,4 +80,3 @@ const BankrollAccordion: React.FC<{ cardClass?: string }> = ({ cardClass = "" })
 );
 
 export default BankrollAccordion;
-

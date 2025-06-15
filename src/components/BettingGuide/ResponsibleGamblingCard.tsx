@@ -9,7 +9,7 @@ const ResponsibleGamblingCard: React.FC<{ className?: string }> = ({ className =
         Responsible Gambling
       </CardTitle>
     </CardHeader>
-    <CardContent className="text-base text-red-200 opacity-90 leading-relaxed">
+    <CardContent className="text-base text-red-100 opacity-90 leading-relaxed">
       Sports betting should be a form of entertainment, not a guaranteed way to make money. Always gamble responsibly.
       <ul className="list-disc pl-5 mt-2 space-y-1">
         <li>Set limits on your time and money spent betting before you start.</li>
@@ -25,4 +25,3 @@ const ResponsibleGamblingCard: React.FC<{ className?: string }> = ({ className =
 );
 
 export default ResponsibleGamblingCard;
-

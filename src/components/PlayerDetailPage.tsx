@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card } from '@/components/ui/card';
@@ -311,6 +312,7 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
     if (sportType === 'nfl') {
       if (stat.includes('Passing Yards')) {
         return [
+          { label: 'Pass Yards Allowed', rank: 18, value: '245.8' },
           { label: 'Pass Def Rank', rank: 18, value: '245.8' },
           { label: 'QB Rating Allow', rank: 22, value: '98.4' },
           { label: 'Pressure Rate', rank: 8, value: '28.7%' }

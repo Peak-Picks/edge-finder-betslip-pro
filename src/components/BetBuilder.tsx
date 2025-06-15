@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -54,11 +53,13 @@ export const BetBuilder = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white pb-20">
+      {/* 
+        Ensure no extra/overriding classes or misplaced bg-white are present.
+      */}
       <div className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700/50 p-4">
         <h1 className="text-xl font-bold text-white">Bet Builder</h1>
         <p className="text-slate-400 text-sm">Build your perfect parlay</p>
       </div>
-
       <div className="p-4 space-y-6">
         <Tabs value={tab} onValueChange={setTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2 bg-slate-800/50 border border-slate-700/50">

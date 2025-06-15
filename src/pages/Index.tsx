@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -16,6 +17,7 @@ import { ProfilePage } from '@/components/ProfilePage';
 import { BettingGuide } from '@/components/BettingGuide';
 import { TrendingUp, Target, BarChart3, Wallet, Zap } from 'lucide-react';
 import TutorialModal from '@/components/TutorialModal';
+import { BetSlipProvider } from "@/components/BetSlipContext";
 
 const THREE_WEEKS_MS = 21 * 24 * 60 * 60 * 1000;
 
@@ -149,10 +151,13 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-slate-900">
       <TutorialModal isOpen={showTutorial} onClose={handleTutorialClose} />
-      {renderContent()}
+      <BetSlipProvider>
+        {renderContent()}
+      </BetSlipProvider>
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
     </div>
   );
 };
 
 export default Index;
+

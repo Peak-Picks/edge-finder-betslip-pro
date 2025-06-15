@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card } from '@/components/ui/card';
@@ -22,33 +21,70 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
   
   if (!player) return null;
 
-  // Generate dynamic data based on the player
-  const getPlayerStats = (playerName: string) => {
-    // Create different data sets for different players
-    const playerDataMap: Record<string, any> = {
+  // Generate dynamic data based on the player and selected stat
+  const getPlayerStats = (playerName: string, stat: string) => {
+    const baseStats = {
       'Luka Dončić': {
-        overview: {
-          average: 30.9,
-          median: 31,
-          last10: '70%',
-          l5: '80%',
-          l20: '55%',
-          h2h: '100%',
-          season2025: '73%',
-          season2024: '47%'
+        'PTS+REB+AST': {
+          overview: { average: 30.9, median: 31, last10: '70%', l5: '80%', l20: '55%', h2h: '100%', season2025: '73%', season2024: '47%' },
+          recentGames: [
+            { opponent: 'vs LAL', total: 33, pts: 25, reb: 5, ast: 3, hit: true },
+            { opponent: 'vs BOS', total: 26, pts: 17, reb: 9, ast: 0, hit: false },
+            { opponent: 'vs MIA', total: 23, pts: 15, reb: 8, ast: 0, hit: false },
+            { opponent: 'vs PHX', total: 31, pts: 23, reb: 8, ast: 0, hit: true },
+            { opponent: 'vs DEN', total: 41, pts: 35, reb: 6, ast: 0, hit: true },
+            { opponent: 'vs GSW', total: 35, pts: 28, reb: 5, ast: 2, hit: true },
+            { opponent: 'vs SAC', total: 31, pts: 24, reb: 7, ast: 0, hit: true },
+            { opponent: 'vs POR', total: 33, pts: 26, reb: 6, ast: 1, hit: true },
+            { opponent: 'vs UTA', total: 25, pts: 18, reb: 6, ast: 1, hit: false },
+            { opponent: 'vs OKC', total: 31, pts: 24, reb: 9, ast: -2, hit: true }
+          ]
         },
-        recentGames: [
-          { opponent: 'vs LAL', total: 33, pts: 25, reb: 5, ast: 3, hit: true },
-          { opponent: 'vs BOS', total: 26, pts: 17, reb: 9, ast: 0, hit: false },
-          { opponent: 'vs MIA', total: 23, pts: 15, reb: 8, ast: 0, hit: false },
-          { opponent: 'vs PHX', total: 31, pts: 23, reb: 8, ast: 0, hit: true },
-          { opponent: 'vs DEN', total: 41, pts: 35, reb: 6, ast: 0, hit: true },
-          { opponent: 'vs GSW', total: 35, pts: 28, reb: 5, ast: 2, hit: true },
-          { opponent: 'vs SAC', total: 31, pts: 24, reb: 7, ast: 0, hit: true },
-          { opponent: 'vs POR', total: 33, pts: 26, reb: 6, ast: 1, hit: true },
-          { opponent: 'vs UTA', total: 25, pts: 18, reb: 6, ast: 1, hit: false },
-          { opponent: 'vs OKC', total: 31, pts: 24, reb: 9, ast: -2, hit: true }
-        ]
+        'PTS': {
+          overview: { average: 28.5, median: 29, last10: '60%', l5: '60%', l20: '65%', h2h: '75%', season2025: '68%', season2024: '52%' },
+          recentGames: [
+            { opponent: 'vs LAL', total: 25, hit: false },
+            { opponent: 'vs BOS', total: 17, hit: false },
+            { opponent: 'vs MIA', total: 15, hit: false },
+            { opponent: 'vs PHX', total: 23, hit: false },
+            { opponent: 'vs DEN', total: 35, hit: true },
+            { opponent: 'vs GSW', total: 28, hit: false },
+            { opponent: 'vs SAC', total: 24, hit: false },
+            { opponent: 'vs POR', total: 26, hit: false },
+            { opponent: 'vs UTA', total: 18, hit: false },
+            { opponent: 'vs OKC', total: 24, hit: false }
+          ]
+        },
+        'REB': {
+          overview: { average: 8.5, median: 8, last10: '80%', l5: '100%', l20: '70%', h2h: '67%', season2025: '76%', season2024: '58%' },
+          recentGames: [
+            { opponent: 'vs LAL', total: 5, hit: false },
+            { opponent: 'vs BOS', total: 9, hit: true },
+            { opponent: 'vs MIA', total: 8, hit: false },
+            { opponent: 'vs PHX', total: 8, hit: false },
+            { opponent: 'vs DEN', total: 6, hit: false },
+            { opponent: 'vs GSW', total: 5, hit: false },
+            { opponent: 'vs SAC', total: 7, hit: false },
+            { opponent: 'vs POR', total: 6, hit: false },
+            { opponent: 'vs UTA', total: 6, hit: false },
+            { opponent: 'vs OKC', total: 9, hit: true }
+          ]
+        },
+        'AST': {
+          overview: { average: 8.5, median: 8, last10: '50%', l5: '40%', l20: '60%', h2h: '50%', season2025: '55%', season2024: '45%' },
+          recentGames: [
+            { opponent: 'vs LAL', total: 3, hit: false },
+            { opponent: 'vs BOS', total: 0, hit: false },
+            { opponent: 'vs MIA', total: 0, hit: false },
+            { opponent: 'vs PHX', total: 0, hit: false },
+            { opponent: 'vs DEN', total: 0, hit: false },
+            { opponent: 'vs GSW', total: 2, hit: false },
+            { opponent: 'vs SAC', total: 0, hit: false },
+            { opponent: 'vs POR', total: 1, hit: false },
+            { opponent: 'vs UTA', total: 1, hit: false },
+            { opponent: 'vs OKC', total: -2, hit: false }
+          ]
+        }
       },
       'Jayson Tatum': {
         overview: {
@@ -100,29 +136,17 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
       }
     };
 
-    // Return player-specific data or default data
-    return playerDataMap[playerName] || {
-      overview: {
-        average: 25.5,
-        median: 26,
-        last10: '50%',
-        l5: '40%',
-        l20: '60%',
-        h2h: '50%',
-        season2025: '55%',
-        season2024: '45%'
-      },
-      recentGames: [
-        { opponent: 'vs OPP', total: 25, pts: 20, reb: 3, ast: 2, hit: true },
-        { opponent: 'vs OPP', total: 23, pts: 18, reb: 3, ast: 2, hit: false },
-        { opponent: 'vs OPP', total: 27, pts: 22, reb: 3, ast: 2, hit: true },
-        { opponent: 'vs OPP', total: 22, pts: 17, reb: 3, ast: 2, hit: false },
-        { opponent: 'vs OPP', total: 26, pts: 21, reb: 3, ast: 2, hit: true }
-      ]
+    // Get player data or use default
+    const playerData = baseStats[playerName as keyof typeof baseStats];
+    const statData = playerData?.[stat as keyof typeof playerData] || {
+      overview: { average: 25.5, median: 26, last10: '50%', l5: '40%', l20: '60%', h2h: '50%', season2025: '55%', season2024: '45%' },
+      recentGames: Array(10).fill(null).map((_, i) => ({ opponent: 'vs OPP', total: 20 + Math.floor(Math.random() * 10), hit: Math.random() > 0.5 }))
     };
+
+    return statData;
   };
 
-  const playerStats = getPlayerStats(player.name);
+  const playerStats = getPlayerStats(player.name, selectedStat);
   
   const matchupAnalysis = {
     overall: { rank: 9, value: 83.9 },
@@ -140,6 +164,40 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
     'PTS+REB+AST', 'PTS', '1Q PTS', '1H PTS', 'AST', 'PTS+AST', 
     '3PTM', 'REB', '1H REB', 'PTS+REB', 'REB+AST'
   ];
+
+  const getStatDisplayName = (stat: string) => {
+    const displayNames = {
+      'PTS+REB+AST': 'Pts + Reb + Ast',
+      'PTS': 'Points',
+      'REB': 'Rebounds', 
+      'AST': 'Assists',
+      '1Q PTS': '1st Quarter Points',
+      '1H PTS': '1st Half Points',
+      'PTS+AST': 'Points + Assists',
+      '3PTM': '3-Pointers Made',
+      '1H REB': '1st Half Rebounds',
+      'PTS+REB': 'Points + Rebounds',
+      'REB+AST': 'Rebounds + Assists'
+    };
+    return displayNames[stat as keyof typeof displayNames] || stat;
+  };
+
+  const getCurrentLine = (stat: string) => {
+    const lines = {
+      'PTS+REB+AST': '29.5',
+      'PTS': '28.5',
+      'REB': '8.5',
+      'AST': '8.5',
+      '1Q PTS': '7.5',
+      '1H PTS': '15.5',
+      'PTS+AST': '37.5',
+      '3PTM': '3.5',
+      '1H REB': '4.5',
+      'PTS+REB': '37.5',
+      'REB+AST': '17.5'
+    };
+    return lines[stat as keyof typeof lines] || '25.5';
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -186,11 +244,11 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
               <Card className="bg-slate-700/50 border-slate-600 p-4">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-emerald-400">
-                    {player.name} - Pts + Reb + Ast - Over 29.5
+                    {player.name} - {getStatDisplayName(selectedStat)} - Over {getCurrentLine(selectedStat)}
                   </h3>
                   <div className="flex gap-2">
                     <Button className="bg-emerald-600 hover:bg-emerald-700" size="sm">
-                      Over 29.5 -108
+                      Over {getCurrentLine(selectedStat)} -108
                     </Button>
                     <Button variant="outline" size="sm" className="border-slate-600">
                       ALT LINES
@@ -219,7 +277,7 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
               <Card className="bg-slate-700/50 border-slate-600 p-4">
                 <div className="flex items-center gap-3 mb-4">
                   <BarChart3 className="w-5 h-5 text-emerald-400" />
-                  <h3 className="font-semibold text-emerald-400">{player.name} - Pts + Reb + Ast</h3>
+                  <h3 className="font-semibold text-emerald-400">{player.name} - {getStatDisplayName(selectedStat)}</h3>
                 </div>
                 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -256,16 +314,18 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
                         className={`w-8 flex flex-col items-center justify-end ${
                           game.hit ? 'bg-emerald-500' : 'bg-red-500'
                         } rounded-t relative`}
-                        style={{ height: `${(game.total / 45) * 100}%` }}
+                        style={{ height: `${Math.min((game.total / (selectedStat.includes('PTS+REB+AST') ? 45 : selectedStat.includes('PTS') ? 35 : 15)) * 100, 100)}%` }}
                       >
                         <span className="text-xs text-white font-bold absolute -top-6">
                           {game.total}
                         </span>
-                        <div className="text-xs text-white p-1">
-                          <div>{game.pts}</div>
-                          <div>{game.reb}</div>
-                          <div>{game.ast}</div>
-                        </div>
+                        {selectedStat === 'PTS+REB+AST' && game.pts && (
+                          <div className="text-xs text-white p-1">
+                            <div>{game.pts}</div>
+                            <div>{game.reb}</div>
+                            <div>{game.ast}</div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -286,7 +346,7 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
                     </div>
                     <div className="text-right">
                       <p className="text-sm text-slate-400">Line</p>
-                      <p className="text-sm text-red-400">29.5 ▼-1</p>
+                      <p className="text-sm text-red-400">{getCurrentLine(selectedStat)} ▼-1</p>
                     </div>
                   </div>
                   <div className="flex justify-between items-center">
@@ -294,7 +354,7 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
                       <p className="text-sm text-white">10:26 PM Jun 14</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm text-white">30.5</p>
+                      <p className="text-sm text-white">{parseFloat(getCurrentLine(selectedStat)) + 1}</p>
                       <p className="text-xs text-slate-400">Open</p>
                     </div>
                   </div>
@@ -308,7 +368,7 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
               <Card className="bg-slate-700/50 border-slate-600 p-4">
                 <div className="flex items-center gap-3 mb-4">
                   <Target className="w-5 h-5 text-orange-400" />
-                  <h3 className="font-semibold text-orange-400">Key {player.team} Pts + Reb + Ast defense</h3>
+                  <h3 className="font-semibold text-orange-400">Key {player.team} {getStatDisplayName(selectedStat)} defense</h3>
                 </div>
                 
                 <Tabs defaultValue="overall" className="w-full">

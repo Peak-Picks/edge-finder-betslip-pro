@@ -1,3 +1,4 @@
+
 export interface OddsApiProp {
   id: string;
   sport_key: string;
@@ -46,12 +47,18 @@ export interface ProcessedProp {
 export class OddsApiService {
   private apiKey: string;
   private baseUrl = 'https://api.the-odds-api.com/v4';
+  private cachedData: ProcessedProp[] | null = null;
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;
   }
 
-  async getWNBAProps(): Promise<ProcessedProp[]> {
+  async getWNBAProps(forceRefresh: boolean = false): Promise<ProcessedProp[]> {
+    // Return cached data if available and not forcing refresh
+    if (!forceRefresh && this.cachedData) {
+      return this.cachedData;
+    }
+
     try {
       // First, try to get basic game odds since player props might not be available
       const response = await fetch(
@@ -67,20 +74,28 @@ export class OddsApiService {
       if (!response.ok) {
         // If WNBA season is not active, the API might return 404 or other errors
         console.log(`API request failed with status: ${response.status}. WNBA season might not be active.`);
-        return this.generateMockWNBAProps();
+        const mockData = this.generateMockWNBAProps();
+        this.cachedData = mockData;
+        return mockData;
       }
 
       const data: OddsApiProp[] = await response.json();
       
       if (data.length === 0) {
         console.log('No WNBA games found. Season might not be active.');
-        return this.generateMockWNBAProps();
+        const mockData = this.generateMockWNBAProps();
+        this.cachedData = mockData;
+        return mockData;
       }
 
-      return this.processWNBAData(data);
+      const processedData = this.processWNBAData(data);
+      this.cachedData = processedData;
+      return processedData;
     } catch (error) {
       console.error('Error fetching WNBA props:', error);
-      return this.generateMockWNBAProps();
+      const mockData = this.generateMockWNBAProps();
+      this.cachedData = mockData;
+      return mockData;
     }
   }
 
@@ -139,11 +154,6 @@ export class OddsApiService {
     });
 
     return processedProps.slice(0, 15);
-  }
-
-  // Make the mock generation method public
-  public generateMockWNBAProps(): ProcessedProp[] {
-    return this.generateMockWNBAProps();
   }
 
   private generateMockWNBAProps(): ProcessedProp[] {
@@ -243,6 +253,11 @@ export class OddsApiService {
     };
     
     return teamAbbrevs[homeTeam] || teamAbbrevs[awayTeam] || 'WNBA';
+  }
+
+  // Clear cached data method
+  clearCache(): void {
+    this.cachedData = null;
   }
 }
 

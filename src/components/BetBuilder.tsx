@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -203,7 +204,22 @@ export const BetBuilder = () => {
                           <h3 className="font-medium text-white mb-1">
                             {bet.description || bet.subtitle}
                           </h3>
-                          <div className="flex items-center gap-2">
+                          
+                          {/* Display parlay legs if they exist */}
+                          {bet.legs && bet.legs.length > 0 && (
+                            <div className="mt-2 space-y-1">
+                              {bet.legs.map((leg: string, index: number) => (
+                                <div key={index} className="flex items-center gap-2 text-sm">
+                                  <div className="w-4 h-4 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-xs font-bold">
+                                    {index + 1}
+                                  </div>
+                                  <span className="text-slate-300">{leg}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          
+                          <div className="flex items-center gap-2 mt-2">
                             <span className="text-emerald-400 font-medium">{bet.odds}</span>
                             <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">
                               {bet.edge}% Edge
@@ -323,13 +339,29 @@ export const BetBuilder = () => {
                           </div>
                         </div>
                         
-                        <div className="space-y-1 mb-3">
+                        <div className="space-y-2 mb-3">
                           {slip.bets.map(bet => (
-                            <div key={bet.id} className="border-b border-slate-700/70 py-1 flex justify-between items-center">
-                              <span className="text-slate-100 text-sm">
-                                {bet.description || bet.subtitle}
-                              </span>
-                              <span className="text-emerald-400 font-medium">{bet.odds}</span>
+                            <div key={bet.id} className="border-b border-slate-700/70 pb-2">
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="text-slate-100 text-sm font-medium">
+                                  {bet.description || bet.subtitle}
+                                </span>
+                                <span className="text-emerald-400 font-medium">{bet.odds}</span>
+                              </div>
+                              
+                              {/* Display parlay legs in saved slips if they exist */}
+                              {bet.legs && bet.legs.length > 0 && (
+                                <div className="mt-1 space-y-1 pl-2">
+                                  {bet.legs.map((leg: string, index: number) => (
+                                    <div key={index} className="flex items-center gap-2 text-xs">
+                                      <div className="w-3 h-3 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-xs font-bold">
+                                        {index + 1}
+                                      </div>
+                                      <span className="text-slate-400">{leg}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>

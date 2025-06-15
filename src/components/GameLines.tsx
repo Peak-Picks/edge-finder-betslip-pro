@@ -1,10 +1,14 @@
-
+import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Plus, TrendingUp } from 'lucide-react';
+import { GameInsights } from './GameInsights';
 
 export const GameLines = () => {
+  const [selectedGame, setSelectedGame] = useState<any>(null);
+  const [insightsOpen, setInsightsOpen] = useState(false);
+
   const gameLines = [
     {
       id: 1,
@@ -62,6 +66,11 @@ export const GameLines = () => {
     }
   ];
 
+  const handleGameClick = (game: any) => {
+    setSelectedGame(game);
+    setInsightsOpen(true);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -73,16 +82,23 @@ export const GameLines = () => {
 
       <div className="space-y-3">
         {gameLines.map((game) => (
-          <Card key={game.id} className="bg-slate-800/50 border-slate-700/50 p-4">
+          <Card 
+            key={game.id} 
+            className="bg-slate-800/50 border-slate-700/50 p-4 cursor-pointer hover:bg-slate-800/70 transition-colors"
+            onClick={() => handleGameClick(game)}
+          >
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="font-semibold text-white">{game.awayTeam} @ {game.homeTeam}</h3>
                 <p className="text-sm text-slate-400">{game.time}</p>
               </div>
-              <TrendingUp className="w-5 h-5 text-emerald-400" />
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-emerald-400" />
+                <span className="text-xs text-slate-400">Click for insights</span>
+              </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-4" onClick={(e) => e.stopPropagation()}>
               {/* Spread */}
               <div className="bg-slate-700/30 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-2">
@@ -176,6 +192,12 @@ export const GameLines = () => {
           </Card>
         ))}
       </div>
+
+      <GameInsights 
+        game={selectedGame}
+        open={insightsOpen}
+        onOpenChange={setInsightsOpen}
+      />
     </div>
   );
 };

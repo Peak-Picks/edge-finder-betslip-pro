@@ -1,16 +1,18 @@
-
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, TrendingUp } from 'lucide-react';
+import { Plus, TrendingUp, BarChart3 } from 'lucide-react';
 import { PlayerPropInsights } from './PlayerPropInsights';
+import { PlayerDetailPage } from './PlayerDetailPage';
 
 export const Props = () => {
   const [selectedLeague, setSelectedLeague] = useState('nba');
   const [selectedProp, setSelectedProp] = useState(null);
   const [insightsOpen, setInsightsOpen] = useState(false);
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [playerDetailOpen, setPlayerDetailOpen] = useState(false);
 
   const propsByLeague = {
     nba: [
@@ -97,6 +99,15 @@ export const Props = () => {
     setInsightsOpen(true);
   };
 
+  const handlePlayerDetailClick = (playerData: any) => {
+    setSelectedPlayer({
+      name: playerData.player,
+      team: playerData.team,
+      matchup: playerData.matchup
+    });
+    setPlayerDetailOpen(true);
+  };
+
   return (
     <>
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white pb-20">
@@ -135,7 +146,18 @@ export const Props = () => {
                   <Card key={playerIndex} className="bg-slate-800/50 border-slate-700/50 p-4">
                     <div className="flex items-center justify-between mb-4">
                       <div>
-                        <h3 className="text-lg font-semibold text-white">{playerData.player}</h3>
+                        <div className="flex items-center gap-3">
+                          <h3 className="text-lg font-semibold text-white">{playerData.player}</h3>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handlePlayerDetailClick(playerData)}
+                            className="text-slate-400 hover:text-emerald-400 p-1 h-auto"
+                            title="Detailed Analytics"
+                          >
+                            <BarChart3 className="w-4 h-4" />
+                          </Button>
+                        </div>
                         <div className="flex items-center gap-2 mt-1">
                           <Badge variant="secondary" className="bg-slate-700 text-slate-300 text-xs">
                             {playerData.team}
@@ -202,6 +224,12 @@ export const Props = () => {
         prop={selectedProp}
         open={insightsOpen}
         onOpenChange={setInsightsOpen}
+      />
+
+      <PlayerDetailPage
+        player={selectedPlayer}
+        open={playerDetailOpen}
+        onOpenChange={setPlayerDetailOpen}
       />
     </>
   );

@@ -4,14 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { TrendingUp, Percent, Info, Shuffle } from "lucide-react";
 
-const ConceptsAccordion: React.FC = () => (
-  <Card className="md:col-span-2 bg-card">
+const ConceptsAccordion: React.FC<{ cardClass?: string }> = ({ cardClass = "" }) => (
+  <Card className={`md:col-span-2 ${cardClass}`}>
     <CardHeader>
-      <CardTitle className="text-2xl flex items-center">
-        <TrendingUp className="h-6 w-6 mr-2 text-primary" />
+      <CardTitle className="text-2xl flex items-center text-emerald-400">
+        <TrendingUp className="h-6 w-6 mr-2 text-emerald-400" />
         Understanding Betting Concepts
       </CardTitle>
-      <CardDescription>
+      <CardDescription className="text-slate-400">
         Key terms and ideas to get you started in sports betting.
       </CardDescription>
     </CardHeader>

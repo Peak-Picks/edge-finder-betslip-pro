@@ -4,14 +4,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { DollarSign, Search } from "lucide-react";
 
-const BankrollAccordion: React.FC = () => (
-  <Card className="bg-card">
+const BankrollAccordion: React.FC<{ cardClass?: string }> = ({ cardClass = "" }) => (
+  <Card className={`${cardClass}`}>
     <CardHeader>
-      <CardTitle className="text-2xl flex items-center">
-        <DollarSign className="h-6 w-6 mr-2 text-primary" />
+      <CardTitle className="text-2xl flex items-center text-emerald-400">
+        <DollarSign className="h-6 w-6 mr-2 text-emerald-400" />
         Bankroll Management
       </CardTitle>
-      <CardDescription>Crucial strategies for managing your betting funds effectively.</CardDescription>
+      <CardDescription className="text-slate-400">
+        Crucial strategies for managing your betting funds effectively.
+      </CardDescription>
     </CardHeader>
     <CardContent>
       <Accordion type="single" collapsible className="w-full">

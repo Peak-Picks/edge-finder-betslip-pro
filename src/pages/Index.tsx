@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -16,10 +15,36 @@ import { DiscoverPage } from '@/components/DiscoverPage';
 import { ProfilePage } from '@/components/ProfilePage';
 import { BettingGuide } from '@/components/BettingGuide';
 import { TrendingUp, Target, BarChart3, Wallet, Zap } from 'lucide-react';
+import TutorialModal from '@/components/TutorialModal';
+
+const THREE_WEEKS_MS = 21 * 24 * 60 * 60 * 1000;
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('home');
   const [currentView, setCurrentView] = useState('wiz-picks');
+  const [showTutorial, setShowTutorial] = useState(false);
+
+  // Check tutorial rules on first render
+  useState(() => {
+    const seen = localStorage.getItem('wizPicksTutorialSeen');
+    const lastSeen = localStorage.getItem('wizPicksTutorialLastSeen');
+    let shouldShow = false;
+
+    if (!seen || !lastSeen) {
+      shouldShow = true;
+    } else {
+      const now = Date.now();
+      const last = parseInt(lastSeen, 10);
+      if (isNaN(last) || now - last > THREE_WEEKS_MS) {
+        shouldShow = true;
+      }
+    }
+    setShowTutorial(shouldShow);
+  });
+
+  const handleTutorialClose = () => {
+    setShowTutorial(false);
+  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -123,6 +148,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-slate-900">
+      <TutorialModal isOpen={showTutorial} onClose={handleTutorialClose} />
       {renderContent()}
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
     </div>

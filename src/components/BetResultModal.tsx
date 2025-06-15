@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,6 +21,27 @@ export const BetResultModal = ({ slip, slipIndex, open, onOpenChange, onMarkResu
   const [actualPayout, setActualPayout] = useState('');
   const [notes, setNotes] = useState('');
 
+  const calculatePotentialPayout = () => {
+    if (!slip) return '0.00';
+    const amount = parseFloat(slip.amount) || 0;
+    // Simple calculation - in real app this would use actual odds
+    return (amount * 2.5).toFixed(2);
+  };
+
+  // Auto-populate actual payout when "Won" is selected
+  useEffect(() => {
+    if (selectedStatus === 'won' && actualPayout === '') {
+      setActualPayout(calculatePotentialPayout());
+    }
+  }, [selectedStatus]);
+
+  const handleStatusChange = (status: 'won' | 'lost' | 'void') => {
+    setSelectedStatus(status);
+    if (status === 'won' && actualPayout === '') {
+      setActualPayout(calculatePotentialPayout());
+    }
+  };
+
   const handleSubmit = () => {
     if (!selectedStatus) return;
     
@@ -32,13 +53,6 @@ export const BetResultModal = ({ slip, slipIndex, open, onOpenChange, onMarkResu
     setActualPayout('');
     setNotes('');
     onOpenChange(false);
-  };
-
-  const calculatePotentialPayout = () => {
-    if (!slip) return '0.00';
-    const amount = parseFloat(slip.amount) || 0;
-    // Simple calculation - in real app this would use actual odds
-    return (amount * 2.5).toFixed(2);
   };
 
   if (!slip) return null;
@@ -77,7 +91,7 @@ export const BetResultModal = ({ slip, slipIndex, open, onOpenChange, onMarkResu
                   ? 'bg-emerald-600 hover:bg-emerald-700' 
                   : 'border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10'
                 }
-                onClick={() => setSelectedStatus('won')}
+                onClick={() => handleStatusChange('won')}
               >
                 <CheckCircle className="w-4 h-4 mr-1" />
                 Won
@@ -88,7 +102,7 @@ export const BetResultModal = ({ slip, slipIndex, open, onOpenChange, onMarkResu
                   ? 'bg-red-600 hover:bg-red-700' 
                   : 'border-red-500/30 text-red-400 hover:bg-red-500/10'
                 }
-                onClick={() => setSelectedStatus('lost')}
+                onClick={() => handleStatusChange('lost')}
               >
                 <XCircle className="w-4 h-4 mr-1" />
                 Lost
@@ -99,7 +113,7 @@ export const BetResultModal = ({ slip, slipIndex, open, onOpenChange, onMarkResu
                   ? 'bg-yellow-600 hover:bg-yellow-700' 
                   : 'border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10'
                 }
-                onClick={() => setSelectedStatus('void')}
+                onClick={() => handleStatusChange('void')}
               >
                 <Ban className="w-4 h-4 mr-1" />
                 Void

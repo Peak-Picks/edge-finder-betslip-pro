@@ -6,11 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Filter, TrendingUp } from 'lucide-react';
 import { PlayerPropInsights } from './PlayerPropInsights';
+import { useBetSlipContext } from './BetSlipContext';
 
 export const PlayerProps = () => {
   const [selectedSport, setSelectedSport] = useState('nba');
   const [selectedProp, setSelectedProp] = useState(null);
   const [insightsOpen, setInsightsOpen] = useState(false);
+
+  const { addToBetSlip, betSlip } = useBetSlipContext();
 
   const playerProps = {
     nba: [
@@ -66,6 +69,10 @@ export const PlayerProps = () => {
     setInsightsOpen(true);
   };
 
+  // For a unique id, use player + prop + line (stringify line in case of decimals)
+  const getPropId = (prop) =>
+    (prop.player + '-' + prop.prop + '-' + prop.line + '-' + prop.team).replace(/\s+/g, '');
+
   return (
     <>
       <div className="space-y-4">
@@ -95,61 +102,75 @@ export const PlayerProps = () => {
 
           <TabsContent value={selectedSport} className="mt-4">
             <div className="space-y-3">
-              {playerProps[selectedSport as keyof typeof playerProps].map((prop, index) => (
-                <Card 
-                  key={index} 
-                  className="bg-slate-800/50 border-slate-700/50 p-4 cursor-pointer hover:bg-slate-800/70 transition-colors"
-                  onClick={() => handlePropClick(prop)}
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-white">{prop.player}</h3>
-                        <Badge variant="secondary" className="bg-slate-700 text-slate-300 text-xs">
-                          {prop.team}
-                        </Badge>
+              {playerProps[selectedSport as keyof typeof playerProps].map((prop, index) => {
+                const betId = getPropId(prop);
+                const alreadyAdded = betSlip.some(b => b.id === betId);
+                return (
+                  <Card 
+                    key={index} 
+                    className="bg-slate-800/50 border-slate-700/50 p-4 cursor-pointer hover:bg-slate-800/70 transition-colors"
+                    onClick={() => handlePropClick(prop)}
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-semibold text-white">{prop.player}</h3>
+                          <Badge variant="secondary" className="bg-slate-700 text-slate-300 text-xs">
+                            {prop.team}
+                          </Badge>
+                        </div>
+                        <p className="text-emerald-400 font-medium">
+                          {prop.type} {prop.line} {prop.prop}
+                        </p>
                       </div>
-                      <p className="text-emerald-400 font-medium">
-                        {prop.type} {prop.line} {prop.prop}
-                      </p>
+                      <div className="text-right">
+                        <Badge className={getConfidenceColor(prop.confidence)}>
+                          {prop.edge}% Edge
+                        </Badge>
+                        <div className="text-lg font-bold text-white mt-1">{prop.odds}</div>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <Badge className={getConfidenceColor(prop.confidence)}>
-                        {prop.edge}% Edge
-                      </Badge>
-                      <div className="text-lg font-bold text-white mt-1">{prop.odds}</div>
-                    </div>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-                    <div>
-                      <p className="text-slate-400">Our Projection</p>
-                      <p className="text-white font-medium">{prop.projected}</p>
+                    <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+                      <div>
+                        <p className="text-slate-400">Our Projection</p>
+                        <p className="text-white font-medium">{prop.projected}</p>
+                      </div>
+                      <div>
+                        <p className="text-slate-400">Book Line</p>
+                        <p className="text-white font-medium">{prop.line}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-slate-400">Book Line</p>
-                      <p className="text-white font-medium">{prop.line}</p>
-                    </div>
-                  </div>
 
-                  <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                    <Button 
-                      className="flex-1 bg-emerald-600 hover:bg-emerald-700"
-                      size="sm"
-                    >
-                      <Plus className="w-4 h-4 mr-1" />
-                      Add to Betslip
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="border-slate-600 text-slate-300 hover:bg-slate-700"
-                    >
-                      <TrendingUp className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </Card>
-              ))}
+                    <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                      <Button 
+                        className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                        size="sm"
+                        disabled={alreadyAdded}
+                        onClick={() => addToBetSlip({
+                          id: betId,
+                          type: 'Player Prop',
+                          player: prop.player,
+                          team: prop.team,
+                          description: `${prop.type} ${prop.line} ${prop.prop}`,
+                          odds: prop.odds,
+                          edge: prop.edge
+                        })}
+                      >
+                        <Plus className="w-4 h-4 mr-1" />
+                        {alreadyAdded ? "Added" : "Add to Betslip"}
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                      >
+                        <TrendingUp className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </Card>
+                );
+              })}
             </div>
           </TabsContent>
         </Tabs>

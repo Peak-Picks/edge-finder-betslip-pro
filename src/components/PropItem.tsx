@@ -11,9 +11,10 @@ interface PropItemProps {
   };
   onAddToBetslip: () => void;
   onViewInsights: () => void;
+  alreadyAdded?: boolean;
 }
 
-export const PropItem = ({ prop, onAddToBetslip, onViewInsights }: PropItemProps) => {
+export const PropItem = ({ prop, onAddToBetslip, onViewInsights, alreadyAdded }: PropItemProps) => {
   const getEdgeColor = (edge: number) => {
     if (edge >= 10) return 'text-emerald-400';
     if (edge >= 5) return 'text-yellow-400';
@@ -43,9 +44,10 @@ export const PropItem = ({ prop, onAddToBetslip, onViewInsights }: PropItemProps
           className="flex-1 bg-emerald-600 hover:bg-emerald-700 h-7 text-xs"
           size="sm"
           onClick={onAddToBetslip}
+          disabled={alreadyAdded}
         >
           <Plus className="w-3 h-3 mr-1" />
-          Add
+          {alreadyAdded ? "Added" : "Add"}
         </Button>
         <Button 
           variant="outline" 

@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { BarChart3 } from 'lucide-react';
 import { PropItem } from './PropItem';
+import { useBetSlipContext } from './BetSlipContext';
 
 interface PropCardProps {
   playerData: {
@@ -22,6 +23,12 @@ interface PropCardProps {
 }
 
 export const PropCard = ({ playerData, onPlayerDetailClick, onPropClick }: PropCardProps) => {
+  const { addToBetSlip, betSlip } = useBetSlipContext();
+
+  // Helper to make a unique id for each player prop
+  const getPropId = (prop: any) =>
+    (playerData.player + '-' + prop.type + '-' + prop.line + '-' + playerData.team).replace(/\s+/g, '');
+
   return (
     <Card className="bg-slate-800/50 border-slate-700/50 p-3">
       <div className="flex items-center justify-between mb-3">
@@ -50,17 +57,27 @@ export const PropCard = ({ playerData, onPlayerDetailClick, onPropClick }: PropC
       </div>
 
       <div className="grid gap-2">
-        {playerData.props.map((prop, propIndex) => (
-          <PropItem
-            key={propIndex}
-            prop={prop}
-            onAddToBetslip={() => {
-              // Handle add to betslip logic here if needed
-              console.log('Added to betslip:', prop);
-            }}
-            onViewInsights={() => onPropClick(playerData, prop)}
-          />
-        ))}
+        {playerData.props.map((prop, propIndex) => {
+          const betId = getPropId(prop);
+          const alreadyAdded = betSlip.some(b => b.id === betId);
+          return (
+            <PropItem
+              key={propIndex}
+              prop={prop}
+              alreadyAdded={alreadyAdded}
+              onAddToBetslip={() => addToBetSlip({
+                id: betId,
+                type: 'Player Prop',
+                player: playerData.player,
+                team: playerData.team,
+                description: `${prop.type} ${prop.line}`,
+                odds: prop.odds,
+                edge: prop.edge
+              })}
+              onViewInsights={() => onPropClick(playerData, prop)}
+            />
+          );
+        })}
       </div>
     </Card>
   );

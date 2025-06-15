@@ -2,7 +2,7 @@
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Plus, Users, TrendingUp, Fire } from 'lucide-react';
+import { Plus, Users, TrendingUp, Flame } from 'lucide-react';
 
 export const TrendingParlays = () => {
   const trendingParlays = [
@@ -51,7 +51,7 @@ export const TrendingParlays = () => {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Fire className="w-5 h-5 text-orange-400" />
+          <Flame className="w-5 h-5 text-orange-400" />
           <h2 className="text-lg font-semibold">Trending Parlays</h2>
         </div>
         <Badge variant="secondary" className="bg-orange-500/20 text-orange-400">

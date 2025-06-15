@@ -118,9 +118,9 @@ export const BetBuilder = () => {
     setDeleteDialogOpen(false);
   };
 
-  const handleEditSave = (amount: string, notes?: string) => {
+  const handleEditSave = (amount: string, notes?: string, status?: 'pending' | 'won' | 'lost' | 'void', actualPayout?: number) => {
     if (selectedSlip) {
-      editSavedBetSlip(selectedSlip.index, amount, notes);
+      editSavedBetSlip(selectedSlip.index, amount, notes, status, actualPayout);
     }
     setSelectedSlip(null);
   };

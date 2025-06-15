@@ -33,7 +33,7 @@ interface BetSlipContextProps {
   addSavedBetSlip: (bets: Bet[], amount: string) => void;
   markBetSlipResult: (slipIndex: number, status: 'won' | 'lost' | 'void', actualPayout?: number, notes?: string) => void;
   markIndividualBetResult: (slipIndex: number, betId: string, result: 'won' | 'lost' | 'void') => void;
-  editSavedBetSlip: (slipIndex: number, amount: string, notes?: string) => void;
+  editSavedBetSlip: (slipIndex: number, amount: string, notes?: string, status?: 'pending' | 'won' | 'lost' | 'void', actualPayout?: number) => void;
   deleteSavedBetSlip: (slipIndex: number) => void;
 }
 
@@ -106,11 +106,18 @@ export function BetSlipProvider({ children }: { children: ReactNode }) {
     );
   };
 
-  const editSavedBetSlip = (slipIndex: number, amount: string, notes?: string) => {
+  const editSavedBetSlip = (slipIndex: number, amount: string, notes?: string, status?: 'pending' | 'won' | 'lost' | 'void', actualPayout?: number) => {
     setSavedBetSlips(prev => 
       prev.map((slip, index) => 
         index === slipIndex 
-          ? { ...slip, amount, notes }
+          ? { 
+              ...slip, 
+              amount, 
+              notes,
+              status: status || slip.status,
+              actualPayout: actualPayout !== undefined ? actualPayout : slip.actualPayout,
+              settledAt: status && status !== 'pending' ? Date.now() : slip.settledAt
+            }
           : slip
       )
     );

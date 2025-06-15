@@ -2,16 +2,14 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { TrendingUp, Percent, Info, Shuffle } from "lucide-react";
 
 const ConceptsAccordion: React.FC<{ cardClass?: string }> = ({ cardClass = "" }) => (
   <Card className={`md:col-span-2 ${cardClass}`}>
     <CardHeader>
-      <CardTitle className="text-2xl flex items-center text-emerald-400">
-        <TrendingUp className="h-6 w-6 mr-2 text-emerald-400" />
+      <CardTitle className="text-2xl">
         Understanding Betting Concepts
       </CardTitle>
-      <CardDescription className="text-slate-400">
+      <CardDescription className="text-foreground">
         Key terms and ideas to get you started in sports betting.
       </CardDescription>
     </CardHeader>
@@ -21,7 +19,7 @@ const ConceptsAccordion: React.FC<{ cardClass?: string }> = ({ cardClass = "" })
           <AccordionTrigger className="text-lg hover:no-underline">
             What are Odds?
           </AccordionTrigger>
-          <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
+          <AccordionContent className="text-base text-foreground leading-relaxed">
             Odds represent the probability of an event occurring and determine how much you can win.
             There are three main types:
             <ul className="list-disc pl-5 mt-2 space-y-1">
@@ -33,7 +31,7 @@ const ConceptsAccordion: React.FC<{ cardClass?: string }> = ({ cardClass = "" })
         </AccordionItem>
         <AccordionItem value="item-2">
           <AccordionTrigger className="text-lg hover:no-underline">Types of Bets</AccordionTrigger>
-          <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
+          <AccordionContent className="text-base text-foreground leading-relaxed">
             <ul className="list-disc pl-5 space-y-2">
               <li><strong>Moneyline:</strong> A bet on which team or player will win outright.</li>
               <li><strong>Point Spread (Handicap):</strong> Betting on the margin of victory. The favorite "gives" points (-7.5), and the underdog "gets" points (+7.5).</li>
@@ -46,17 +44,17 @@ const ConceptsAccordion: React.FC<{ cardClass?: string }> = ({ cardClass = "" })
         </AccordionItem>
         <AccordionItem value="item-3">
           <AccordionTrigger className="text-lg hover:no-underline">What is "Value" in Betting?</AccordionTrigger>
-          <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
+          <AccordionContent className="text-base text-foreground leading-relaxed">
             Value betting means finding odds that are higher than the true probability of an outcome. If you believe a team has a 60% chance to win, but the odds imply a 50% chance (e.g., +100 American odds), that's a value bet.
             <br /><br />
             Identifying value requires research, understanding statistics, and sometimes going against popular opinion. It's about finding discrepancies between the sportsbook's implied probability and your own assessed probability. Wiz Picks aims to help identify potential value based on AI analysis.
           </AccordionContent>
         </AccordionItem>
         <AccordionItem value="item-4">
-          <AccordionTrigger className="text-lg hover:no-underline flex items-center">
-            <Percent className="h-5 w-5 mr-2 text-primary/80" /> Understanding Implied Probability
+          <AccordionTrigger className="text-lg hover:no-underline">
+            Understanding Implied Probability
           </AccordionTrigger>
-          <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
+          <AccordionContent className="text-base text-foreground leading-relaxed">
             Implied probability is the likelihood of an outcome as suggested by the betting odds. You can calculate it from any odds format:
             <ul className="list-disc pl-5 mt-2 space-y-1">
               <li><strong>American Odds (Negative):</strong> Implied Probability = Odds / (Odds + 100) * 100. For -110, it's 110 / (110 + 100) * 100 = 52.38%.</li>
@@ -68,20 +66,20 @@ const ConceptsAccordion: React.FC<{ cardClass?: string }> = ({ cardClass = "" })
           </AccordionContent>
         </AccordionItem>
         <AccordionItem value="item-5">
-          <AccordionTrigger className="text-lg hover:no-underline flex items-center">
-            <Info className="h-5 w-5 mr-2 text-primary/80" /> The Vig (Juice / Margin)
+          <AccordionTrigger className="text-lg hover:no-underline">
+            The Vig (Juice / Margin)
           </AccordionTrigger>
-          <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
+          <AccordionContent className="text-base text-foreground leading-relaxed">
             The "vig" or "juice" is the commission a sportsbook charges for taking a bet. It's built into the odds. For example, on a point spread bet where both sides are considered equally likely, you'll often see odds of -110 for each side instead of +100. This means you have to risk $110 to win $100. That extra $10 (relative to a "fair" +100 bet) is part of the sportsbook's margin.
             <br /><br />
             Understanding the vig is crucial because it means you need to win more than 50% of your bets (for even money propositions) just to break even. For -110 odds, your break-even point is 52.38%.
           </AccordionContent>
         </AccordionItem>
         <AccordionItem value="item-6">
-          <AccordionTrigger className="text-lg hover:no-underline flex items-center">
-            <Shuffle className="h-5 w-5 mr-2 text-primary/80" /> Line Movement
+          <AccordionTrigger className="text-lg hover:no-underline">
+            Line Movement
           </AccordionTrigger>
-          <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
+          <AccordionContent className="text-base text-foreground leading-relaxed">
             Betting lines and odds are not static; they can change leading up to an event. This is called "line movement." Reasons for line movement include:
             <ul className="list-disc pl-5 mt-2 space-y-1">
               <li><strong>Betting Volume:</strong> If a lot of money is bet on one side, sportsbooks may adjust the line to encourage betting on the other side to balance their risk.</li>
@@ -97,3 +95,4 @@ const ConceptsAccordion: React.FC<{ cardClass?: string }> = ({ cardClass = "" })
 );
 
 export default ConceptsAccordion;
+

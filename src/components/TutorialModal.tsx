@@ -1,9 +1,9 @@
-
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { TrendingUp, BarChart2, Wand2, BookOpen, CheckCircle } from 'lucide-react';
+import WizPicksLogo from './WizPicksLogo';
 
 interface TutorialModalProps {
   isOpen: boolean;
@@ -21,11 +21,13 @@ const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose }) => {
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleDismiss()}>
       <DialogContent className="sm:max-w-[600px] bg-card text-card-foreground">
         <DialogHeader>
-          <DialogTitle className="text-2xl flex items-center">
-            <img src="https://storage.googleapis.com/cem-hackathon-images/direct/May_24_2024_19_59_00_9u4gq.png" alt="Wiz Picks Logo" className="h-8 w-8 mr-2" />
+          <div className="flex items-center justify-center mb-2">
+            <WizPicksLogo className="h-10 w-10 mr-2 drop-shadow-lg" />
+          </div>
+          <DialogTitle className="text-2xl flex items-center justify-center">
             Welcome to Wiz Picks!
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-center mt-1">
             Here's a quick guide to help you get started and make the most of our AI-powered betting tools.
           </DialogDescription>
         </DialogHeader>

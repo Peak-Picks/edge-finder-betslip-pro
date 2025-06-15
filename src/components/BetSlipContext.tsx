@@ -12,6 +12,17 @@ export interface Bet {
   [x: string]: any;
 }
 
+export interface SavedBetSlip {
+  bets: Bet[];
+  amount: string;
+  timestamp: number;
+  status: 'pending' | 'won' | 'lost' | 'void' | 'partial';
+  settledAt?: number;
+  actualPayout?: number;
+  notes?: string;
+  betResults: { betId: string; result: 'won' | 'lost' | 'void' }[];
+}
+
 interface BetSlipContextProps {
   betSlip: Bet[];
   setBetSlip: React.Dispatch<React.SetStateAction<Bet[]>>;
@@ -19,8 +30,10 @@ interface BetSlipContextProps {
   removeFromBetSlip: (betId: string) => void;
   clearBetSlip: () => void;
 
-  savedBetSlips: { bets: Bet[]; amount: string; timestamp: number }[];
+  savedBetSlips: SavedBetSlip[];
   addSavedBetSlip: (bets: Bet[], amount: string) => void;
+  markBetSlipResult: (slipIndex: number, status: 'won' | 'lost' | 'void', actualPayout?: number, notes?: string) => void;
+  markIndividualBetResult: (slipIndex: number, betId: string, result: 'won' | 'lost' | 'void') => void;
 }
 
 const BetSlipContext = createContext<BetSlipContextProps | undefined>(undefined);
@@ -33,7 +46,7 @@ export function useBetSlipContext() {
 
 export function BetSlipProvider({ children }: { children: ReactNode }) {
   const [betSlip, setBetSlip] = useState<Bet[]>([]);
-  const [savedBetSlips, setSavedBetSlips] = useState<{ bets: Bet[]; amount: string; timestamp: number }[]>([]);
+  const [savedBetSlips, setSavedBetSlips] = useState<SavedBetSlip[]>([]);
 
   const addToBetSlip = (bet: Bet) => {
     setBetSlip(prev =>
@@ -50,8 +63,46 @@ export function BetSlipProvider({ children }: { children: ReactNode }) {
   const addSavedBetSlip = (bets: Bet[], amount: string) => {
     setSavedBetSlips(prev => [
       ...prev,
-      { bets: bets, amount, timestamp: Date.now() }
+      { 
+        bets: bets, 
+        amount, 
+        timestamp: Date.now(),
+        status: 'pending',
+        betResults: []
+      }
     ]);
+  };
+
+  const markBetSlipResult = (slipIndex: number, status: 'won' | 'lost' | 'void', actualPayout?: number, notes?: string) => {
+    setSavedBetSlips(prev => 
+      prev.map((slip, index) => 
+        index === slipIndex 
+          ? { 
+              ...slip, 
+              status, 
+              settledAt: Date.now(), 
+              actualPayout, 
+              notes 
+            }
+          : slip
+      )
+    );
+  };
+
+  const markIndividualBetResult = (slipIndex: number, betId: string, result: 'won' | 'lost' | 'void') => {
+    setSavedBetSlips(prev => 
+      prev.map((slip, index) => 
+        index === slipIndex 
+          ? { 
+              ...slip, 
+              betResults: [
+                ...slip.betResults.filter(br => br.betId !== betId),
+                { betId, result }
+              ]
+            }
+          : slip
+      )
+    );
   };
 
   return (
@@ -63,6 +114,8 @@ export function BetSlipProvider({ children }: { children: ReactNode }) {
       clearBetSlip,
       savedBetSlips,
       addSavedBetSlip,
+      markBetSlipResult,
+      markIndividualBetResult,
     }}>
       {children}
     </BetSlipContext.Provider>

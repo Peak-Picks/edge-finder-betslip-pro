@@ -1,11 +1,11 @@
-
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Trash2, Calculator, TrendingUp, DollarSign } from 'lucide-react';
+import { Plus, Trash2, Calculator, TrendingUp, DollarSign, CheckCircle, XCircle, Ban, Target, Clock } from 'lucide-react';
 import { useBetSlipContext } from './BetSlipContext';
+import { BetResultModal } from './BetResultModal';
 
 export const BetBuilder = () => {
   const {
@@ -15,10 +15,13 @@ export const BetBuilder = () => {
     clearBetSlip,
     savedBetSlips,
     addSavedBetSlip,
+    markBetSlipResult,
   } = useBetSlipContext();
 
   const [betAmount, setBetAmount] = useState("25");
   const [tab, setTab] = useState("betslip");
+  const [resultModalOpen, setResultModalOpen] = useState(false);
+  const [selectedSlip, setSelectedSlip] = useState<{ slip: any; index: number } | null>(null);
 
   // Simulate available bets for possible future use or quick add
   const availableBets = [
@@ -85,6 +88,45 @@ export const BetBuilder = () => {
     setBetAmount("25");
     setTab("saved");
   };
+
+  const handleMarkResult = (slip: any, index: number) => {
+    setSelectedSlip({ slip, index });
+    setResultModalOpen(true);
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'won':
+        return <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30"><CheckCircle className="w-3 h-3 mr-1" />Won</Badge>;
+      case 'lost':
+        return <Badge className="bg-red-500/20 text-red-400 border-red-500/30"><XCircle className="w-3 h-3 mr-1" />Lost</Badge>;
+      case 'void':
+        return <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30"><Ban className="w-3 h-3 mr-1" />Void</Badge>;
+      case 'partial':
+        return <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30"><Target className="w-3 h-3 mr-1" />Partial</Badge>;
+      default:
+        return <Badge className="bg-slate-500/20 text-slate-400 border-slate-500/30"><Clock className="w-3 h-3 mr-1" />Pending</Badge>;
+    }
+  };
+
+  const calculateStats = () => {
+    const settled = savedBetSlips.filter(slip => slip.status !== 'pending');
+    const won = settled.filter(slip => slip.status === 'won');
+    const totalWagered = savedBetSlips.reduce((sum, slip) => sum + parseFloat(slip.amount), 0);
+    const totalReturns = settled.reduce((sum, slip) => sum + (slip.actualPayout || 0), 0);
+    const profit = totalReturns - settled.reduce((sum, slip) => sum + parseFloat(slip.amount), 0);
+    
+    return {
+      totalBets: savedBetSlips.length,
+      settledBets: settled.length,
+      winRate: settled.length > 0 ? ((won.length / settled.length) * 100).toFixed(1) : '0.0',
+      totalWagered: totalWagered.toFixed(2),
+      profit: profit.toFixed(2),
+      profitColor: profit >= 0 ? 'text-emerald-400' : 'text-red-400'
+    };
+  };
+
+  const stats = calculateStats();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white pb-20">
@@ -187,6 +229,31 @@ export const BetBuilder = () => {
 
           <TabsContent value="saved" className="mt-4">
             <div className="space-y-4">
+              {/* Stats Summary */}
+              {savedBetSlips.length > 0 && (
+                <Card className="bg-slate-800/50 border-slate-700/50 p-4">
+                  <h3 className="font-semibold mb-3 text-white">Betting Summary</h3>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-slate-400">Total Bets:</p>
+                      <p className="text-white font-medium">{stats.totalBets}</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-400">Win Rate:</p>
+                      <p className="text-white font-medium">{stats.winRate}%</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-400">Total Wagered:</p>
+                      <p className="text-white font-medium">${stats.totalWagered}</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-400">Profit/Loss:</p>
+                      <p className={`font-medium ${stats.profitColor}`}>${stats.profit}</p>
+                    </div>
+                  </div>
+                </Card>
+              )}
+
               {savedBetSlips.length === 0 ? (
                 <Card className="bg-slate-800/50 border-slate-700/50 p-8 text-center">
                   <p className="text-slate-400">No saved bet slips</p>
@@ -195,39 +262,77 @@ export const BetBuilder = () => {
                 savedBetSlips
                   .slice()
                   .reverse()
-                  .map((slip, i) => (
-                  <Card key={slip.timestamp} className="bg-slate-800/50 border-slate-700/50 p-4">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-slate-400 text-xs">#{savedBetSlips.length - i} • {new Date(slip.timestamp).toLocaleString()}</span>
-                      <Badge className="bg-slate-700/80 text-slate-300 border-slate-800 text-xs">{slip.bets.length} bet{slip.bets.length === 1 ? '' : 's'}</Badge>
-                    </div>
-                    <div className="space-y-1 mb-2">
-                      {slip.bets.map(bet => (
-                        <div key={bet.id} className="border-b border-slate-700/70 py-1 flex justify-between items-center">
-                          <span className="text-slate-100 text-sm">
-                            {bet.description || bet.subtitle}
-                          </span>
-                          <span className="text-emerald-400 font-medium">{bet.odds}</span>
+                  .map((slip, i) => {
+                    const originalIndex = savedBetSlips.length - 1 - i;
+                    return (
+                      <Card key={slip.timestamp} className="bg-slate-800/50 border-slate-700/50 p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-slate-400 text-xs">#{savedBetSlips.length - i} • {new Date(slip.timestamp).toLocaleString()}</span>
+                            {getStatusBadge(slip.status)}
+                          </div>
+                          <Badge className="bg-slate-700/80 text-slate-300 border-slate-800 text-xs">{slip.bets.length} bet{slip.bets.length === 1 ? '' : 's'}</Badge>
                         </div>
-                      ))}
-                    </div>
-                    <div className="flex justify-between pt-2 border-t border-slate-700 mt-2">
-                      <div>
-                        <span className="text-slate-400 text-xs">Wager:</span>{" "}
-                        <span className="text-white font-semibold text-sm">${slip.amount}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-400 text-xs">Potential:</span>{" "}
-                        <span className="text-emerald-400 font-semibold text-sm">${(parseFloat(slip.amount) * 2.5).toFixed(2)}</span>
-                      </div>
-                    </div>
-                  </Card>
-                ))
+                        
+                        <div className="space-y-1 mb-3">
+                          {slip.bets.map(bet => (
+                            <div key={bet.id} className="border-b border-slate-700/70 py-1 flex justify-between items-center">
+                              <span className="text-slate-100 text-sm">
+                                {bet.description || bet.subtitle}
+                              </span>
+                              <span className="text-emerald-400 font-medium">{bet.odds}</span>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="flex justify-between items-center pt-2 border-t border-slate-700 mb-3">
+                          <div>
+                            <span className="text-slate-400 text-xs">Wager:</span>{" "}
+                            <span className="text-white font-semibold text-sm">${slip.amount}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 text-xs">
+                              {slip.status === 'won' ? 'Payout:' : 'Potential:'}
+                            </span>{" "}
+                            <span className="text-emerald-400 font-semibold text-sm">
+                              ${slip.actualPayout?.toFixed(2) || (parseFloat(slip.amount) * 2.5).toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+
+                        {slip.notes && (
+                          <div className="mb-3 p-2 bg-slate-700/30 rounded text-sm">
+                            <span className="text-slate-400">Notes: </span>
+                            <span className="text-slate-200">{slip.notes}</span>
+                          </div>
+                        )}
+
+                        {slip.status === 'pending' && (
+                          <Button
+                            size="sm"
+                            className="w-full bg-blue-600 hover:bg-blue-700"
+                            onClick={() => handleMarkResult(slip, originalIndex)}
+                          >
+                            <Target className="w-4 h-4 mr-1" />
+                            Mark Result
+                          </Button>
+                        )}
+                      </Card>
+                    );
+                  })
               )}
             </div>
           </TabsContent>
         </Tabs>
       </div>
+
+      <BetResultModal
+        slip={selectedSlip?.slip}
+        slipIndex={selectedSlip?.index || 0}
+        open={resultModalOpen}
+        onOpenChange={setResultModalOpen}
+        onMarkResult={markBetSlipResult}
+      />
     </div>
   );
 };

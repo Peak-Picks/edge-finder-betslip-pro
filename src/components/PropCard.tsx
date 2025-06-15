@@ -1,4 +1,3 @@
-
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -59,6 +58,7 @@ export const PropCard = ({ playerData, onPlayerDetailClick, onPropClick }: PropC
       <div className="grid gap-2">
         {playerData.props.map((prop, propIndex) => {
           const betId = getPropId(prop);
+          // betId is string, compare with b.id (string)
           const alreadyAdded = betSlip.some(b => b.id === betId);
           return (
             <PropItem
@@ -72,7 +72,9 @@ export const PropCard = ({ playerData, onPlayerDetailClick, onPropClick }: PropC
                 team: playerData.team,
                 description: `${prop.type} ${prop.line}`,
                 odds: prop.odds,
-                edge: prop.edge
+                edge: prop.edge,
+                // Do not pass prop.line as string
+                line: prop.line,
               })}
               onViewInsights={() => onPropClick(playerData, prop)}
             />

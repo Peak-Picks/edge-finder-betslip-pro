@@ -68,7 +68,7 @@ export const PlayerProps = () => {
     setInsightsOpen(true);
   };
 
-  // Fix for unique ID generation, ensure `prop.line` is always a string for id, but kept as number for code
+  // Unique ID: always a string for betslip
   const getPropId = (prop: any) =>
     (prop.player + '-' + prop.prop + '-' + String(prop.line) + '-' + prop.team).replace(/\s+/g, '');
 
@@ -103,7 +103,7 @@ export const PlayerProps = () => {
             <div className="space-y-3">
               {playerProps[selectedSport as keyof typeof playerProps].map((prop, index) => {
                 const betId = getPropId(prop);
-                // Ensure prop.line is number and betSlip stores bet ids as strings
+                // betId is always string, comparison against string
                 const alreadyAdded = betSlip.some(b => b.id === betId);
                 return (
                   <Card 
@@ -154,7 +154,9 @@ export const PlayerProps = () => {
                           team: prop.team,
                           description: `${prop.type} ${prop.line} ${prop.prop}`,
                           odds: prop.odds,
-                          edge: prop.edge
+                          edge: prop.edge,
+                          // Only add line if the betslip expects it, and as number!
+                          line: prop.line,
                         })}
                       >
                         <Plus className="w-4 h-4 mr-1" />

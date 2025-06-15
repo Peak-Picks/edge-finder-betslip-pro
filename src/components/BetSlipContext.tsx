@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, ReactNode } from "react";
 
 export interface Bet {
@@ -34,6 +33,8 @@ interface BetSlipContextProps {
   addSavedBetSlip: (bets: Bet[], amount: string) => void;
   markBetSlipResult: (slipIndex: number, status: 'won' | 'lost' | 'void', actualPayout?: number, notes?: string) => void;
   markIndividualBetResult: (slipIndex: number, betId: string, result: 'won' | 'lost' | 'void') => void;
+  editSavedBetSlip: (slipIndex: number, amount: string, notes?: string) => void;
+  deleteSavedBetSlip: (slipIndex: number) => void;
 }
 
 const BetSlipContext = createContext<BetSlipContextProps | undefined>(undefined);
@@ -105,6 +106,20 @@ export function BetSlipProvider({ children }: { children: ReactNode }) {
     );
   };
 
+  const editSavedBetSlip = (slipIndex: number, amount: string, notes?: string) => {
+    setSavedBetSlips(prev => 
+      prev.map((slip, index) => 
+        index === slipIndex 
+          ? { ...slip, amount, notes }
+          : slip
+      )
+    );
+  };
+
+  const deleteSavedBetSlip = (slipIndex: number) => {
+    setSavedBetSlips(prev => prev.filter((_, index) => index !== slipIndex));
+  };
+
   return (
     <BetSlipContext.Provider value={{
       betSlip,
@@ -116,6 +131,8 @@ export function BetSlipProvider({ children }: { children: ReactNode }) {
       addSavedBetSlip,
       markBetSlipResult,
       markIndividualBetResult,
+      editSavedBetSlip,
+      deleteSavedBetSlip,
     }}>
       {children}
     </BetSlipContext.Provider>

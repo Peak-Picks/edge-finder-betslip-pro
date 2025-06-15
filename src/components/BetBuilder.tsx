@@ -3,9 +3,11 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Trash2, Calculator, TrendingUp, DollarSign, CheckCircle, XCircle, Ban, Target, Clock } from 'lucide-react';
+import { Plus, Trash2, Calculator, TrendingUp, DollarSign, CheckCircle, XCircle, Ban, Target, Clock, Edit, Trash } from 'lucide-react';
 import { useBetSlipContext } from './BetSlipContext';
 import { BetResultModal } from './BetResultModal';
+import { EditBetSlipModal } from './EditBetSlipModal';
+import { DeleteBetSlipDialog } from './DeleteBetSlipDialog';
 
 export const BetBuilder = () => {
   const {
@@ -16,11 +18,15 @@ export const BetBuilder = () => {
     savedBetSlips,
     addSavedBetSlip,
     markBetSlipResult,
+    editSavedBetSlip,
+    deleteSavedBetSlip,
   } = useBetSlipContext();
 
   const [betAmount, setBetAmount] = useState("25");
   const [tab, setTab] = useState("betslip");
   const [resultModalOpen, setResultModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedSlip, setSelectedSlip] = useState<{ slip: any; index: number } | null>(null);
 
   // Simulate available bets for possible future use or quick add
@@ -92,6 +98,31 @@ export const BetBuilder = () => {
   const handleMarkResult = (slip: any, index: number) => {
     setSelectedSlip({ slip, index });
     setResultModalOpen(true);
+  };
+
+  const handleEditSlip = (slip: any, index: number) => {
+    setSelectedSlip({ slip, index });
+    setEditModalOpen(true);
+  };
+
+  const handleDeleteSlip = (slip: any, index: number) => {
+    setSelectedSlip({ slip, index });
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (selectedSlip) {
+      deleteSavedBetSlip(selectedSlip.index);
+    }
+    setSelectedSlip(null);
+    setDeleteDialogOpen(false);
+  };
+
+  const handleEditSave = (amount: string, notes?: string) => {
+    if (selectedSlip) {
+      editSavedBetSlip(selectedSlip.index, amount, notes);
+    }
+    setSelectedSlip(null);
   };
 
   const getStatusBadge = (status: string) => {
@@ -271,7 +302,25 @@ export const BetBuilder = () => {
                             <span className="text-slate-400 text-xs">#{savedBetSlips.length - i} • {new Date(slip.timestamp).toLocaleString()}</span>
                             {getStatusBadge(slip.status)}
                           </div>
-                          <Badge className="bg-slate-700/80 text-slate-300 border-slate-800 text-xs">{slip.bets.length} bet{slip.bets.length === 1 ? '' : 's'}</Badge>
+                          <div className="flex items-center gap-2">
+                            <Badge className="bg-slate-700/80 text-slate-300 border-slate-800 text-xs">{slip.bets.length} bet{slip.bets.length === 1 ? '' : 's'}</Badge>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEditSlip(slip, originalIndex)}
+                              className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10 p-1 h-8 w-8"
+                            >
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDeleteSlip(slip, originalIndex)}
+                              className="border-red-500/30 text-red-400 hover:bg-red-500/10 p-1 h-8 w-8"
+                            >
+                              <Trash className="w-3 h-3" />
+                            </Button>
+                          </div>
                         </div>
                         
                         <div className="space-y-1 mb-3">
@@ -332,6 +381,20 @@ export const BetBuilder = () => {
         open={resultModalOpen}
         onOpenChange={setResultModalOpen}
         onMarkResult={markBetSlipResult}
+      />
+
+      <EditBetSlipModal
+        slip={selectedSlip?.slip}
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+        onSave={handleEditSave}
+      />
+
+      <DeleteBetSlipDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={confirmDelete}
+        slipNumber={(selectedSlip?.index || 0) + 1}
       />
     </div>
   );

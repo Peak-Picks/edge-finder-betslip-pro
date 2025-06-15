@@ -16,6 +16,29 @@ interface PlayerDetailPageProps {
   onOpenChange: (open: boolean) => void;
 }
 
+interface GameData {
+  opponent: string;
+  total: number;
+  hit: boolean;
+  pts?: number;
+  reb?: number;
+  ast?: number;
+}
+
+interface StatData {
+  overview: {
+    average: number;
+    median: number;
+    last10: string;
+    l5: string;
+    l20: string;
+    h2h: string;
+    season2025: string;
+    season2024: string;
+  };
+  recentGames: GameData[];
+}
+
 export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPageProps) => {
   const [selectedStat, setSelectedStat] = useState('PTS+REB+AST');
   const [showAltLines, setShowAltLines] = useState(false);
@@ -23,7 +46,7 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
   if (!player) return null;
 
   // Generate dynamic data based on the player and selected stat
-  const getPlayerStats = (playerName: string, stat: string) => {
+  const getPlayerStats = (playerName: string, stat: string): StatData => {
     const baseStats = {
       'Luka Dončić': {
         'PTS+REB+AST': {
@@ -366,7 +389,7 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
                         <span className="text-xs text-white font-bold absolute -top-6">
                           {game.total}
                         </span>
-                        {selectedStat === 'PTS+REB+AST' && 'pts' in game && (
+                        {selectedStat === 'PTS+REB+AST' && game.pts !== undefined && (
                           <div className="text-xs text-white p-1">
                             <div>{game.pts}</div>
                             <div>{game.reb}</div>

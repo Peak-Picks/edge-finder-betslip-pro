@@ -22,39 +22,118 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
   
   if (!player) return null;
 
-  const playerStats = {
-    overview: {
-      average: 30.9,
-      median: 31,
-      last10: '70%',
-      l5: '80%',
-      l20: '55%',
-      h2h: '100%',
-      season2025: '73%',
-      season2024: '47%'
-    },
-    recentGames: [
-      { opponent: 'vs LAL', total: 33, pts: 25, reb: 5, ast: 3, hit: true },
-      { opponent: 'vs BOS', total: 26, pts: 17, reb: 9, ast: 0, hit: false },
-      { opponent: 'vs MIA', total: 23, pts: 15, reb: 8, ast: 0, hit: false },
-      { opponent: 'vs PHX', total: 31, pts: 23, reb: 8, ast: 0, hit: true },
-      { opponent: 'vs DEN', total: 41, pts: 35, reb: 6, ast: 0, hit: true },
-      { opponent: 'vs GSW', total: 35, pts: 28, reb: 5, ast: 2, hit: true },
-      { opponent: 'vs SAC', total: 31, pts: 24, reb: 7, ast: 0, hit: true },
-      { opponent: 'vs POR', total: 33, pts: 26, reb: 6, ast: 1, hit: true },
-      { opponent: 'vs UTA', total: 25, pts: 18, reb: 6, ast: 1, hit: false },
-      { opponent: 'vs OKC', total: 31, pts: 24, reb: 9, ast: -2, hit: true }
-    ],
-    matchupAnalysis: {
-      overall: { rank: 9, value: 83.9 },
-      vsGuards: { rank: 12, value: 36.3 },
-      vsForwards: { rank: 12, value: 22.4 },
-      vsCenters: { rank: 8, value: 45.2 }
-    },
-    teamRankings: {
-      offense: { avg: 52.3, rank: 8, stat: 'Effective Field Goal', rankStat: 12, avgStat: 52.0 },
-      defense: { avg: 48.1, rank: 15, stat: 'Opponent Points', rankStat: 20, avgStat: 110.5 }
-    }
+  // Generate dynamic data based on the player
+  const getPlayerStats = (playerName: string) => {
+    // Create different data sets for different players
+    const playerDataMap: Record<string, any> = {
+      'Luka Dončić': {
+        overview: {
+          average: 30.9,
+          median: 31,
+          last10: '70%',
+          l5: '80%',
+          l20: '55%',
+          h2h: '100%',
+          season2025: '73%',
+          season2024: '47%'
+        },
+        recentGames: [
+          { opponent: 'vs LAL', total: 33, pts: 25, reb: 5, ast: 3, hit: true },
+          { opponent: 'vs BOS', total: 26, pts: 17, reb: 9, ast: 0, hit: false },
+          { opponent: 'vs MIA', total: 23, pts: 15, reb: 8, ast: 0, hit: false },
+          { opponent: 'vs PHX', total: 31, pts: 23, reb: 8, ast: 0, hit: true },
+          { opponent: 'vs DEN', total: 41, pts: 35, reb: 6, ast: 0, hit: true },
+          { opponent: 'vs GSW', total: 35, pts: 28, reb: 5, ast: 2, hit: true },
+          { opponent: 'vs SAC', total: 31, pts: 24, reb: 7, ast: 0, hit: true },
+          { opponent: 'vs POR', total: 33, pts: 26, reb: 6, ast: 1, hit: true },
+          { opponent: 'vs UTA', total: 25, pts: 18, reb: 6, ast: 1, hit: false },
+          { opponent: 'vs OKC', total: 31, pts: 24, reb: 9, ast: -2, hit: true }
+        ]
+      },
+      'Jayson Tatum': {
+        overview: {
+          average: 27.4,
+          median: 28,
+          last10: '60%',
+          l5: '60%',
+          l20: '65%',
+          h2h: '75%',
+          season2025: '68%',
+          season2024: '52%'
+        },
+        recentGames: [
+          { opponent: 'vs MIA', total: 29, pts: 22, reb: 4, ast: 3, hit: true },
+          { opponent: 'vs PHI', total: 24, pts: 18, reb: 6, ast: 0, hit: false },
+          { opponent: 'vs NYK', total: 31, pts: 24, reb: 5, ast: 2, hit: true },
+          { opponent: 'vs BRK', total: 28, pts: 21, reb: 7, ast: 0, hit: true },
+          { opponent: 'vs ATL', total: 26, pts: 19, reb: 4, ast: 3, hit: false },
+          { opponent: 'vs CHA', total: 32, pts: 26, reb: 3, ast: 3, hit: true },
+          { opponent: 'vs WAS', total: 30, pts: 23, reb: 5, ast: 2, hit: true },
+          { opponent: 'vs ORL', total: 25, pts: 17, reb: 6, ast: 2, hit: false },
+          { opponent: 'vs DET', total: 33, pts: 27, reb: 4, ast: 2, hit: true },
+          { opponent: 'vs TOR', total: 27, pts: 20, reb: 5, ast: 2, hit: true }
+        ]
+      },
+      'Giannis Antetokounmpo': {
+        overview: {
+          average: 32.8,
+          median: 33,
+          last10: '80%',
+          l5: '100%',
+          l20: '70%',
+          h2h: '67%',
+          season2025: '76%',
+          season2024: '58%'
+        },
+        recentGames: [
+          { opponent: 'vs PHI', total: 36, pts: 28, reb: 8, ast: 0, hit: true },
+          { opponent: 'vs CHI', total: 34, pts: 26, reb: 7, ast: 1, hit: true },
+          { opponent: 'vs IND', total: 31, pts: 23, reb: 6, ast: 2, hit: true },
+          { opponent: 'vs CLE', total: 38, pts: 30, reb: 6, ast: 2, hit: true },
+          { opponent: 'vs TOR', total: 35, pts: 27, reb: 8, ast: 0, hit: true },
+          { opponent: 'vs DET', total: 29, pts: 21, reb: 6, ast: 2, hit: false },
+          { opponent: 'vs ATL', total: 37, pts: 31, reb: 5, ast: 1, hit: true },
+          { opponent: 'vs BRK', total: 33, pts: 25, reb: 7, ast: 1, hit: true },
+          { opponent: 'vs NYK', total: 32, pts: 24, reb: 6, ast: 2, hit: true },
+          { opponent: 'vs MIA', total: 30, pts: 22, reb: 6, ast: 2, hit: false }
+        ]
+      }
+    };
+
+    // Return player-specific data or default data
+    return playerDataMap[playerName] || {
+      overview: {
+        average: 25.5,
+        median: 26,
+        last10: '50%',
+        l5: '40%',
+        l20: '60%',
+        h2h: '50%',
+        season2025: '55%',
+        season2024: '45%'
+      },
+      recentGames: [
+        { opponent: 'vs OPP', total: 25, pts: 20, reb: 3, ast: 2, hit: true },
+        { opponent: 'vs OPP', total: 23, pts: 18, reb: 3, ast: 2, hit: false },
+        { opponent: 'vs OPP', total: 27, pts: 22, reb: 3, ast: 2, hit: true },
+        { opponent: 'vs OPP', total: 22, pts: 17, reb: 3, ast: 2, hit: false },
+        { opponent: 'vs OPP', total: 26, pts: 21, reb: 3, ast: 2, hit: true }
+      ]
+    };
+  };
+
+  const playerStats = getPlayerStats(player.name);
+  
+  const matchupAnalysis = {
+    overall: { rank: 9, value: 83.9 },
+    vsGuards: { rank: 12, value: 36.3 },
+    vsForwards: { rank: 12, value: 22.4 },
+    vsCenters: { rank: 8, value: 45.2 }
+  };
+
+  const teamRankings = {
+    offense: { avg: 52.3, rank: 8, stat: 'Effective Field Goal', rankStat: 12, avgStat: 52.0 },
+    defense: { avg: 48.1, rank: 15, stat: 'Opponent Points', rankStat: 20, avgStat: 110.5 }
   };
 
   const statTabs = [
@@ -229,7 +308,7 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
               <Card className="bg-slate-700/50 border-slate-600 p-4">
                 <div className="flex items-center gap-3 mb-4">
                   <Target className="w-5 h-5 text-orange-400" />
-                  <h3 className="font-semibold text-orange-400">Key LVA Pts + Reb + Ast defense</h3>
+                  <h3 className="font-semibold text-orange-400">Key {player.team} Pts + Reb + Ast defense</h3>
                 </div>
                 
                 <Tabs defaultValue="overall" className="w-full">
@@ -245,22 +324,22 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
                       <div className="flex justify-between">
                         <span className="text-slate-400">Points</span>
                         <div className="flex items-center gap-2">
-                          <span className="text-emerald-400 font-bold">{playerStats.matchupAnalysis.overall.rank}</span>
-                          <span className="text-white">{playerStats.matchupAnalysis.overall.value}</span>
+                          <span className="text-emerald-400 font-bold">{matchupAnalysis.overall.rank}</span>
+                          <span className="text-white">{matchupAnalysis.overall.value}</span>
                         </div>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-400">Rebounds</span>
                         <div className="flex items-center gap-2">
-                          <span className="text-emerald-400 font-bold">{playerStats.matchupAnalysis.vsGuards.rank}</span>
-                          <span className="text-white">{playerStats.matchupAnalysis.vsGuards.value}</span>
+                          <span className="text-emerald-400 font-bold">{matchupAnalysis.vsGuards.rank}</span>
+                          <span className="text-white">{matchupAnalysis.vsGuards.value}</span>
                         </div>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-400">Assists</span>
                         <div className="flex items-center gap-2">
-                          <span className="text-emerald-400 font-bold">{playerStats.matchupAnalysis.vsForwards.rank}</span>
-                          <span className="text-white">{playerStats.matchupAnalysis.vsForwards.value}</span>
+                          <span className="text-emerald-400 font-bold">{matchupAnalysis.vsForwards.rank}</span>
+                          <span className="text-white">{matchupAnalysis.vsForwards.value}</span>
                         </div>
                       </div>
                     </div>
@@ -283,15 +362,15 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
                   <div className="grid grid-cols-3 gap-4 text-sm">
                     <div>
                       <p className="text-slate-400">Avg.</p>
-                      <p className="text-white font-medium">{playerStats.teamRankings.offense.avg}</p>
+                      <p className="text-white font-medium">{teamRankings.offense.avg}</p>
                     </div>
                     <div>
                       <p className="text-slate-400">Rank</p>
-                      <p className="text-white font-medium">#{playerStats.teamRankings.offense.rank}</p>
+                      <p className="text-white font-medium">#{teamRankings.offense.rank}</p>
                     </div>
                     <div>
                       <p className="text-slate-400">Stat</p>
-                      <p className="text-white font-medium">{playerStats.teamRankings.offense.stat}</p>
+                      <p className="text-white font-medium">{teamRankings.offense.stat}</p>
                     </div>
                   </div>
                 </div>

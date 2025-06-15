@@ -82,10 +82,17 @@ export const Props = () => {
     return 'text-slate-400';
   };
 
-  const handlePropClick = (playerData: any, prop: any) => {
+  const handlePropClick = (playerData: any, propData: any) => {
     setSelectedProp({
-      ...playerData,
-      selectedProp: prop
+      player: playerData.player,
+      team: playerData.team,
+      prop: propData.type,
+      line: propData.line,
+      type: "Over",
+      odds: propData.odds,
+      edge: propData.edge,
+      projected: propData.line + (propData.edge * 0.1),
+      confidence: propData.edge >= 10 ? "high" : propData.edge >= 5 ? "medium" : "low"
     });
     setInsightsOpen(true);
   };

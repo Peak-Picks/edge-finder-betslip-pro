@@ -1,4 +1,3 @@
-
 export interface OddsApiProp {
   id: string;
   sport_key: string;
@@ -156,7 +155,7 @@ export class OddsApiService {
     return processedProps.slice(0, 15);
   }
 
-  private generateMockWNBAProps(): ProcessedProp[] {
+  public generateMockWNBAProps(): ProcessedProp[] {
     const mockPlayers = [
       { name: 'A\'ja Wilson', team: 'LV' },
       { name: 'Breanna Stewart', team: 'NY' },

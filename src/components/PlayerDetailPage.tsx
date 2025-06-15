@@ -251,10 +251,10 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl bg-slate-800 border-slate-700 text-white max-h-[95vh] overflow-y-auto p-0">
-        <div className="p-4">
-          <DialogHeader className="mb-4">
-            <div className="flex items-center gap-3 mb-3">
+      <DialogContent className="max-w-6xl bg-slate-800 border-slate-700 text-white max-h-[95vh] overflow-y-auto p-0">
+        <div className="p-3">
+          <DialogHeader className="mb-3">
+            <div className="flex items-center gap-2 mb-2">
               <Button 
                 variant="ghost" 
                 size="sm" 
@@ -266,19 +266,19 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
               </Button>
             </div>
             
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400 flex items-center justify-center">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400 flex items-center justify-center">
                 <span className="text-xs font-bold text-white">{player.name.split(' ').map(n => n[0]).join('')}</span>
               </div>
               <div>
-                <DialogTitle className="text-xl font-bold text-white mb-1">
+                <DialogTitle className="text-lg font-bold text-white mb-1">
                   {player.name}
                 </DialogTitle>
                 <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="bg-slate-700 text-slate-300 text-xs px-1.5 py-0.5">
+                  <Badge variant="secondary" className="bg-slate-700 text-slate-300 text-xs px-1 py-0.5">
                     {player.team}
                   </Badge>
-                  <Badge variant="secondary" className="bg-slate-700 text-slate-300 text-xs px-1.5 py-0.5">
+                  <Badge variant="secondary" className="bg-slate-700 text-slate-300 text-xs px-1 py-0.5">
                     {player.matchup}
                   </Badge>
                   <span className="text-slate-400 text-xs">Today 5:00 PM</span>
@@ -287,23 +287,23 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
             </div>
           </DialogHeader>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* Main Stats Section */}
-            <div className="lg:col-span-2 space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-3">
+            {/* Main Stats Section - Takes 3 columns */}
+            <div className="lg:col-span-3 space-y-3">
               {/* Stat Selection */}
-              <Card className="bg-slate-700/50 border-slate-600 p-3">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-base font-semibold text-emerald-400">
+              <Card className="bg-slate-700/50 border-slate-600 p-2">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-semibold text-emerald-400">
                     {player.name} - {getStatDisplayName(selectedStat)} - Over {getCurrentLine(selectedStat)}
                   </h3>
-                  <div className="flex gap-2">
-                    <Button className="bg-emerald-600 hover:bg-emerald-700 h-7 text-xs" size="sm">
+                  <div className="flex gap-1">
+                    <Button className="bg-emerald-600 hover:bg-emerald-700 h-6 text-xs px-2" size="sm">
                       Over {getCurrentLine(selectedStat)} -108
                     </Button>
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      className="border-slate-600 h-7 text-xs px-2"
+                      className="border-slate-600 h-6 text-xs px-2"
                       onClick={() => setShowAltLines(!showAltLines)}
                     >
                       ALT LINES
@@ -312,13 +312,13 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
                 </div>
                 
                 {showAltLines && (
-                  <div className="mb-3 p-2 bg-slate-800/50 rounded-lg">
-                    <h4 className="text-xs font-semibold text-slate-300 mb-2">Alternative Lines</h4>
+                  <div className="mb-2 p-2 bg-slate-800/50 rounded-lg">
+                    <h4 className="text-xs font-semibold text-slate-300 mb-1">Alternative Lines</h4>
                     <div className="grid grid-cols-1 gap-1">
                       {getAltLines(selectedStat).map((altLine, index) => (
-                        <div key={index} className="flex justify-between items-center p-2 bg-slate-700/30 rounded">
-                          <span className="text-white text-sm">Over {altLine.line}</span>
-                          <Button size="sm" variant="outline" className="border-slate-600 text-emerald-400 h-6 text-xs">
+                        <div key={index} className="flex justify-between items-center p-1 bg-slate-700/30 rounded">
+                          <span className="text-white text-xs">Over {altLine.line}</span>
+                          <Button size="sm" variant="outline" className="border-slate-600 text-emerald-400 h-5 text-xs px-1">
                             {altLine.odds}
                           </Button>
                         </div>
@@ -327,7 +327,7 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
                   </div>
                 )}
                 
-                <div className="flex flex-wrap gap-1 mb-3">
+                <div className="flex flex-wrap gap-1 mb-2">
                   {statTabs.map((stat) => (
                     <button
                       key={stat}
@@ -344,71 +344,77 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
                 </div>
               </Card>
 
-              {/* Performance Stats */}
+              {/* Performance Stats - 2 Column Layout */}
               <Card className="bg-slate-700/50 border-slate-600 p-3">
                 <div className="flex items-center gap-2 mb-3">
                   <BarChart3 className="w-4 h-4 text-emerald-400" />
                   <h3 className="font-semibold text-emerald-400 text-sm">{player.name} - {getStatDisplayName(selectedStat)}</h3>
                 </div>
                 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Left Column - Performance Metrics */}
                   <div>
-                    <p className="text-xs text-slate-400">Last 10</p>
-                    <p className="text-lg font-bold text-emerald-400">{playerStats.overview.last10}</p>
-                    <p className="text-xs text-slate-500">7 of 10</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-400">L5</p>
-                    <p className="text-lg font-bold text-emerald-400">{playerStats.overview.l5}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-400">H2H</p>
-                    <p className="text-lg font-bold text-emerald-400">{playerStats.overview.h2h}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-400">2024</p>
-                    <p className="text-lg font-bold text-red-400">{playerStats.overview.season2024}</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-4 text-xs text-slate-400 mb-3">
-                  <span>Average: <span className="text-white font-medium">{playerStats.overview.average}</span></span>
-                  <span>Median: <span className="text-white font-medium">{playerStats.overview.median}</span></span>
-                </div>
-
-                {/* Chart representation */}
-                <div className="h-32 bg-slate-600/30 rounded-lg flex items-end justify-center p-2">
-                  <div className="flex items-end gap-1 h-full">
-                    {playerStats.recentGames.slice(0, 10).map((game, index) => (
-                      <div
-                        key={index}
-                        className={`w-6 flex flex-col items-center justify-end ${
-                          game.hit ? 'bg-emerald-500' : 'bg-red-500'
-                        } rounded-t relative`}
-                        style={{ height: `${Math.min((game.total / (selectedStat.includes('PTS+REB+AST') ? 45 : selectedStat.includes('PTS') ? 35 : 15)) * 100, 100)}%` }}
-                      >
-                        <span className="text-xs text-white font-bold absolute -top-4">
-                          {game.total}
-                        </span>
-                        {selectedStat === 'PTS+REB+AST' && game.pts !== undefined && (
-                          <div className="text-xs text-white p-0.5">
-                            <div>{game.pts}</div>
-                            <div>{game.reb || 0}</div>
-                            <div>{game.ast || 0}</div>
-                          </div>
-                        )}
+                    <h4 className="text-xs font-semibold text-slate-300 mb-2">Performance Metrics</h4>
+                    <div className="grid grid-cols-2 gap-2 mb-3">
+                      <div>
+                        <p className="text-xs text-slate-400">Last 10</p>
+                        <p className="text-lg font-bold text-emerald-400">{playerStats.overview.last10}</p>
+                        <p className="text-xs text-slate-500">7 of 10</p>
                       </div>
-                    ))}
+                      <div>
+                        <p className="text-xs text-slate-400">L5</p>
+                        <p className="text-lg font-bold text-emerald-400">{playerStats.overview.l5}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-400">H2H</p>
+                        <p className="text-lg font-bold text-emerald-400">{playerStats.overview.h2h}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-400">2024</p>
+                        <p className="text-lg font-bold text-red-400">{playerStats.overview.season2024}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4 text-xs text-slate-400">
+                      <span>Average: <span className="text-white font-medium">{playerStats.overview.average}</span></span>
+                      <span>Median: <span className="text-white font-medium">{playerStats.overview.median}</span></span>
+                    </div>
+                  </div>
+
+                  {/* Right Column - Recent Games Chart */}
+                  <div>
+                    <h4 className="text-xs font-semibold text-slate-300 mb-2">Recent Games</h4>
+                    <div className="h-32 bg-slate-600/30 rounded-lg flex items-end justify-center p-2">
+                      <div className="flex items-end gap-1 h-full">
+                        {playerStats.recentGames.slice(0, 10).map((game, index) => (
+                          <div key={index} className="flex flex-col items-center">
+                            <div
+                              className={`w-4 flex flex-col items-center justify-end ${
+                                game.hit ? 'bg-emerald-500' : 'bg-red-500'
+                              } rounded-t relative`}
+                              style={{ height: `${Math.min((game.total / (selectedStat.includes('PTS+REB+AST') ? 45 : selectedStat.includes('PTS') ? 35 : 15)) * 100, 100)}%` }}
+                            >
+                              <span className="text-xs text-white font-bold absolute -top-4">
+                                {game.total}
+                              </span>
+                            </div>
+                            <span className="text-xs text-slate-400 mt-1 transform -rotate-45 origin-center">
+                              {game.opponent.replace('vs ', '').slice(0, 3)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </Card>
             </div>
 
-            {/* Sidebar */}
-            <div className="space-y-4">
+            {/* Sidebar - Takes 1 column */}
+            <div className="space-y-3">
               {/* Line Movement */}
-              <Card className="bg-slate-700/50 border-slate-600 p-3">
-                <h3 className="font-semibold text-pink-400 mb-3 text-sm">Line movement</h3>
+              <Card className="bg-slate-700/50 border-slate-600 p-2">
+                <h3 className="font-semibold text-pink-400 mb-2 text-sm">Line movement</h3>
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <div>
@@ -430,28 +436,28 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
                     </div>
                   </div>
                 </div>
-                <Button variant="link" className="text-slate-400 text-xs p-0 mt-2 h-auto">
+                <Button variant="link" className="text-slate-400 text-xs p-0 mt-1 h-auto">
                   SHOW MORE
                 </Button>
               </Card>
 
               {/* Matchup Analysis */}
-              <Card className="bg-slate-700/50 border-slate-600 p-3">
-                <div className="flex items-center gap-2 mb-3">
+              <Card className="bg-slate-700/50 border-slate-600 p-2">
+                <div className="flex items-center gap-2 mb-2">
                   <Target className="w-4 h-4 text-orange-400" />
-                  <h3 className="font-semibold text-orange-400 text-sm">Key {player.team} {getStatDisplayName(selectedStat)} defense</h3>
+                  <h3 className="font-semibold text-orange-400 text-sm">Key {player.team} defense</h3>
                 </div>
                 
                 <Tabs defaultValue="overall" className="w-full">
-                  <TabsList className="grid w-full grid-cols-4 bg-slate-600/50 text-xs h-7">
+                  <TabsList className="grid w-full grid-cols-4 bg-slate-600/50 text-xs h-6">
                     <TabsTrigger value="overall" className="text-xs">Overall</TabsTrigger>
                     <TabsTrigger value="vsg" className="text-xs">vs G</TabsTrigger>
                     <TabsTrigger value="vsf" className="text-xs">vs F</TabsTrigger>
                     <TabsTrigger value="vsc" className="text-xs">vs C</TabsTrigger>
                   </TabsList>
                   
-                  <TabsContent value="overall" className="mt-3">
-                    <div className="space-y-2">
+                  <TabsContent value="overall" className="mt-2">
+                    <div className="space-y-1">
                       <div className="flex justify-between">
                         <span className="text-slate-400 text-xs">Points</span>
                         <div className="flex items-center gap-2">
@@ -479,18 +485,18 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
               </Card>
 
               {/* Team Rankings */}
-              <Card className="bg-slate-700/50 border-slate-600 p-3">
-                <h3 className="font-semibold text-blue-400 mb-3 text-sm">Team Rankings (2025)</h3>
-                <div className="space-y-3">
+              <Card className="bg-slate-700/50 border-slate-600 p-2">
+                <h3 className="font-semibold text-blue-400 mb-2 text-sm">Team Rankings (2025)</h3>
+                <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 rounded bg-gradient-to-r from-orange-400 to-red-400"></div>
+                      <div className="w-3 h-3 rounded bg-gradient-to-r from-orange-400 to-red-400"></div>
                       <span className="text-xs text-white">Offense</span>
                     </div>
                     <TrendingUp className="w-3 h-3 text-slate-400" />
                   </div>
                   
-                  <div className="grid grid-cols-3 gap-3 text-xs">
+                  <div className="grid grid-cols-3 gap-2 text-xs">
                     <div>
                       <p className="text-slate-400">Avg.</p>
                       <p className="text-white font-medium">{teamRankings.offense.avg}</p>

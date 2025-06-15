@@ -52,7 +52,7 @@ export const BetBuilder = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white pb-20">
       <div className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700/50 p-4">
-        <h1 className="text-xl font-bold">Bet Builder</h1>
+        <h1 className="text-xl font-bold text-white">Bet Builder</h1>
         <p className="text-slate-400 text-sm">Build your perfect parlay</p>
       </div>
 
@@ -61,13 +61,13 @@ export const BetBuilder = () => {
           <TabsList className="grid w-full grid-cols-2 bg-slate-800/50 border border-slate-700/50">
             <TabsTrigger 
               value="betslip" 
-              className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400"
+              className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 text-white"
             >
               Betslip ({selectedBets.length})
             </TabsTrigger>
             <TabsTrigger 
               value="available" 
-              className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400"
+              className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 text-white"
             >
               Available Bets
             </TabsTrigger>
@@ -109,13 +109,14 @@ export const BetBuilder = () => {
                   ))}
 
                   <Card className="bg-slate-800/50 border-slate-700/50 p-4">
-                    <h3 className="font-semibold mb-3">Bet Amount</h3>
+                    <h3 className="font-semibold mb-3 text-white">Bet Amount</h3>
                     <div className="flex gap-2 mb-4">
                       <input
                         type="number"
                         value={betAmount}
                         onChange={(e) => setBetAmount(e.target.value)}
-                        className="flex-1 bg-slate-700/50 border border-slate-600 rounded-lg px-3 py-2 text-white"
+                        // Ensure input text is white, placeholder is slate-400
+                        className="flex-1 bg-slate-700/50 border border-slate-600 rounded-lg px-3 py-2 text-white placeholder:text-slate-400"
                         placeholder="Enter amount"
                       />
                       <Button variant="outline" className="border-slate-600 text-slate-300">
@@ -134,7 +135,7 @@ export const BetBuilder = () => {
                       </div>
                     </div>
 
-                    <Button className="w-full bg-emerald-600 hover:bg-emerald-700">
+                    <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
                       <Calculator className="w-4 h-4 mr-2" />
                       Place Bet
                     </Button>
@@ -164,7 +165,7 @@ export const BetBuilder = () => {
                     <Button
                       size="sm"
                       onClick={() => addBet(bet)}
-                      className="bg-emerald-600 hover:bg-emerald-700"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
                     >
                       <Plus className="w-4 h-4" />
                     </Button>

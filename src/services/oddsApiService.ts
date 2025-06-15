@@ -112,6 +112,7 @@ export class OddsApiService {
             }
             
             const mockEdge = Math.random() * 12 + 1;
+            const projected = line + (mockEdge * 0.1);
             
             processedProps.push({
               id: `${game.id}-${bookmaker.key}-${market.key}-${index}`,
@@ -131,7 +132,7 @@ export class OddsApiService {
               matchup: matchup,
               gameTime: gameTime,
               line: line,
-              projected: line + (mockEdge * 0.1)
+              projected: Math.round(projected * 100) / 100
             });
           });
         });
@@ -149,41 +150,68 @@ export class OddsApiService {
       { name: 'Alyssa Thomas', team: 'CONN' },
       { name: 'Napheesa Collier', team: 'MIN' },
       { name: 'Caitlin Clark', team: 'IND' },
+      { name: 'Angel Reese', team: 'CHI' },
+      { name: 'Kelsey Plum', team: 'LV' },
     ];
 
     const propTypes = ['Points', 'Rebounds', 'Assists'];
     const bookmakers = ['DraftKings', 'FanDuel', 'BetMGM'];
+    const betTypes = ['Over', 'Under'];
     
-    return mockPlayers.map((player, index) => {
-      const propType = propTypes[index % propTypes.length];
-      const bookmaker = bookmakers[index % bookmakers.length];
-      const line = propType === 'Points' ? Math.floor(Math.random() * 10) + 18 : 
-                   propType === 'Rebounds' ? Math.floor(Math.random() * 5) + 8 : 
-                   Math.floor(Math.random() * 4) + 5;
-      const odds = Math.random() > 0.5 ? `+${Math.floor(Math.random() * 200) + 100}` : `-${Math.floor(Math.random() * 150) + 110}`;
-      const edge = Math.round((Math.random() * 12 + 1) * 10) / 10;
-      
-      return {
-        id: `mock-${index}`,
-        player: player.name,
-        team: player.team,
-        title: `Over ${line} ${propType}`,
-        sport: 'WNBA',
-        game: 'Today',
-        description: `${player.name} ${propType}`,
-        odds: odds,
-        platform: bookmaker,
-        confidence: Math.floor(edge / 3) + 2,
-        insights: `Mock WNBA data - season may not be active. Based on historical performance.`,
-        category: 'Player Prop',
-        edge: edge,
-        type: 'Over',
-        matchup: 'Mock Game',
-        gameTime: 'TBD',
-        line: line,
-        projected: line + (edge * 0.1)
-      };
+    // Generate all possible combinations
+    const allProps: ProcessedProp[] = [];
+    
+    mockPlayers.forEach((player) => {
+      propTypes.forEach((propType) => {
+        betTypes.forEach((betType) => {
+          bookmakers.forEach((bookmaker) => {
+            const baseId = `${player.name.toLowerCase().replace(/[^a-z]/g, '')}-${propType.toLowerCase()}-${betType.toLowerCase()}-${bookmaker.toLowerCase()}`;
+            
+            const line = propType === 'Points' ? Math.floor(Math.random() * 10) + 18 : 
+                        propType === 'Rebounds' ? Math.floor(Math.random() * 5) + 8 : 
+                        Math.floor(Math.random() * 4) + 5;
+            
+            const baseEdge = Math.random() * 12 + 1;
+            // Add some variance to make under bets potentially attractive
+            const edge = betType === 'Under' ? baseEdge * (0.8 + Math.random() * 0.4) : baseEdge;
+            
+            const odds = Math.random() > 0.5 ? `+${Math.floor(Math.random() * 200) + 100}` : `-${Math.floor(Math.random() * 150) + 110}`;
+            
+            // Calculate projection based on bet type
+            const projectedVariance = edge * 0.1;
+            const projected = betType === 'Over' 
+              ? line + projectedVariance 
+              : line - projectedVariance;
+            
+            allProps.push({
+              id: baseId,
+              player: player.name,
+              team: player.team,
+              title: `${betType} ${line} ${propType}`,
+              sport: 'WNBA',
+              game: 'Today',
+              description: `${player.name} ${propType}`,
+              odds: odds,
+              platform: bookmaker,
+              confidence: Math.floor(edge / 3) + 2,
+              insights: `Mock WNBA data - season may not be active. ${betType === 'Under' ? 'Projection suggests lower output' : 'Strong performance indicators'}. Based on algorithmic analysis.`,
+              category: 'Player Prop',
+              edge: Math.round(edge * 10) / 10,
+              type: betType,
+              matchup: 'Mock Game',
+              gameTime: 'TBD',
+              line: line,
+              projected: Math.round(projected * 100) / 100
+            });
+          });
+        });
+      });
     });
+
+    // Sort by edge (highest first) and take top 5
+    return allProps
+      .sort((a, b) => b.edge - a.edge)
+      .slice(0, 5);
   }
 
   private getTeamFromPlayer(playerName: string, homeTeam: string, awayTeam: string): string {

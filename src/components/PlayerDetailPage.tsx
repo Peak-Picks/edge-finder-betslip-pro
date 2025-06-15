@@ -569,10 +569,6 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
                       <span className="text-slate-400">K. Porzingis</span>
                       <span className="text-red-400">Out</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">A. Horford</span>
-                      <span className="text-emerald-400">Healthy</span>
-                    </div>
                   </div>
                 </Card>
 

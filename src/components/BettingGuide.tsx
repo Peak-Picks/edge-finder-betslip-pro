@@ -1,7 +1,6 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, AlertTriangle, TrendingUp, Shield, Calculator, Target } from 'lucide-react';
+import { CheckCircle, AlertTriangle, TrendingUp, Shield, Calculator, Target, BookOpen } from 'lucide-react';
 
 export const BettingGuide = () => {
   return (

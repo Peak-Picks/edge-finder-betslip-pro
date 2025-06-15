@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -89,10 +90,10 @@ export const GameBasedPicks = () => {
                   <Clock className="w-3 h-3 text-slate-400" />
                   <span className="text-xs text-slate-400">{pick.gameTime}</span>
                 </div>
-                <p className="text-cyan-300 font-medium">{pick.type}: {pick.pick}</p>
+                <p className="text-cyan-300 font-medium">{pick.type}: {pick.title}</p>
               </div>
               <div className="text-right">
-                <Badge className={getConfidenceColor(pick.confidence)}>
+                <Badge className={getConfidenceColor(pick.confidence.toString())}>
                   {pick.edge}% Edge
                 </Badge>
                 <div className="text-lg font-bold text-white">{pick.odds}</div>
@@ -101,11 +102,11 @@ export const GameBasedPicks = () => {
             <div className="grid grid-cols-2 gap-4 mb-3 text-sm">
               <div>
                 <p className="text-slate-400">Sportsbook</p>
-                <p className="text-white font-medium">{pick.bookmaker}</p>
+                <p className="text-white font-medium">{pick.platform}</p>
               </div>
             </div>
             <div className="bg-slate-700/30 rounded-lg p-3 mb-3">
-              <p className="text-xs text-cyan-100">{pick.aiInsight}</p>
+              <p className="text-xs text-cyan-100">{pick.insights}</p>
             </div>
             <div className="flex gap-2">
               <Button
@@ -114,7 +115,7 @@ export const GameBasedPicks = () => {
                 onClick={() => addToBetSlip({
                   id: pick.id,
                   type: pick.type,
-                  description: pick.pick,
+                  description: pick.title,
                   odds: pick.odds,
                   edge: pick.edge
                 })}

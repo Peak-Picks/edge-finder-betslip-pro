@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -48,11 +49,17 @@ export const PlayerProps = () => {
     }
   };
 
+  const extractPropFromTitle = (title: string): string => {
+    // Extract prop type from title like "Over 28.5 Points" -> "Points"
+    const match = title.match(/Over \d+\.?\d* (.+)/);
+    return match ? match[1] : title;
+  };
+
   const handlePropClick = (prop: GeneratedPick) => {
     setSelectedProp({
       player: prop.player,
       team: prop.team,
-      prop: prop.title,
+      prop: extractPropFromTitle(prop.title),
       line: prop.line,
       type: "Over",
       odds: prop.odds,
@@ -123,6 +130,7 @@ export const PlayerProps = () => {
               {playerProps[selectedSport as keyof typeof playerProps].map((prop, index) => {
                 const betId = `${prop.id}-${index}`;
                 const alreadyAdded = betSlip.some(b => b.id === betId);
+                const propType = extractPropFromTitle(prop.title);
                 return (
                   <Card 
                     key={index} 
@@ -138,11 +146,11 @@ export const PlayerProps = () => {
                           </Badge>
                         </div>
                         <p className="text-emerald-400 font-medium">
-                          {prop.type} {prop.line} {prop.prop}
+                          {prop.type} {prop.line} {propType}
                         </p>
                       </div>
                       <div className="text-right">
-                        <Badge className={getConfidenceColor(prop.confidence)}>
+                        <Badge className={getConfidenceColor(prop.confidence.toString())}>
                           {prop.edge}% Edge
                         </Badge>
                         <div className="text-lg font-bold text-white mt-1">{prop.odds}</div>
@@ -170,10 +178,9 @@ export const PlayerProps = () => {
                           type: 'Player Prop',
                           player: prop.player,
                           team: prop.team,
-                          description: `${prop.type} ${prop.line} ${prop.prop}`,
+                          description: `${prop.type} ${prop.line} ${propType}`,
                           odds: prop.odds,
                           edge: prop.edge,
-                          // Only add line if the betslip expects it, and as number!
                           line: prop.line,
                         })}
                       >

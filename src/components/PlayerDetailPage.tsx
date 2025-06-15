@@ -186,6 +186,69 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
 
   const playerStats = getPlayerStats(player.name, selectedStat);
   
+  // Get player position based on name (in real app this would come from data)
+  const getPlayerPosition = (playerName: string) => {
+    const positions = {
+      'Luka Dončić': 'PG',
+      'Jayson Tatum': 'SF', 
+      'Giannis Antetokounmpo': 'PF',
+      'LeBron James': 'SF',
+      'Stephen Curry': 'PG',
+      'Kevin Durant': 'SF',
+      'Nikola Jokić': 'C',
+      'Joel Embiid': 'C'
+    };
+    return positions[playerName as keyof typeof positions] || 'PG';
+  };
+
+  const playerPosition = getPlayerPosition(player.name);
+
+  // Get relevant defensive stats based on selected stat and player position
+  const getRelevantDefensiveStats = (stat: string, position: string) => {
+    const positionLabel = {
+      'PG': 'Guards',
+      'SG': 'Guards', 
+      'SF': 'Forwards',
+      'PF': 'Forwards',
+      'C': 'Centers'
+    }[position] || 'Guards';
+
+    if (stat.includes('PTS')) {
+      return [
+        { label: `vs ${positionLabel} PPG`, rank: 12, value: '22.4' },
+        { label: 'Def Rating vs Pos', rank: 8, value: '109.1' },
+        { label: 'Opp FG% vs Pos', rank: 15, value: '45.2%' }
+      ];
+    } else if (stat.includes('REB')) {
+      return [
+        { label: `vs ${positionLabel} RPG`, rank: 18, value: '8.9' },
+        { label: 'Def Reb Rate', rank: 11, value: '76.3%' },
+        { label: 'Opp OReb vs Pos', rank: 9, value: '10.1' }
+      ];
+    } else if (stat.includes('AST')) {
+      return [
+        { label: `vs ${positionLabel} APG`, rank: 22, value: '6.8' },
+        { label: 'TOV Rate vs Pos', rank: 7, value: '12.4%' },
+        { label: 'Steal Rate', rank: 14, value: '8.9%' }
+      ];
+    } else if (stat.includes('3PTM')) {
+      return [
+        { label: `vs ${positionLabel} 3PM`, rank: 19, value: '2.1' },
+        { label: '3P Def %', rank: 25, value: '36.8%' },
+        { label: 'Contest Rate', rank: 12, value: '78.5%' }
+      ];
+    } else {
+      // For combo stats like PTS+REB+AST, show综合 position-based stats
+      return [
+        { label: `vs ${positionLabel} Scoring`, rank: 12, value: '22.4' },
+        { label: `vs ${positionLabel} Playmaking`, rank: 18, value: '6.8' },
+        { label: `Overall vs ${positionLabel}`, rank: 9, value: '85.2' }
+      ];
+    }
+  };
+
+  const relevantDefensiveStats = getRelevantDefensiveStats(selectedStat, playerPosition);
+
   const matchupAnalysis = {
     overall: { rank: 9, value: 83.9 },
     vsGuards: { rank: 12, value: 36.3 },
@@ -247,40 +310,6 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
       { line: currentLine + 1, odds: '-130' }
     ];
   };
-
-  // Get relevant defensive stats based on selected stat
-  const getRelevantDefensiveStats = (stat: string) => {
-    if (stat.includes('PTS')) {
-      return [
-        { label: 'Opp PPG', rank: 9, value: '108.2' },
-        { label: 'Def Rating', rank: 15, value: '112.3' }
-      ];
-    } else if (stat.includes('REB')) {
-      return [
-        { label: 'Opp RPG', rank: 12, value: '45.1' },
-        { label: 'Reb Rate', rank: 8, value: '78.9%' }
-      ];
-    } else if (stat.includes('AST')) {
-      return [
-        { label: 'Opp APG', rank: 18, value: '26.4' },
-        { label: 'TOV Rate', rank: 11, value: '14.2%' }
-      ];
-    } else if (stat.includes('3PTM')) {
-      return [
-        { label: 'Opp 3P%', rank: 22, value: '37.8%' },
-        { label: '3P Def', rank: 28, value: '12.1' }
-      ];
-    } else {
-      // For combo stats like PTS+REB+AST
-      return [
-        { label: 'Opp PPG', rank: 9, value: '108.2' },
-        { label: 'Opp RPG', rank: 12, value: '45.1' },
-        { label: 'Opp APG', rank: 18, value: '26.4' }
-      ];
-    }
-  };
-
-  const relevantDefensiveStats = getRelevantDefensiveStats(selectedStat);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -480,7 +509,7 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
                 <Card className="bg-slate-700/50 border-slate-600 p-2">
                   <div className="flex items-center gap-2 mb-2">
                     <Target className="w-4 h-4 text-orange-400" />
-                    <h3 className="font-semibold text-orange-400 text-xs">Key defense</h3>
+                    <h3 className="font-semibold text-orange-400 text-xs">vs {playerPosition} Defense</h3>
                   </div>
                   
                   <div className="space-y-1">

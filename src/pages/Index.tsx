@@ -14,6 +14,7 @@ import { PlayerPropAnalyzer } from '@/components/PlayerPropAnalyzer';
 import { BetBuilder } from '@/components/BetBuilder';
 import { DiscoverPage } from '@/components/DiscoverPage';
 import { ProfilePage } from '@/components/ProfilePage';
+import { BettingGuide } from '@/components/BettingGuide';
 import { TrendingUp, Target, BarChart3, Wallet, Zap } from 'lucide-react';
 
 const Index = () => {
@@ -111,6 +112,8 @@ const Index = () => {
         return <BetBuilder />;
       case 'discover':
         return <DiscoverPage />;
+      case 'guide':
+        return <BettingGuide />;
       case 'profile':
         return <ProfilePage />;
       default:

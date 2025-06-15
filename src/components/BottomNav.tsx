@@ -1,5 +1,5 @@
 
-import { Home, FileText, Compass, User } from 'lucide-react';
+import { Home, FileText, Compass, User, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface BottomNavProps {
@@ -12,6 +12,7 @@ export const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
     { id: 'home', label: 'Home', icon: Home },
     { id: 'betslip', label: 'Betslip', icon: FileText },
     { id: 'discover', label: 'Discover', icon: Compass },
+    { id: 'guide', label: 'Guide', icon: BookOpen },
     { id: 'profile', label: 'Profile', icon: User },
   ];
 

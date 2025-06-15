@@ -248,6 +248,40 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
     ];
   };
 
+  // Get relevant defensive stats based on selected stat
+  const getRelevantDefensiveStats = (stat: string) => {
+    if (stat.includes('PTS')) {
+      return [
+        { label: 'Opp PPG', rank: 9, value: '108.2' },
+        { label: 'Def Rating', rank: 15, value: '112.3' }
+      ];
+    } else if (stat.includes('REB')) {
+      return [
+        { label: 'Opp RPG', rank: 12, value: '45.1' },
+        { label: 'Reb Rate', rank: 8, value: '78.9%' }
+      ];
+    } else if (stat.includes('AST')) {
+      return [
+        { label: 'Opp APG', rank: 18, value: '26.4' },
+        { label: 'TOV Rate', rank: 11, value: '14.2%' }
+      ];
+    } else if (stat.includes('3PTM')) {
+      return [
+        { label: 'Opp 3P%', rank: 22, value: '37.8%' },
+        { label: '3P Def', rank: 28, value: '12.1' }
+      ];
+    } else {
+      // For combo stats like PTS+REB+AST
+      return [
+        { label: 'Opp PPG', rank: 9, value: '108.2' },
+        { label: 'Opp RPG', rank: 12, value: '45.1' },
+        { label: 'Opp APG', rank: 18, value: '26.4' }
+      ];
+    }
+  };
+
+  const relevantDefensiveStats = getRelevantDefensiveStats(selectedStat);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl bg-slate-800 border-slate-700 text-white max-h-[95vh] overflow-y-auto p-0">
@@ -446,43 +480,20 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
                 <Card className="bg-slate-700/50 border-slate-600 p-2">
                   <div className="flex items-center gap-2 mb-2">
                     <Target className="w-4 h-4 text-orange-400" />
-                    <h3 className="font-semibold text-orange-400 text-sm">Key {player.team} defense</h3>
+                    <h3 className="font-semibold text-orange-400 text-xs">Key defense</h3>
                   </div>
                   
-                  <Tabs defaultValue="overall" className="w-full">
-                    <TabsList className="grid w-full grid-cols-4 bg-slate-600/50 text-xs h-6">
-                      <TabsTrigger value="overall" className="text-xs">Overall</TabsTrigger>
-                      <TabsTrigger value="vsg" className="text-xs">vs G</TabsTrigger>
-                      <TabsTrigger value="vsf" className="text-xs">vs F</TabsTrigger>
-                      <TabsTrigger value="vsc" className="text-xs">vs C</TabsTrigger>
-                    </TabsList>
-                    
-                    <TabsContent value="overall" className="mt-2">
-                      <div className="space-y-1">
-                        <div className="flex justify-between">
-                          <span className="text-slate-400 text-xs">Points</span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-emerald-400 font-bold text-xs">{matchupAnalysis.overall.rank}</span>
-                            <span className="text-white text-xs">{matchupAnalysis.overall.value}</span>
-                          </div>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-slate-400 text-xs">Rebounds</span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-emerald-400 font-bold text-xs">{matchupAnalysis.vsGuards.rank}</span>
-                            <span className="text-white text-xs">{matchupAnalysis.vsGuards.value}</span>
-                          </div>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-slate-400 text-xs">Assists</span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-emerald-400 font-bold text-xs">{matchupAnalysis.vsForwards.rank}</span>
-                            <span className="text-white text-xs">{matchupAnalysis.vsForwards.value}</span>
-                          </div>
+                  <div className="space-y-1">
+                    {relevantDefensiveStats.map((stat, index) => (
+                      <div key={index} className="flex justify-between">
+                        <span className="text-slate-400 text-xs">{stat.label}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-emerald-400 font-bold text-xs">#{stat.rank}</span>
+                          <span className="text-white text-xs">{stat.value}</span>
                         </div>
                       </div>
-                    </TabsContent>
-                  </Tabs>
+                    ))}
+                  </div>
                 </Card>
               </div>
 

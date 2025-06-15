@@ -12,13 +12,13 @@ interface EditBetSlipModalProps {
   slip: SavedBetSlip | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (amount: string, notes?: string, status?: 'pending' | 'won' | 'lost' | 'void', actualPayout?: number) => void;
+  onSave: (amount: string, notes?: string, status?: 'pending' | 'won' | 'lost' | 'void' | 'partial', actualPayout?: number) => void;
 }
 
 export const EditBetSlipModal = ({ slip, open, onOpenChange, onSave }: EditBetSlipModalProps) => {
   const [amount, setAmount] = useState('');
   const [notes, setNotes] = useState('');
-  const [status, setStatus] = useState<'pending' | 'won' | 'lost' | 'void'>('pending');
+  const [status, setStatus] = useState<'pending' | 'won' | 'lost' | 'void' | 'partial'>('pending');
   const [actualPayout, setActualPayout] = useState('');
 
   useEffect(() => {

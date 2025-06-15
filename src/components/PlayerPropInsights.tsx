@@ -23,27 +23,52 @@ interface PlayerPropInsightsProps {
 export const PlayerPropInsights = ({ prop, open, onOpenChange }: PlayerPropInsightsProps) => {
   if (!prop) return null;
 
-  const insights = {
-    aiRecommendation: `${prop.type} ${prop.line} ${prop.prop}`,
-    confidence: 85,
-    keyFactors: [
-      `${prop.player} averaging ${prop.projected} ${prop.prop.toLowerCase()} over last 5 games`,
-      `Strong matchup advantage in this category`,
-      `Historical performance suggests ${prop.type.toLowerCase()} trend`
-    ],
-    recentPerformance: [
-      { game: 'vs LAL', stat: prop.projected + 2.1, result: 'hit' },
-      { game: 'vs BOS', stat: prop.projected - 1.3, result: 'miss' },
-      { game: 'vs MIA', stat: prop.projected + 3.2, result: 'hit' },
-      { game: 'vs PHX', stat: prop.projected + 0.8, result: 'hit' },
-      { game: 'vs DEN', stat: prop.projected - 0.5, result: 'miss' }
-    ],
-    matchupAnalysis: {
-      opponentRank: 23,
-      allowedAverage: prop.projected + 1.2,
-      defenseRating: 'Below Average'
-    }
+  // Generate dynamic insights based on the prop data
+  const generateDynamicInsights = () => {
+    const confidencePercentage = prop.confidence === 'high' ? 85 + Math.floor(Math.random() * 10) : 
+                                prop.confidence === 'medium' ? 70 + Math.floor(Math.random() * 10) : 
+                                55 + Math.floor(Math.random() * 10);
+
+    const isOver = prop.type === 'Over';
+    const variance = Math.abs(prop.projected - prop.line);
+    
+    // Generate realistic recent performance based on projection
+    const recentGames = ['vs LAL', 'vs BOS', 'vs MIA', 'vs PHX', 'vs DEN'];
+    const recentPerformance = recentGames.map(game => {
+      const baseVariance = (Math.random() - 0.5) * 6; // Random variance between -3 and +3
+      const stat = Math.max(0, prop.projected + baseVariance);
+      const result = (isOver && stat > prop.line) || (!isOver && stat < prop.line) ? 'hit' : 'miss';
+      return { game, stat, result };
+    });
+
+    // Calculate hit rate for recent games
+    const hits = recentPerformance.filter(game => game.result === 'hit').length;
+    const hitRate = `${hits}/5`;
+
+    const keyFactors = [
+      `${prop.player} averaging ${prop.projected.toFixed(1)} ${prop.prop.toLowerCase()} over last 5 games`,
+      isOver ? 
+        `Strong matchup advantage suggests higher ${prop.prop.toLowerCase()} output` :
+        `Defensive matchup suggests limited ${prop.prop.toLowerCase()} opportunities`,
+      `Historical performance trend supports ${prop.type.toLowerCase()} play (${hitRate} recent hits)`
+    ];
+
+    const matchupAnalysis = {
+      opponentRank: Math.floor(Math.random() * 30) + 1,
+      allowedAverage: isOver ? prop.line + 1.2 : prop.line - 1.2,
+      defenseRating: prop.edge > 8 ? 'Below Average' : prop.edge > 4 ? 'Average' : 'Above Average'
+    };
+
+    return {
+      aiRecommendation: `${prop.type} ${prop.line} ${prop.prop}`,
+      confidence: confidencePercentage,
+      keyFactors,
+      recentPerformance,
+      matchupAnalysis
+    };
   };
+
+  const insights = generateDynamicInsights();
 
   const getConfidenceColor = (confidence: string) => {
     switch (confidence) {

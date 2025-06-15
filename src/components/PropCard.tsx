@@ -27,7 +27,7 @@ export const PropCard = ({ playerData, onPlayerDetailClick, onPropClick }: PropC
 
   // Helper to make a unique id for each player prop
   const getPropId = (prop: any) =>
-    (playerData.player + '-' + prop.type + '-' + prop.line + '-' + playerData.team).replace(/\s+/g, '');
+    (playerData.player + '-' + prop.type + '-' + String(prop.line) + '-' + playerData.team).replace(/\s+/g, '');
 
   return (
     <Card className="bg-slate-800/50 border-slate-700/50 p-3">

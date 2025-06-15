@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +9,7 @@ import { useBetSlipContext } from './BetSlipContext';
 
 export const PlayerProps = () => {
   const [selectedSport, setSelectedSport] = useState('nba');
-  const [selectedProp, setSelectedProp] = useState(null);
+  const [selectedProp, setSelectedProp] = useState<any>(null);
   const [insightsOpen, setInsightsOpen] = useState(false);
 
   const { addToBetSlip, betSlip } = useBetSlipContext();
@@ -64,14 +63,14 @@ export const PlayerProps = () => {
     }
   };
 
-  const handlePropClick = (prop) => {
+  const handlePropClick = (prop: any) => {
     setSelectedProp(prop);
     setInsightsOpen(true);
   };
 
-  // For a unique id, use player + prop + line (stringify line in case of decimals)
-  const getPropId = (prop) =>
-    (prop.player + '-' + prop.prop + '-' + prop.line + '-' + prop.team).replace(/\s+/g, '');
+  // Fix for unique ID generation, ensure `prop.line` is always a string for id, but kept as number for code
+  const getPropId = (prop: any) =>
+    (prop.player + '-' + prop.prop + '-' + String(prop.line) + '-' + prop.team).replace(/\s+/g, '');
 
   return (
     <>
@@ -104,6 +103,7 @@ export const PlayerProps = () => {
             <div className="space-y-3">
               {playerProps[selectedSport as keyof typeof playerProps].map((prop, index) => {
                 const betId = getPropId(prop);
+                // Ensure prop.line is number and betSlip stores bet ids as strings
                 const alreadyAdded = betSlip.some(b => b.id === betId);
                 return (
                   <Card 

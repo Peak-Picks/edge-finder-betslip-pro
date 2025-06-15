@@ -18,6 +18,7 @@ interface PlayerDetailPageProps {
 
 export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPageProps) => {
   const [selectedStat, setSelectedStat] = useState('PTS+REB+AST');
+  const [showAltLines, setShowAltLines] = useState(false);
   
   if (!player) return null;
 
@@ -87,61 +88,75 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
         }
       },
       'Jayson Tatum': {
-        overview: {
-          average: 27.4,
-          median: 28,
-          last10: '60%',
-          l5: '60%',
-          l20: '65%',
-          h2h: '75%',
-          season2025: '68%',
-          season2024: '52%'
-        },
-        recentGames: [
-          { opponent: 'vs MIA', total: 29, pts: 22, reb: 4, ast: 3, hit: true },
-          { opponent: 'vs PHI', total: 24, pts: 18, reb: 6, ast: 0, hit: false },
-          { opponent: 'vs NYK', total: 31, pts: 24, reb: 5, ast: 2, hit: true },
-          { opponent: 'vs BRK', total: 28, pts: 21, reb: 7, ast: 0, hit: true },
-          { opponent: 'vs ATL', total: 26, pts: 19, reb: 4, ast: 3, hit: false },
-          { opponent: 'vs CHA', total: 32, pts: 26, reb: 3, ast: 3, hit: true },
-          { opponent: 'vs WAS', total: 30, pts: 23, reb: 5, ast: 2, hit: true },
-          { opponent: 'vs ORL', total: 25, pts: 17, reb: 6, ast: 2, hit: false },
-          { opponent: 'vs DET', total: 33, pts: 27, reb: 4, ast: 2, hit: true },
-          { opponent: 'vs TOR', total: 27, pts: 20, reb: 5, ast: 2, hit: true }
-        ]
+        'PTS+REB+AST': {
+          overview: {
+            average: 27.4,
+            median: 28,
+            last10: '60%',
+            l5: '60%',
+            l20: '65%',
+            h2h: '75%',
+            season2025: '68%',
+            season2024: '52%'
+          },
+          recentGames: [
+            { opponent: 'vs MIA', total: 29, pts: 22, reb: 4, ast: 3, hit: true },
+            { opponent: 'vs PHI', total: 24, pts: 18, reb: 6, ast: 0, hit: false },
+            { opponent: 'vs NYK', total: 31, pts: 24, reb: 5, ast: 2, hit: true },
+            { opponent: 'vs BRK', total: 28, pts: 21, reb: 7, ast: 0, hit: true },
+            { opponent: 'vs ATL', total: 26, pts: 19, reb: 4, ast: 3, hit: false },
+            { opponent: 'vs CHA', total: 32, pts: 26, reb: 3, ast: 3, hit: true },
+            { opponent: 'vs WAS', total: 30, pts: 23, reb: 5, ast: 2, hit: true },
+            { opponent: 'vs ORL', total: 25, pts: 17, reb: 6, ast: 2, hit: false },
+            { opponent: 'vs DET', total: 33, pts: 27, reb: 4, ast: 2, hit: true },
+            { opponent: 'vs TOR', total: 27, pts: 20, reb: 5, ast: 2, hit: true }
+          ]
+        }
       },
       'Giannis Antetokounmpo': {
-        overview: {
-          average: 32.8,
-          median: 33,
-          last10: '80%',
-          l5: '100%',
-          l20: '70%',
-          h2h: '67%',
-          season2025: '76%',
-          season2024: '58%'
-        },
-        recentGames: [
-          { opponent: 'vs PHI', total: 36, pts: 28, reb: 8, ast: 0, hit: true },
-          { opponent: 'vs CHI', total: 34, pts: 26, reb: 7, ast: 1, hit: true },
-          { opponent: 'vs IND', total: 31, pts: 23, reb: 6, ast: 2, hit: true },
-          { opponent: 'vs CLE', total: 38, pts: 30, reb: 6, ast: 2, hit: true },
-          { opponent: 'vs TOR', total: 35, pts: 27, reb: 8, ast: 0, hit: true },
-          { opponent: 'vs DET', total: 29, pts: 21, reb: 6, ast: 2, hit: false },
-          { opponent: 'vs ATL', total: 37, pts: 31, reb: 5, ast: 1, hit: true },
-          { opponent: 'vs BRK', total: 33, pts: 25, reb: 7, ast: 1, hit: true },
-          { opponent: 'vs NYK', total: 32, pts: 24, reb: 6, ast: 2, hit: true },
-          { opponent: 'vs MIA', total: 30, pts: 22, reb: 6, ast: 2, hit: false }
-        ]
+        'PTS+REB+AST': {
+          overview: {
+            average: 32.8,
+            median: 33,
+            last10: '80%',
+            l5: '100%',
+            l20: '70%',
+            h2h: '67%',
+            season2025: '76%',
+            season2024: '58%'
+          },
+          recentGames: [
+            { opponent: 'vs PHI', total: 36, pts: 28, reb: 8, ast: 0, hit: true },
+            { opponent: 'vs CHI', total: 34, pts: 26, reb: 7, ast: 1, hit: true },
+            { opponent: 'vs IND', total: 31, pts: 23, reb: 6, ast: 2, hit: true },
+            { opponent: 'vs CLE', total: 38, pts: 30, reb: 6, ast: 2, hit: true },
+            { opponent: 'vs TOR', total: 35, pts: 27, reb: 8, ast: 0, hit: true },
+            { opponent: 'vs DET', total: 29, pts: 21, reb: 6, ast: 2, hit: false },
+            { opponent: 'vs ATL', total: 37, pts: 31, reb: 5, ast: 1, hit: true },
+            { opponent: 'vs BRK', total: 33, pts: 25, reb: 7, ast: 1, hit: true },
+            { opponent: 'vs NYK', total: 32, pts: 24, reb: 6, ast: 2, hit: true },
+            { opponent: 'vs MIA', total: 30, pts: 22, reb: 6, ast: 2, hit: false }
+          ]
+        }
       }
     };
 
     // Get player data or use default
     const playerData = baseStats[playerName as keyof typeof baseStats];
-    const statData = playerData?.[stat as keyof typeof playerData] || {
-      overview: { average: 25.5, median: 26, last10: '50%', l5: '40%', l20: '60%', h2h: '50%', season2025: '55%', season2024: '45%' },
-      recentGames: Array(10).fill(null).map((_, i) => ({ opponent: 'vs OPP', total: 20 + Math.floor(Math.random() * 10), hit: Math.random() > 0.5 }))
-    };
+    if (!playerData) {
+      return {
+        overview: { average: 25.5, median: 26, last10: '50%', l5: '40%', l20: '60%', h2h: '50%', season2025: '55%', season2024: '45%' },
+        recentGames: Array(10).fill(null).map((_, i) => ({ opponent: 'vs OPP', total: 20 + Math.floor(Math.random() * 10), hit: Math.random() > 0.5 }))
+      };
+    }
+
+    const statData = playerData[stat as keyof typeof playerData];
+    if (!statData) {
+      return {
+        overview: { average: 25.5, median: 26, last10: '50%', l5: '40%', l20: '60%', h2h: '50%', season2025: '55%', season2024: '45%' },
+        recentGames: Array(10).fill(null).map((_, i) => ({ opponent: 'vs OPP', total: 20 + Math.floor(Math.random() * 10), hit: Math.random() > 0.5 }))
+      };
+    }
 
     return statData;
   };
@@ -199,6 +214,17 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
     return lines[stat as keyof typeof lines] || '25.5';
   };
 
+  const getAltLines = (stat: string) => {
+    const currentLine = parseFloat(getCurrentLine(stat));
+    return [
+      { line: currentLine - 1, odds: '+125' },
+      { line: currentLine - 0.5, odds: '+110' },
+      { line: currentLine, odds: '-108' },
+      { line: currentLine + 0.5, odds: '-115' },
+      { line: currentLine + 1, odds: '-130' }
+    ];
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl bg-slate-800 border-slate-700 text-white max-h-[95vh] overflow-y-auto p-0">
@@ -250,11 +276,32 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
                     <Button className="bg-emerald-600 hover:bg-emerald-700" size="sm">
                       Over {getCurrentLine(selectedStat)} -108
                     </Button>
-                    <Button variant="outline" size="sm" className="border-slate-600">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="border-slate-600"
+                      onClick={() => setShowAltLines(!showAltLines)}
+                    >
                       ALT LINES
                     </Button>
                   </div>
                 </div>
+                
+                {showAltLines && (
+                  <div className="mb-4 p-3 bg-slate-800/50 rounded-lg">
+                    <h4 className="text-sm font-semibold text-slate-300 mb-2">Alternative Lines</h4>
+                    <div className="grid grid-cols-1 gap-2">
+                      {getAltLines(selectedStat).map((altLine, index) => (
+                        <div key={index} className="flex justify-between items-center p-2 bg-slate-700/30 rounded">
+                          <span className="text-white">Over {altLine.line}</span>
+                          <Button size="sm" variant="outline" className="border-slate-600 text-emerald-400">
+                            {altLine.odds}
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 
                 <div className="flex flex-wrap gap-2 mb-4">
                   {statTabs.map((stat) => (
@@ -319,7 +366,7 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
                         <span className="text-xs text-white font-bold absolute -top-6">
                           {game.total}
                         </span>
-                        {selectedStat === 'PTS+REB+AST' && game.pts && (
+                        {selectedStat === 'PTS+REB+AST' && 'pts' in game && (
                           <div className="text-xs text-white p-1">
                             <div>{game.pts}</div>
                             <div>{game.reb}</div>

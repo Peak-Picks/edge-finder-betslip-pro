@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, TrendingUp, BarChart3, Target, Calendar } from 'lucide-react';
+import { ArrowLeft, TrendingUp, BarChart3, Target, Calendar, Bandage } from 'lucide-react';
 
 interface PlayerDetailPageProps {
   player: {
@@ -417,7 +417,7 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
                 <Card className="bg-slate-700/50 border-slate-600 p-2">
                   <h3 className="font-semibold text-pink-400 mb-2 text-xs">Line movement</h3>
                   <div className="space-y-1">
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-between">
                       <div>
                         <p className="text-xs text-slate-400">Updated</p>
                         <p className="text-xs text-white">8:59 AM Today</p>
@@ -427,7 +427,7 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
                         <p className="text-xs text-red-400">{getCurrentLine(selectedStat)} ▼-1</p>
                       </div>
                     </div>
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-between">
                       <div>
                         <p className="text-xs text-white">10:26 PM Jun 14</p>
                       </div>
@@ -486,7 +486,7 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
                 </Card>
               </div>
 
-              {/* Supporting Stats - Now in 2 columns */}
+              {/* Supporting Stats - Now in 3 columns (2 rows) */}
               <div className="grid grid-cols-2 gap-2">
                 {/* Team Rankings */}
                 <Card className="bg-slate-700/50 border-slate-600 p-2">
@@ -532,7 +532,51 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
                   </div>
                 </Card>
 
-                {/* Weather & Conditions */}
+                {/* Team Injuries */}
+                <Card className="bg-slate-700/50 border-slate-600 p-2">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Bandage className="w-3 h-3 text-red-400" />
+                    <h3 className="font-semibold text-red-400 text-xs">{player.team} Injuries</h3>
+                  </div>
+                  <div className="space-y-1 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">K. Irving</span>
+                      <span className="text-yellow-400">Questionable</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">D. Powell</span>
+                      <span className="text-red-400">Out</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">M. Kleber</span>
+                      <span className="text-red-400">Out</span>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Opponent Injuries */}
+                <Card className="bg-slate-700/50 border-slate-600 p-2">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Bandage className="w-3 h-3 text-orange-400" />
+                    <h3 className="font-semibold text-orange-400 text-xs">Opponent Injuries</h3>
+                  </div>
+                  <div className="space-y-1 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">J. Brown</span>
+                      <span className="text-yellow-400">Probable</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">K. Porzingis</span>
+                      <span className="text-red-400">Out</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">A. Horford</span>
+                      <span className="text-emerald-400">Healthy</span>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Game Conditions */}
                 <Card className="bg-slate-700/50 border-slate-600 p-2">
                   <h3 className="font-semibold text-cyan-400 mb-2 text-xs">Game Conditions</h3>
                   <div className="space-y-1 text-xs">
@@ -551,12 +595,12 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
                   </div>
                 </Card>
 
-                {/* Injury Report */}
+                {/* Player Status */}
                 <Card className="bg-slate-700/50 border-slate-600 p-2">
-                  <h3 className="font-semibold text-yellow-400 mb-2 text-xs">Injury Status</h3>
+                  <h3 className="font-semibold text-yellow-400 mb-2 text-xs">Player Status</h3>
                   <div className="space-y-1 text-xs">
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Status</span>
+                      <span className="text-slate-400">Health</span>
                       <span className="text-emerald-400 font-bold">Healthy</span>
                     </div>
                     <div className="flex justify-between">

@@ -213,44 +213,36 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
       'C': 'Centers'
     }[position] || 'Point Guards';
 
-    const shortLabel = {
-      'PG': 'PGs',
-      'SG': 'SGs', 
-      'SF': 'SFs',
-      'PF': 'PFs',
-      'C': 'Cs'
-    }[position] || 'PGs';
-
     if (stat.includes('PTS')) {
       return [
-        { label: `vs ${shortLabel} PPG`, rank: 12, value: '22.4' },
-        { label: 'Def Rating vs Pos', rank: 8, value: '109.1' },
-        { label: 'Opp FG% vs Pos', rank: 15, value: '45.2%' }
+        { label: 'Points Allowed', rank: 18, value: '112.4' },
+        { label: 'Opp FG%', rank: 12, value: '47.2%' },
+        { label: 'Def Efficiency', rank: 15, value: '108.9' }
       ];
     } else if (stat.includes('REB')) {
       return [
-        { label: `vs ${shortLabel} RPG`, rank: 18, value: position === 'C' ? '12.9' : position === 'PF' ? '9.2' : '4.8' },
-        { label: 'Def Reb Rate vs Pos', rank: 11, value: '76.3%' },
-        { label: 'Opp OReb vs Pos', rank: 9, value: position === 'C' ? '3.2' : '2.1' }
+        { label: 'Rebounds Allowed', rank: 8, value: '43.2' },
+        { label: 'Opp OReb Rate', rank: 11, value: '28.4%' },
+        { label: 'Box Out Rate', rank: 22, value: '71.8%' }
       ];
     } else if (stat.includes('AST')) {
       return [
-        { label: `vs ${shortLabel} APG`, rank: 22, value: position === 'PG' ? '8.9' : position === 'SG' ? '5.2' : '3.8' },
-        { label: 'TOV Rate vs Pos', rank: 7, value: '12.4%' },
-        { label: 'Steal Rate vs Pos', rank: 14, value: '1.8' }
+        { label: 'Assists Allowed', rank: 14, value: '25.8' },
+        { label: 'Forced TOV Rate', rank: 9, value: '16.2%' },
+        { label: 'Steal Rate', rank: 19, value: '8.4%' }
       ];
     } else if (stat.includes('3PTM')) {
       return [
-        { label: `vs ${shortLabel} 3PM`, rank: 19, value: position === 'PG' || position === 'SG' ? '3.1' : '1.8' },
-        { label: '3P Def % vs Pos', rank: 25, value: '36.8%' },
-        { label: 'Contest Rate vs Pos', rank: 12, value: '78.5%' }
+        { label: '3PM Allowed', rank: 25, value: '12.9' },
+        { label: 'Opp 3P%', rank: 17, value: '36.1%' },
+        { label: 'Contest Rate', rank: 11, value: '82.3%' }
       ];
     } else {
-      // For combo stats like PTS+REB+AST, show综合 position-based stats
+      // For combo stats like PTS+REB+AST, show overall defensive metrics
       return [
-        { label: `vs ${shortLabel} Total Prod`, rank: 9, value: position === 'PG' ? '42.1' : position === 'C' ? '38.7' : '35.2' },
-        { label: `${positionLabel} Def Rank`, rank: 12, value: `#${12}` },
-        { label: `Pos Usage vs Opp`, rank: 18, value: '28.4%' }
+        { label: 'Total Def Rating', rank: 12, value: '110.2' },
+        { label: 'Opp Production', rank: 16, value: '89.4' },
+        { label: 'Def Efficiency', rank: 9, value: '103.7' }
       ];
     }
   };
@@ -520,7 +512,7 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
                 <Card className="bg-slate-700/50 border-slate-600 p-2">
                   <div className="flex items-center gap-2 mb-2">
                     <Target className="w-4 h-4 text-orange-400" />
-                    <h3 className="font-semibold text-orange-400 text-xs">vs {playerPosition} Defense</h3>
+                    <h3 className="font-semibold text-orange-400 text-xs">Defense vs {getStatDisplayName(selectedStat)}</h3>
                   </div>
                   
                   <div className="space-y-1">

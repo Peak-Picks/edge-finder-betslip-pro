@@ -85,75 +85,90 @@ export const GameLines = () => {
             <div className="space-y-4">
               {/* Spread */}
               <div className="bg-slate-700/30 rounded-lg p-3">
-                <h4 className="text-sm font-medium text-slate-300 mb-2">Spread</h4>
-                <div className="flex justify-between items-center">
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm text-slate-300">{game.awayTeam} {game.awaySpread}</span>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-sm font-medium text-slate-300">Spread</h4>
+                  <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">
+                    {game.edge.spread}% Edge
+                  </Badge>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-300">{game.awayTeam} {game.awaySpread}</span>
+                    <div className="flex items-center gap-2">
                       <span className="text-emerald-400 font-medium">-110</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-slate-300">{game.homeTeam} {game.homeSpread}</span>
-                      <span className="text-emerald-400 font-medium">-110</span>
+                      <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 h-6 px-2">
+                        <Plus className="w-3 h-3" />
+                      </Button>
                     </div>
                   </div>
-                  <div className="ml-4 flex flex-col items-end">
-                    <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs mb-1">
-                      {game.edge.spread}% Edge
-                    </Badge>
-                    <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700">
-                      <Plus className="w-3 h-3" />
-                    </Button>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-300">{game.homeTeam} {game.homeSpread}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-emerald-400 font-medium">-110</span>
+                      <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 h-6 px-2">
+                        <Plus className="w-3 h-3" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Money Line */}
               <div className="bg-slate-700/30 rounded-lg p-3">
-                <h4 className="text-sm font-medium text-slate-300 mb-2">Money Line</h4>
-                <div className="flex justify-between items-center">
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm text-slate-300">{game.awayTeam}</span>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-sm font-medium text-slate-300">Money Line</h4>
+                  <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">
+                    {game.edge.moneyline}% Edge
+                  </Badge>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-300">{game.awayTeam}</span>
+                    <div className="flex items-center gap-2">
                       <span className="text-emerald-400 font-medium">{game.awayML}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-slate-300">{game.homeTeam}</span>
-                      <span className="text-emerald-400 font-medium">{game.homeML}</span>
+                      <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 h-6 px-2">
+                        <Plus className="w-3 h-3" />
+                      </Button>
                     </div>
                   </div>
-                  <div className="ml-4 flex flex-col items-end">
-                    <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs mb-1">
-                      {game.edge.moneyline}% Edge
-                    </Badge>
-                    <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700">
-                      <Plus className="w-3 h-3" />
-                    </Button>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-300">{game.homeTeam}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-emerald-400 font-medium">{game.homeML}</span>
+                      <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 h-6 px-2">
+                        <Plus className="w-3 h-3" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Total Points */}
               <div className="bg-slate-700/30 rounded-lg p-3">
-                <h4 className="text-sm font-medium text-slate-300 mb-2">Total Points</h4>
-                <div className="flex justify-between items-center">
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm text-slate-300">Over {game.total}</span>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-sm font-medium text-slate-300">Total Points</h4>
+                  <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">
+                    {game.edge.total}% Edge
+                  </Badge>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-300">Over {game.total}</span>
+                    <div className="flex items-center gap-2">
                       <span className="text-emerald-400 font-medium">{game.overOdds}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-slate-300">Under {game.total}</span>
-                      <span className="text-emerald-400 font-medium">{game.underOdds}</span>
+                      <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 h-6 px-2">
+                        <Plus className="w-3 h-3" />
+                      </Button>
                     </div>
                   </div>
-                  <div className="ml-4 flex flex-col items-end">
-                    <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs mb-1">
-                      {game.edge.total}% Edge
-                    </Badge>
-                    <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700">
-                      <Plus className="w-3 h-3" />
-                    </Button>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-300">Under {game.total}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-emerald-400 font-medium">{game.underOdds}</span>
+                      <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 h-6 px-2">
+                        <Plus className="w-3 h-3" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>

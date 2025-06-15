@@ -3,11 +3,13 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { TrendingUp, Plus, BarChart3, Clock } from 'lucide-react';
+import { useBetSlipContext } from './BetSlipContext';
 
 export const GameBasedPicks = () => {
+  const { addToBetSlip, betSlip } = useBetSlipContext();
   const gamePicks = [
     {
-      id: 1,
+      id: 101,
       matchup: 'Lakers vs Warriors',
       type: 'Spread',
       pick: 'Lakers -3.5',
@@ -16,10 +18,10 @@ export const GameBasedPicks = () => {
       confidence: 'medium',
       bookmaker: 'DraftKings',
       gameTime: '8:00 PM ET',
-      aiInsight: "The AI model projects the Lakers to outperform the spread due to significant rebound and transition advantages against a Warriors defense ranked in the bottom third for defensive rating on the road. Lakers' adjusted +6.2 net rating at home and LeBron's stronger on/off splits increase expected point margin. Simulations have Lakers covering this spread 61% of the time."
+      aiInsight: "The AI model projects the Lakers to outperform the spread due to significant rebound and transition advantages against a Warriors defense ranked in the bottom third for defensive rating on the road. Lakers' adjusted +6.2 net rating at home and LeBron's stronger on/off splits increase expected point margin. Simulations have Lakers covering this spread 61% of the time. Additional factors: Warriors' top scorer’s ankle injury affects expected pace. LA’s preferred switching defense is expected to limit Golden State’s drives, while betting market consensus projects a line closer to -5."
     },
     {
-      id: 2,
+      id: 102,
       matchup: 'Celtics vs Heat',
       type: 'Total',
       pick: 'Under 218.5',
@@ -28,10 +30,10 @@ export const GameBasedPicks = () => {
       confidence: 'high',
       bookmaker: 'BetMGM',
       gameTime: '7:30 PM ET',
-      aiInsight: "AI predicts a defensive-focused contest, with both teams in the top 6 for defensive efficiency over the last 10 games. The Heat’s pace drops significantly against top-tier opponents, and recent injury adjustments forecast a 211 total. Historical data shows 8 of the last 10 meetings finishing under this line. 74% model confidence."
+      aiInsight: "AI predicts a defensive-focused contest, with both teams in the top 6 for defensive efficiency over the last 10 games. The Heat’s pace drops significantly against top-tier opponents, and recent injury adjustments forecast a 211 total. Historical data shows 8 of the last 10 meetings finishing under this line. 74% model confidence. Weather: No impact. AI notes: If Celtics’ Robert Williams is ruled out (questionable), predicted total drops by another 2.3 points. Key On/Off metrics are baked into the total."
     },
     {
-      id: 3,
+      id: 103,
       matchup: 'Chiefs vs Bills',
       type: 'Moneyline',
       pick: 'Chiefs ML',
@@ -40,7 +42,7 @@ export const GameBasedPicks = () => {
       confidence: 'high',
       bookmaker: 'FanDuel',
       gameTime: '4:25 PM ET',
-      aiInsight: "After analyzing home/away splits, QB matchups, and late-season trends, AI rates Chiefs' win probability at 61%, factoring injury updates and weather. Mahomes' EPA/play increases to 0.35 at home vs. playoff teams, while Bills struggle in red zone defense (ranked 23rd last 8 games). This value is above market consensus."
+      aiInsight: "After analyzing home/away splits, QB matchups, and late-season trends, AI rates Chiefs' win probability at 61%, factoring injury updates and weather. Mahomes' EPA/play increases to 0.35 at home vs. playoff teams, while Bills struggle in red zone defense (ranked 23rd last 8 games). This value is above market consensus. Noted: KC also ranks 2nd in special teams DVOA, which can swing close games; sharp money from betting exchanges has moved the line from -120 to -130."
     }
   ];
 
@@ -96,9 +98,17 @@ export const GameBasedPicks = () => {
               <Button
                 className="flex-1 bg-cyan-700 hover:bg-cyan-800 text-white"
                 size="sm"
+                onClick={() => addToBetSlip({
+                  id: pick.id,
+                  type: pick.type,
+                  description: pick.pick,
+                  odds: pick.odds,
+                  edge: pick.edge
+                })}
+                disabled={betSlip.some(b => b.id === pick.id)}
               >
                 <Plus className="w-4 h-4 mr-1" />
-                Add to Betslip
+                {betSlip.some(b => b.id === pick.id) ? "Added" : "Add to Betslip"}
               </Button>
               <Button
                 variant="outline"

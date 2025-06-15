@@ -5,20 +5,22 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Trash2, Calculator, TrendingUp, DollarSign } from 'lucide-react';
+import { useBetSlipContext } from './BetSlipContext';
 
 export const BetBuilder = () => {
-  const [selectedBets, setSelectedBets] = useState([
-    {
-      id: 1,
-      type: "Player Prop",
-      description: "LeBron James Over 25.5 Points",
-      odds: "-110",
-      edge: 5.2
-    }
-  ]);
-  
-  const [betAmount, setBetAmount] = useState("25");
+  const {
+    betSlip,
+    addToBetSlip,
+    removeFromBetSlip,
+    clearBetSlip,
+    savedBetSlips,
+    addSavedBetSlip,
+  } = useBetSlipContext();
 
+  const [betAmount, setBetAmount] = useState("25");
+  const [tab, setTab] = useState("betslip");
+
+  // Simulate available bets for possible future use or quick add
   const availableBets = [
     {
       id: 2,
@@ -38,15 +40,16 @@ export const BetBuilder = () => {
 
   const calculatePayout = () => {
     const amount = parseFloat(betAmount) || 0;
+    // Dummy payout formula (should eventually calculate actual odds from bets)
     return (amount * 2.5).toFixed(2);
   };
 
-  const addBet = (bet: typeof availableBets[0]) => {
-    setSelectedBets([...selectedBets, bet]);
-  };
-
-  const removeBet = (betId: number) => {
-    setSelectedBets(selectedBets.filter(bet => bet.id !== betId));
+  const handlePlaceBet = () => {
+    if (betSlip.length === 0) return;
+    addSavedBetSlip(betSlip, betAmount);
+    clearBetSlip();
+    setBetAmount("25");
+    setTab("saved");
   };
 
   return (
@@ -57,38 +60,40 @@ export const BetBuilder = () => {
       </div>
 
       <div className="p-4 space-y-6">
-        <Tabs defaultValue="betslip" className="w-full">
+        <Tabs value={tab} onValueChange={setTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2 bg-slate-800/50 border border-slate-700/50">
             <TabsTrigger 
               value="betslip" 
               className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 text-white"
             >
-              Betslip ({selectedBets.length})
+              Betslip ({betSlip.length})
             </TabsTrigger>
             <TabsTrigger 
-              value="available" 
+              value="saved" 
               className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 text-white"
             >
-              Available Bets
+              Saved Bet Slips
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="betslip" className="mt-4">
             <div className="space-y-4">
-              {selectedBets.length === 0 ? (
+              {betSlip.length === 0 ? (
                 <Card className="bg-slate-800/50 border-slate-700/50 p-8 text-center">
                   <p className="text-slate-400">No bets selected</p>
                 </Card>
               ) : (
                 <>
-                  {selectedBets.map((bet) => (
+                  {betSlip.map((bet) => (
                     <Card key={bet.id} className="bg-slate-800/50 border-slate-700/50 p-4">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 mb-2">
                             {bet.type}
                           </Badge>
-                          <h3 className="font-medium text-white mb-1">{bet.description}</h3>
+                          <h3 className="font-medium text-white mb-1">
+                            {bet.description || bet.subtitle}
+                          </h3>
                           <div className="flex items-center gap-2">
                             <span className="text-emerald-400 font-medium">{bet.odds}</span>
                             <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">
@@ -99,7 +104,7 @@ export const BetBuilder = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => removeBet(bet.id)}
+                          onClick={() => removeFromBetSlip(bet.id)}
                           className="border-red-500/30 text-red-400 hover:bg-red-500/10"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -115,7 +120,6 @@ export const BetBuilder = () => {
                         type="number"
                         value={betAmount}
                         onChange={(e) => setBetAmount(e.target.value)}
-                        // Ensure input text is white, placeholder is slate-400
                         className="flex-1 bg-slate-700/50 border border-slate-600 rounded-lg px-3 py-2 text-white placeholder:text-slate-400"
                         placeholder="Enter amount"
                       />
@@ -135,7 +139,7 @@ export const BetBuilder = () => {
                       </div>
                     </div>
 
-                    <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
+                    <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handlePlaceBet}>
                       <Calculator className="w-4 h-4 mr-2" />
                       Place Bet
                     </Button>
@@ -145,33 +149,45 @@ export const BetBuilder = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="available" className="mt-4">
-            <div className="space-y-3">
-              {availableBets.map((bet) => (
-                <Card key={bet.id} className="bg-slate-800/50 border-slate-700/50 p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 mb-2">
-                        {bet.type}
-                      </Badge>
-                      <h3 className="font-medium text-white mb-1">{bet.description}</h3>
-                      <div className="flex items-center gap-2">
-                        <span className="text-emerald-400 font-medium">{bet.odds}</span>
-                        <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">
-                          {bet.edge}% Edge
-                        </Badge>
+          <TabsContent value="saved" className="mt-4">
+            <div className="space-y-4">
+              {savedBetSlips.length === 0 ? (
+                <Card className="bg-slate-800/50 border-slate-700/50 p-8 text-center">
+                  <p className="text-slate-400">No saved bet slips</p>
+                </Card>
+              ) : (
+                savedBetSlips
+                  .slice()
+                  .reverse()
+                  .map((slip, i) => (
+                  <Card key={slip.timestamp} className="bg-slate-800/50 border-slate-700/50 p-4">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-slate-400 text-xs">#{savedBetSlips.length - i} • {new Date(slip.timestamp).toLocaleString()}</span>
+                      <Badge className="bg-slate-700/80 text-slate-300 border-slate-800 text-xs">{slip.bets.length} bet{slip.bets.length === 1 ? '' : 's'}</Badge>
+                    </div>
+                    <div className="space-y-1 mb-2">
+                      {slip.bets.map(bet => (
+                        <div key={bet.id} className="border-b border-slate-700/70 py-1 flex justify-between items-center">
+                          <span className="text-slate-100 text-sm">
+                            {bet.description || bet.subtitle}
+                          </span>
+                          <span className="text-emerald-400 font-medium">{bet.odds}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex justify-between pt-2 border-t border-slate-700 mt-2">
+                      <div>
+                        <span className="text-slate-400 text-xs">Wager:</span>{" "}
+                        <span className="text-white font-semibold text-sm">${slip.amount}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 text-xs">Potential:</span>{" "}
+                        <span className="text-emerald-400 font-semibold text-sm">${(parseFloat(slip.amount) * 2.5).toFixed(2)}</span>
                       </div>
                     </div>
-                    <Button
-                      size="sm"
-                      onClick={() => addBet(bet)}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </Card>
-              ))}
+                  </Card>
+                ))
+              )}
             </div>
           </TabsContent>
         </Tabs>

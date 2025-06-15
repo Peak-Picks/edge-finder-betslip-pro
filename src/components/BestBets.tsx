@@ -3,8 +3,11 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { TrendingUp, Plus, Star, Clock } from 'lucide-react';
+import { useBetSlipContext } from './BetSlipContext';
 
 export const BestBets = () => {
+  const { addToBetSlip, betSlip } = useBetSlipContext();
+
   const bestBets = [
     {
       id: 1,
@@ -106,9 +109,17 @@ export const BestBets = () => {
               <Button 
                 className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
                 size="sm"
+                onClick={() => addToBetSlip({
+                  id: bet.id,
+                  type: "Best Bet",
+                  description: bet.subtitle,
+                  odds: bet.odds,
+                  edge: bet.edge
+                })}
+                disabled={betSlip.some(b => b.id === bet.id)}
               >
                 <Plus className="w-4 h-4 mr-1" />
-                Add to Betslip
+                {betSlip.some(b => b.id === bet.id) ? "Added" : "Add to Betslip"}
               </Button>
               <Button 
                 variant="outline" 

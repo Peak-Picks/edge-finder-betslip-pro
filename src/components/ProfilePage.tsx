@@ -18,7 +18,7 @@ export const ProfilePage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white pb-20">
       <div className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700/50 p-4">
-        <h1 className="text-xl font-bold">Profile</h1>
+        <h1 className="text-xl font-bold text-white">Profile</h1>
         <p className="text-slate-400 text-sm">Your betting performance and settings</p>
       </div>
 
@@ -43,7 +43,7 @@ export const ProfilePage = () => {
         <Card className="bg-slate-800/50 border-slate-700/50 p-4">
           <div className="flex items-center gap-2 mb-4">
             <Trophy className="w-5 h-5 text-yellow-400" />
-            <h3 className="text-lg font-semibold">Performance</h3>
+            <h3 className="text-lg font-semibold text-white">Performance</h3>
           </div>
           
           <div className="grid grid-cols-2 gap-4 mb-4">
@@ -81,7 +81,7 @@ export const ProfilePage = () => {
 
         {/* Settings Menu */}
         <Card className="bg-slate-800/50 border-slate-700/50 p-4">
-          <h3 className="text-lg font-semibold mb-4">Settings</h3>
+          <h3 className="text-lg font-semibold text-white mb-4">Settings</h3>
           
           <div className="space-y-2">
             <Button variant="ghost" className="w-full justify-start text-slate-300 hover:bg-slate-700/50">
@@ -122,7 +122,7 @@ export const ProfilePage = () => {
         <Card className="bg-slate-800/50 border-slate-700/50 p-4">
           <div className="flex items-center gap-2 mb-4">
             <Trophy className="w-5 h-5 text-yellow-400" />
-            <h3 className="text-lg font-semibold">Recent Achievements</h3>
+            <h3 className="text-lg font-semibold text-white">Recent Achievements</h3>
           </div>
           
           <div className="space-y-3">

@@ -1,11 +1,11 @@
 
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Target, Zap, BarChart3 } from 'lucide-react';
+import { Target, Zap, BarChart3, TrendingUp } from 'lucide-react';
 import { BestBets } from './BestBets';
 import { PlayerProps } from './PlayerProps';
 import { GameBasedPicks } from './GameBasedPicks';
-// Removed BetSlipProvider import
+import { LongShots } from './LongShots';
 
 export const WizPicks = () => {
   const [activeTab, setActiveTab] = useState('best-bets');
@@ -17,13 +17,20 @@ export const WizPicks = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3 bg-slate-800/50 border border-slate-700/50">
+        <TabsList className="grid w-full grid-cols-4 bg-slate-800/50 border border-slate-700/50">
           <TabsTrigger
             value="best-bets"
             className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 flex items-center gap-1"
           >
             <Target className="w-4 h-4" />
             Best Bets
+          </TabsTrigger>
+          <TabsTrigger
+            value="long-shots"
+            className="data-[state=active]:bg-purple-500/20 data-[state=active]:text-purple-400 flex items-center gap-1"
+          >
+            <TrendingUp className="w-4 h-4" />
+            Long Shot
           </TabsTrigger>
           <TabsTrigger
             value="game-based"
@@ -43,6 +50,9 @@ export const WizPicks = () => {
         <TabsContent value="best-bets" className="mt-4">
           <BestBets />
         </TabsContent>
+        <TabsContent value="long-shots" className="mt-4">
+          <LongShots />
+        </TabsContent>
         <TabsContent value="game-based" className="mt-4">
           <GameBasedPicks />
         </TabsContent>
@@ -53,4 +63,3 @@ export const WizPicks = () => {
     </div>
   );
 };
-

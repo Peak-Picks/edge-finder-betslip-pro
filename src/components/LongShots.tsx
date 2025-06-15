@@ -5,48 +5,48 @@ import { Button } from '@/components/ui/button';
 import { TrendingUp, Plus, Star } from 'lucide-react';
 import { useBetSlipContext } from './BetSlipContext';
 
-export const BestBets = () => {
+export const LongShots = () => {
   const { addToBetSlip, betSlip } = useBetSlipContext();
 
-  const bestBets = [
+  const longShots = [
     {
-      id: "1",
+      id: "ls1",
       player: "LeBron James",
-      title: "Over 25.5 Points",
+      title: "Over 27.5 Points",
       sport: "Basketball - NBA",
-      game: "Jun 10, 8:00 PM",
-      description: "LeBron James to score over 25.5 points against the Golden State Warriors.",
-      odds: "+110",
+      game: "Jun 10, 3:00 PM",
+      description: "LeBron James to score over 27.5 points against the Golden State Warriors.",
+      odds: "-115",
       platform: "DraftKings",
       confidence: 4,
-      insights: "LeBron is averaging 31.2 points per game against the Warriors this season and is coming off a three-game 35+ point streak. Warriors struggle to defend high-usage forwards (allowing 2.5 points per attempt above league average), and LeBron's usage increases by 9% in games projected to finish within 5 points.",
+      insights: "LeBron has been averaging 30.2 points in his last 5 games. Warriors rank 23rd in opponent points per game. High-stakes game likely means more usage for LeBron.",
       category: "Top Prop"
     },
     {
-      id: "2",
-      player: "Patrick Mahomes",
-      title: "Over 2.5 Passing TDs",
-      sport: "Football - NFL",
-      game: "Jun 11, 4:25 PM",
-      description: "Patrick Mahomes to throw over 2.5 passing touchdowns against the Bills.",
-      odds: "-115",
+      id: "ls2", 
+      player: "Nikola Jokic",
+      title: "Triple-Double",
+      sport: "Basketball - NBA",
+      game: "Jun 11, 4:30 PM",
+      description: "Nikola Jokic to record a triple-double against the Phoenix Suns.",
+      odds: "+150",
       platform: "FanDuel",
-      confidence: 5,
-      insights: "Mahomes faces a Bills defense allowing 2.8 passing TDs per game over their last 5. AI analysis factors in offensive line strength, red zone efficiency (Chiefs top 5), and game script projecting above league-average pass attempts.",
-      category: "Best Value"
+      confidence: 3,
+      insights: "Jokic has 5 triple-doubles in his last 10 games. Suns allow the 5th most assists to centers. Jokic's all-around game makes this a strong possibility.",
+      category: "Top Prop"
     },
     {
-      id: "3",
-      player: "Jayson Tatum",
-      title: "Over 8.5 Rebounds",
-      sport: "Basketball - NBA",
-      game: "Jun 12, 7:30 PM",
-      description: "Jayson Tatum to grab over 8.5 rebounds against the Heat.",
-      odds: "+125",
-      platform: "BetMGM",
-      confidence: 3,
-      insights: "AI projects Tatum for 10+ rebounds in this matchup due to increased time at power forward and Miami's key frontcourt injuries. Past 10 games, Heat allow the 2nd most rebounds to AI-profiled comparable forwards.",
-      category: "Trending"
+      id: "ls3",
+      player: "Connor McDavid", 
+      title: "Over 3.5 Shots on Goal",
+      sport: "Hockey - NHL",
+      game: "Jun 12, 3:30 PM",
+      description: "Connor McDavid to have over 3.5 shots on goal.",
+      odds: "-140",
+      platform: "DraftKings",
+      confidence: 5,
+      insights: "McDavid is averaging 4.2 shots per game this season and faces a team that allows a high volume of shots. He's hit this line in 7 of his last 10 games.",
+      category: "Top Prop"
     }
   ];
 
@@ -64,35 +64,26 @@ export const BestBets = () => {
     return isPositive ? 'text-emerald-400' : 'text-red-400';
   };
 
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case 'Top Prop': return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
-      case 'Best Value': return 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30';
-      case 'Trending': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
-      default: return 'bg-slate-500/20 text-slate-400 border-slate-500/30';
-    }
-  };
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Star className="w-5 h-5 text-emerald-400" />
-          <h2 className="text-lg font-semibold">Today's Best Bets</h2>
+          <TrendingUp className="w-5 h-5 text-purple-400" />
+          <h2 className="text-lg font-semibold">Long Shot Picks</h2>
         </div>
-        <Badge variant="secondary" className="bg-emerald-500/20 text-emerald-400">
-          {bestBets.length} Available
+        <Badge variant="secondary" className="bg-purple-500/20 text-purple-400">
+          {longShots.length} Available
         </Badge>
       </div>
 
       <div className="space-y-3">
-        {bestBets.map((bet) => (
+        {longShots.map((bet) => (
           <Card key={bet.id} className="bg-slate-800/50 border-slate-700/50 p-4 hover:bg-slate-800/70 transition-all duration-200">
             <div className="flex items-start justify-between mb-3">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
                   <h3 className="font-bold text-white text-lg">{bet.player} {bet.title}</h3>
-                  <Badge className={getCategoryColor(bet.category)}>
+                  <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">
                     {bet.category}
                   </Badge>
                 </div>
@@ -128,11 +119,11 @@ export const BestBets = () => {
 
             <div className="flex gap-2">
               <Button 
-                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
                 size="sm"
                 onClick={() => addToBetSlip({
                   id: bet.id,
-                  type: "Best Bet",
+                  type: "Long Shot",
                   description: `${bet.player} ${bet.title}`,
                   odds: bet.odds,
                   edge: 0

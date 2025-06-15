@@ -22,41 +22,41 @@ export const PropItem = ({ prop, onAddToBetslip, onViewInsights }: PropItemProps
 
   return (
     <div 
-      className="bg-slate-700/30 rounded-lg p-3 cursor-pointer hover:bg-slate-700/40 transition-colors"
+      className="bg-slate-700/30 rounded-lg p-2 cursor-pointer hover:bg-slate-700/40 transition-colors"
       onClick={onViewInsights}
     >
       <div className="flex items-center justify-between mb-2">
         <div className="flex-1">
-          <h4 className="font-medium text-white">{prop.type}</h4>
-          <p className="text-sm text-slate-400">O/U {prop.line}</p>
+          <h4 className="font-medium text-white text-sm">{prop.type}</h4>
+          <p className="text-xs text-slate-400">O/U {prop.line}</p>
         </div>
         <div className="text-right">
-          <div className={`text-sm font-bold ${getEdgeColor(prop.edge)}`}>
-            {prop.edge}% Edge
+          <div className={`text-xs font-bold ${getEdgeColor(prop.edge)}`}>
+            {prop.edge}%
           </div>
-          <div className="text-sm font-bold text-white mt-1">{prop.odds}</div>
+          <div className="text-xs font-bold text-white mt-0.5">{prop.odds}</div>
         </div>
       </div>
 
-      <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+      <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
         <Button 
-          className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+          className="flex-1 bg-emerald-600 hover:bg-emerald-700 h-7 text-xs"
           size="sm"
           onClick={onAddToBetslip}
         >
-          <Plus className="w-4 h-4 mr-1" />
-          Add to Betslip
+          <Plus className="w-3 h-3 mr-1" />
+          Add
         </Button>
         <Button 
           variant="outline" 
           size="sm"
-          className="border-slate-600 text-slate-300 hover:bg-slate-700"
+          className="border-slate-600 text-slate-300 hover:bg-slate-700 h-7 px-2"
           onClick={(e) => {
             e.stopPropagation();
             onViewInsights();
           }}
         >
-          <TrendingUp className="w-4 h-4" />
+          <TrendingUp className="w-3 h-3" />
         </Button>
       </div>
     </div>

@@ -213,7 +213,14 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
       'C': 'Centers'
     }[position] || 'Point Guards';
 
-    if (stat.includes('PTS')) {
+    if (stat === 'PTS+REB+AST') {
+      // For the combo stat, show comprehensive overall defensive metrics
+      return [
+        { label: 'Overall Def Rating', rank: 12, value: '108.3' },
+        { label: 'Fantasy Pts Allow', rank: 8, value: '45.2' },
+        { label: 'Multi-Cat Defense', rank: 15, value: '76.8%' }
+      ];
+    } else if (stat.includes('PTS')) {
       return [
         { label: 'Points Allowed', rank: 18, value: '112.4' },
         { label: 'Opp FG%', rank: 12, value: '47.2%' },
@@ -238,7 +245,7 @@ export const PlayerDetailPage = ({ player, open, onOpenChange }: PlayerDetailPag
         { label: 'Contest Rate', rank: 11, value: '82.3%' }
       ];
     } else {
-      // For combo stats like PTS+REB+AST, show overall defensive metrics
+      // For other combo stats, show overall defensive metrics
       return [
         { label: 'Total Def Rating', rank: 12, value: '110.2' },
         { label: 'Opp Production', rank: 16, value: '89.4' },

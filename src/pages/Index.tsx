@@ -1,11 +1,11 @@
+
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { BottomNav } from '@/components/BottomNav';
-import { BestBets } from '@/components/BestBets';
-import { PlayerProps } from '@/components/PlayerProps';
+import { WizPicks } from '@/components/WizPicks';
 import { TrendingParlays } from '@/components/TrendingParlays';
 import { BankrollTracker } from '@/components/BankrollTracker';
 import { GameLines } from '@/components/GameLines';
@@ -13,11 +13,11 @@ import { PlayerPropAnalyzer } from '@/components/PlayerPropAnalyzer';
 import { BetBuilder } from '@/components/BetBuilder';
 import { DiscoverPage } from '@/components/DiscoverPage';
 import { ProfilePage } from '@/components/ProfilePage';
-import { TrendingUp, Target, Zap, Wallet, BarChart3 } from 'lucide-react';
+import { TrendingUp, Target, BarChart3, Wallet } from 'lucide-react';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('home');
-  const [currentView, setCurrentView] = useState('best-bets');
+  const [currentView, setCurrentView] = useState('wiz-picks');
 
   const renderContent = () => {
     switch (activeTab) {
@@ -43,20 +43,13 @@ const Index = () => {
                 </div>
 
                 <Tabs value={currentView} onValueChange={setCurrentView} className="w-full">
-                  <TabsList className="grid w-full grid-cols-5 bg-slate-800/50 border border-slate-700/50">
+                  <TabsList className="grid w-full grid-cols-4 bg-slate-800/50 border border-slate-700/50">
                     <TabsTrigger 
-                      value="best-bets" 
+                      value="wiz-picks" 
                       className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 flex items-center gap-1 text-xs"
                     >
                       <Target className="w-3 h-3" />
-                      Best Bets
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="player-props" 
-                      className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 flex items-center gap-1 text-xs"
-                    >
-                      <Zap className="w-3 h-3" />
-                      Props
+                      Wiz Picks
                     </TabsTrigger>
                     <TabsTrigger 
                       value="game-lines" 
@@ -87,11 +80,8 @@ const Index = () => {
             {/* Content */}
             <div className="px-4 py-2">
               <Tabs value={currentView} className="w-full">
-                <TabsContent value="best-bets" className="mt-2">
-                  <BestBets />
-                </TabsContent>
-                <TabsContent value="player-props" className="mt-2">
-                  <PlayerProps />
+                <TabsContent value="wiz-picks" className="mt-2">
+                  <WizPicks />
                 </TabsContent>
                 <TabsContent value="game-lines" className="mt-2">
                   <GameLines />

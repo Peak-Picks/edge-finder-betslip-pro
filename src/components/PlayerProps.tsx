@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -84,6 +85,13 @@ export const PlayerProps = ({ onRefreshData }: PlayerPropsProps) => {
   };
 
   const extractPropFromTitle = (title: string): string => {
+    // Handle titles that already have clean prop names
+    if (title.includes('Points') || title.includes('Rebounds') || title.includes('Assists')) {
+      const match = title.match(/(Points|Rebounds|Assists)/);
+      return match ? match[1] : title;
+    }
+    
+    // Handle legacy format "Over X.X PropType"
     const match = title.match(/Over \d+\.?\d* (.+)/);
     return match ? match[1] : title;
   };
@@ -204,7 +212,7 @@ export const PlayerProps = ({ onRefreshData }: PlayerPropsProps) => {
                           )}
                         </div>
                         <p className="text-emerald-400 font-medium">
-                          {prop.type} {prop.line} {propType}
+                          {prop.line} {propType}
                         </p>
                       </div>
                       <div className="text-right">

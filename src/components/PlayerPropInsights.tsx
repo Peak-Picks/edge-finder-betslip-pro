@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -73,8 +72,12 @@ export const PlayerPropInsights = ({ prop, open, onOpenChange }: PlayerPropInsig
       defenseRating: prop.edge > 8 ? 'Below Average' : prop.edge > 4 ? 'Average' : 'Above Average'
     };
 
+    // Create clean AI recommendation without duplication
+    const cleanPropType = prop.prop;
+    const recommendation = `${prop.type} ${prop.line} ${cleanPropType}`;
+
     return {
-      aiRecommendation: `${prop.type} ${prop.line} ${prop.prop}`,
+      aiRecommendation: recommendation,
       confidence: confidencePercentage,
       keyFactors,
       recentPerformance,

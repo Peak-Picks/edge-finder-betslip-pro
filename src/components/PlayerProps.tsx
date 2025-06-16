@@ -13,6 +13,9 @@ interface PlayerPropsProps {
   onRefreshData?: () => void;
 }
 
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+const WNBA_CACHE_KEY = 'wnba_props_cache';
+
 export const PlayerProps = ({ onRefreshData }: PlayerPropsProps) => {
   const [selectedSport, setSelectedSport] = useState('wnba');
   const [selectedProp, setSelectedProp] = useState<any>(null);
@@ -26,20 +29,74 @@ export const PlayerProps = ({ onRefreshData }: PlayerPropsProps) => {
 
   const API_KEY = '70f59ac60558d2b4dee1200bdaa2f2f3';
 
-  // Initialize with NBA/NFL data only on first load
+  // Check if we have valid cached WNBA data
+  const getWNBACachedData = (): ProcessedProp[] | null => {
+    try {
+      const cached = localStorage.getItem(WNBA_CACHE_KEY);
+      if (!cached) return null;
+      
+      const { data, timestamp } = JSON.parse(cached);
+      const now = Date.now();
+      
+      if (now - timestamp > CACHE_DURATION) {
+        localStorage.removeItem(WNBA_CACHE_KEY);
+        return null;
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Error reading WNBA cache:', error);
+      localStorage.removeItem(WNBA_CACHE_KEY);
+      return null;
+    }
+  };
+
+  // Save WNBA data to cache
+  const setWNBACachedData = (data: ProcessedProp[]) => {
+    try {
+      const cacheData = {
+        data,
+        timestamp: Date.now()
+      };
+      localStorage.setItem(WNBA_CACHE_KEY, JSON.stringify(cacheData));
+    } catch (error) {
+      console.error('Error saving WNBA cache:', error);
+    }
+  };
+
+  // Initialize with NBA/NFL data and check for cached WNBA data
   useEffect(() => {
     console.log('🎬 PlayerProps component initialized');
     const nbaProps = dynamicPicksGenerator.generatePlayerProps('nba');
     const nflProps = dynamicPicksGenerator.generatePlayerProps('nfl');
-    setPlayerProps({ nba: nbaProps, nfl: nflProps, wnba: [] });
     
-    // Load WNBA data separately
-    console.log('🚀 Initiating WNBA props load...');
-    loadWNBAProps();
+    // Check for cached WNBA data first
+    const cachedWNBAData = getWNBACachedData();
+    if (cachedWNBAData && cachedWNBAData.length > 0) {
+      console.log('📦 Using cached WNBA data, skipping API call');
+      setPlayerProps({ nba: nbaProps, nfl: nflProps, wnba: cachedWNBAData });
+      setWnbaDataSource('live');
+    } else {
+      console.log('💾 No valid cached WNBA data found, will load from API');
+      setPlayerProps({ nba: nbaProps, nfl: nflProps, wnba: [] });
+      loadWNBAProps();
+    }
   }, []);
 
-  const loadWNBAProps = async () => {
-    console.log('🎯 loadWNBAProps function called');
+  const loadWNBAProps = async (forceRefresh: boolean = false) => {
+    console.log('🎯 loadWNBAProps function called, forceRefresh:', forceRefresh);
+    
+    // If not forcing refresh, check cache first
+    if (!forceRefresh) {
+      const cachedData = getWNBACachedData();
+      if (cachedData && cachedData.length > 0) {
+        console.log('📦 Found valid cached data, using cache instead of API');
+        setPlayerProps(prev => ({ ...prev, wnba: cachedData }));
+        setWnbaDataSource('live');
+        return;
+      }
+    }
+    
     setLoading(true);
     setError(null);
     console.log('Loading WNBA props from live API...');
@@ -50,13 +107,14 @@ export const PlayerProps = ({ onRefreshData }: PlayerPropsProps) => {
       const oddsService = createOddsApiService(API_KEY);
       console.log('✅ OddsApiService created, calling getWNBAProps...');
       
-      const wnbaProps = await oddsService.getWNBAProps();
+      const wnbaProps = await oddsService.getWNBAProps(forceRefresh);
       console.log('📬 getWNBAProps returned:', wnbaProps.length, 'props');
       
       if (wnbaProps.length > 0) {
-        console.log('✅ Successfully received WNBA props, updating state...');
+        console.log('✅ Successfully received WNBA props, updating state and cache...');
         setPlayerProps(prev => ({ ...prev, wnba: wnbaProps }));
         setWnbaDataSource('live');
+        setWNBACachedData(wnbaProps); // Cache the data
         console.log(`Successfully loaded ${wnbaProps.length} live WNBA props`);
       } else {
         console.log('⚠️ No WNBA props returned from API');
@@ -84,7 +142,7 @@ export const PlayerProps = ({ onRefreshData }: PlayerPropsProps) => {
       const nflProps = dynamicPicksGenerator.generatePlayerProps('nfl');
       
       // Load WNBA props separately with proper error handling
-      await loadWNBAProps();
+      await loadWNBAProps(true); // Force refresh when manually loading
       
       setPlayerProps(prev => ({ ...prev, nba: nbaProps, nfl: nflProps }));
       
@@ -102,7 +160,7 @@ export const PlayerProps = ({ onRefreshData }: PlayerPropsProps) => {
 
   const refreshPicks = () => {
     if (selectedSport === 'wnba') {
-      loadWNBAProps();
+      loadWNBAProps(true); // Force refresh for WNBA
     } else {
       dynamicPicksGenerator.refreshAllPicks();
       const nbaProps = dynamicPicksGenerator.generatePlayerProps('nba');

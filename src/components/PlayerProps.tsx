@@ -96,13 +96,34 @@ export const PlayerProps = ({ onRefreshData }: PlayerPropsProps) => {
     return match ? match[1] : title;
   };
 
+  const getBetType = (prop: GeneratedPick | ProcessedProp): string => {
+    // Check if the title explicitly mentions "Under"
+    if (prop.title.toLowerCase().includes('under')) {
+      return 'Under';
+    }
+    
+    // Check if it's a ProcessedProp with outcome property
+    if ('outcome' in prop && prop.outcome) {
+      return prop.outcome === 'over' ? 'Over' : 'Under';
+    }
+    
+    // For GeneratedPick, check if type property exists
+    if ('type' in prop && prop.type) {
+      return prop.type;
+    }
+    
+    // Default to Over if no clear indicator
+    return 'Over';
+  };
+
   const handlePropClick = (prop: GeneratedPick | ProcessedProp) => {
+    const betType = getBetType(prop);
     setSelectedProp({
       player: prop.player,
       team: prop.team,
       prop: extractPropFromTitle(prop.title),
       line: prop.line,
-      type: "Over",
+      type: betType,
       odds: prop.odds,
       edge: prop.edge,
       projected: prop.projected,
@@ -188,6 +209,7 @@ export const PlayerProps = ({ onRefreshData }: PlayerPropsProps) => {
                 const betId = `${prop.id}-${index}`;
                 const alreadyAdded = betSlip.some(b => b.id === betId);
                 const propType = extractPropFromTitle(prop.title);
+                const betType = getBetType(prop);
                 const confidence = typeof prop.confidence === 'number' 
                   ? (prop.confidence >= 4 ? 'high' : prop.confidence >= 2 ? 'medium' : 'low')
                   : prop.confidence.toString();
@@ -212,7 +234,7 @@ export const PlayerProps = ({ onRefreshData }: PlayerPropsProps) => {
                           )}
                         </div>
                         <p className="text-emerald-400 font-medium">
-                          Over {prop.line} {propType}
+                          {betType} {prop.line} {propType}
                         </p>
                       </div>
                       <div className="text-right">
@@ -244,7 +266,7 @@ export const PlayerProps = ({ onRefreshData }: PlayerPropsProps) => {
                           type: 'Player Prop',
                           player: prop.player,
                           team: prop.team,
-                          description: `Over ${prop.line} ${propType}`,
+                          description: `${betType} ${prop.line} ${propType}`,
                           odds: prop.odds,
                           edge: prop.edge,
                           line: prop.line,

@@ -132,20 +132,40 @@ export const PlayerProps = ({ onRefreshData }: PlayerPropsProps) => {
   };
 
   const getGameDetails = (prop: GeneratedPick | ProcessedProp): string => {
-    // For WNBA props with game details
+    // For WNBA props with matchup details
+    if (selectedSport === 'wnba' && 'matchup' in prop && prop.matchup) {
+      return ` (${prop.matchup})`;
+    }
+    
+    // For WNBA props with game details in various formats
     if (selectedSport === 'wnba' && 'game' in prop && prop.game) {
       const gameInfo = prop.game;
-      const isHome = gameInfo.includes('vs');
-      const opponent = isHome ? gameInfo.split(' vs ')[1] : gameInfo.split(' @ ')[1];
-      const location = isHome ? 'vs' : '@';
-      return ` (${location} ${opponent})`;
+      
+      // Handle different game info formats
+      if (gameInfo.includes('vs')) {
+        const parts = gameInfo.split(' vs ');
+        if (parts.length === 2) {
+          return ` (vs ${parts[1].trim()})`;
+        }
+      } else if (gameInfo.includes('@')) {
+        const parts = gameInfo.split(' @ ');
+        if (parts.length === 2) {
+          return ` (@ ${parts[1].trim()})`;
+        }
+      }
+      
+      // If game info exists but doesn't match expected format, return it as is
+      if (gameInfo && gameInfo !== 'Today' && gameInfo !== 'TBD') {
+        return ` (${gameInfo})`;
+      }
     }
     
     // For other sports with game property
-    if ('game' in prop && prop.game) {
+    if ('game' in prop && prop.game && prop.game !== 'Today' && prop.game !== 'TBD') {
       return ` (${prop.game})`;
     }
     
+    // Return empty string if no valid game details found
     return '';
   };
 

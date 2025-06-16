@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -33,7 +34,11 @@ export const PlayerPropInsights = ({ prop, open, onOpenChange }: PlayerPropInsig
     
     // Generate realistic recent performance based on projection and bet type
     // Use actual team names instead of random matchups
-    const opponents = ['LAL', 'BOS', 'MIA', 'PHX', 'DEN'];
+    const opponents = [prop.team === 'LAL' ? 'BOS' : 'LAL', 
+                      prop.team === 'MIA' ? 'PHX' : 'MIA', 
+                      prop.team === 'DEN' ? 'GSW' : 'DEN', 
+                      prop.team === 'BOS' ? 'MIA' : 'BOS', 
+                      prop.team === 'PHX' ? 'LAL' : 'PHX'];
     const recentGames = opponents.map(opponent => `vs ${opponent}`);
     const recentPerformance = recentGames.map(game => {
       // Create more realistic performance around the projection
@@ -73,8 +78,13 @@ export const PlayerPropInsights = ({ prop, open, onOpenChange }: PlayerPropInsig
     };
 
     // Create clean AI recommendation without duplication
-    const cleanPropType = prop.prop;
-    const recommendation = `${prop.type} ${prop.line} ${cleanPropType}`;
+    // Extract the stat type from the prop string to avoid redundancy
+    const statType = prop.prop.toLowerCase().includes('points') ? 'Points' :
+                    prop.prop.toLowerCase().includes('rebounds') ? 'Rebounds' :
+                    prop.prop.toLowerCase().includes('assists') ? 'Assists' :
+                    prop.prop;
+    
+    const recommendation = `${prop.type} ${prop.line} ${statType}`;
 
     return {
       aiRecommendation: recommendation,

@@ -32,11 +32,21 @@ export const PlayerPropInsights = ({ prop, open, onOpenChange }: PlayerPropInsig
     const isOver = prop.type === 'Over';
     const variance = Math.abs(prop.projected - prop.line);
     
-    // Generate realistic recent performance based on projection
+    // Generate realistic recent performance based on projection and bet type
     const recentGames = ['vs LAL', 'vs BOS', 'vs MIA', 'vs PHX', 'vs DEN'];
     const recentPerformance = recentGames.map(game => {
-      const baseVariance = (Math.random() - 0.5) * 6; // Random variance between -3 and +3
-      const stat = Math.max(0, prop.projected + baseVariance);
+      // Create more realistic performance around the projection
+      const baseVariance = (Math.random() - 0.5) * 4; // Smaller variance for more realistic stats
+      let stat = Math.max(0, prop.projected + baseVariance);
+      
+      // Round to appropriate decimal places based on stat type
+      if (prop.prop.toLowerCase().includes('points')) {
+        stat = Math.round(stat * 10) / 10; // One decimal for points
+      } else {
+        stat = Math.round(stat); // Whole numbers for rebounds/assists
+      }
+      
+      // Determine if this would be a hit or miss based on the bet type and line
       const result = (isOver && stat > prop.line) || (!isOver && stat < prop.line) ? 'hit' : 'miss';
       return { game, stat, result };
     });
@@ -45,8 +55,10 @@ export const PlayerPropInsights = ({ prop, open, onOpenChange }: PlayerPropInsig
     const hits = recentPerformance.filter(game => game.result === 'hit').length;
     const hitRate = `${hits}/5`;
 
+    // Generate key factors based on the actual bet type and performance
+    const avgStat = recentPerformance.reduce((sum, game) => sum + game.stat, 0) / recentPerformance.length;
     const keyFactors = [
-      `${prop.player} averaging ${prop.projected.toFixed(1)} ${prop.prop.toLowerCase()} over last 5 games`,
+      `${prop.player} averaging ${avgStat.toFixed(1)} ${prop.prop.toLowerCase()} over last 5 games`,
       isOver ? 
         `Strong matchup advantage suggests higher ${prop.prop.toLowerCase()} output` :
         `Defensive matchup suggests limited ${prop.prop.toLowerCase()} opportunities`,
@@ -60,7 +72,7 @@ export const PlayerPropInsights = ({ prop, open, onOpenChange }: PlayerPropInsig
     };
 
     return {
-      aiRecommendation: `${prop.type} ${prop.line} ${prop.prop}`,
+      aiRecommendation: `${prop.type} ${prop.line} ${prop.prop}`, // Only show the actual bet type
       confidence: confidencePercentage,
       keyFactors,
       recentPerformance,
@@ -131,7 +143,9 @@ export const PlayerPropInsights = ({ prop, open, onOpenChange }: PlayerPropInsig
                 <div key={index} className="flex justify-between items-center p-2 bg-slate-600/30 rounded">
                   <span className="text-slate-300">{game.game}</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-white font-medium">{game.stat.toFixed(1)}</span>
+                    <span className="text-white font-medium">
+                      {prop.prop.toLowerCase().includes('points') ? game.stat.toFixed(1) : game.stat.toString()}
+                    </span>
                     <Badge className={game.result === 'hit' ? 
                       'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 
                       'bg-red-500/20 text-red-400 border-red-500/30'

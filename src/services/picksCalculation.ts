@@ -1,4 +1,3 @@
-
 export interface PlayerStats {
   playerId: string;
   name: string;
@@ -35,11 +34,11 @@ export interface GameData {
   homeTeam: string;
   awayTeam: string;
   gameTime: string;
-  sport: 'nba' | 'nfl' | 'nhl';
-  venue: string;
+  sport: 'nba' | 'nfl' | 'nhl' | 'wnba';
+  venue?: string;
   weather?: string;
-  injuries: string[];
-  teamStats: {
+  injuries?: string[];
+  teamStats?: {
     [team: string]: {
       offensiveRating: number;
       defensiveRating: number;
@@ -100,7 +99,7 @@ export class PicksCalculationEngine {
         factors.push(`${player.vsOpponent.points} average vs ${opponent}`);
         
         // Adjust for opponent defense
-        const oppDefRating = gameData.teamStats[opponent]?.defensiveRating || 100;
+        const oppDefRating = gameData.teamStats?.[opponent]?.defensiveRating || 100;
         if (oppDefRating < 95) {
           projection *= 0.9; // Tough defense
           factors.push("Opponent has strong defense");
@@ -158,15 +157,15 @@ export class PicksCalculationEngine {
     let projection = 0;
     let confidence = 8;
 
-    const homeStats = gameData.teamStats[gameData.homeTeam];
-    const awayStats = gameData.teamStats[gameData.awayTeam];
+    const homeStats = gameData.teamStats?.[gameData.homeTeam];
+    const awayStats = gameData.teamStats?.[gameData.awayTeam];
 
     switch (propType) {
       case 'spread':
         // Calculate expected point differential
-        const homeAdv = homeStats.homeAdvantage || 3;
-        const offensiveDiff = homeStats.offensiveRating - awayStats.offensiveRating;
-        const defensiveDiff = awayStats.defensiveRating - homeStats.defensiveRating;
+        const homeAdv = homeStats?.homeAdvantage || 3;
+        const offensiveDiff = (homeStats?.offensiveRating || 100) - (awayStats?.offensiveRating || 100);
+        const defensiveDiff = (awayStats?.defensiveRating || 100) - (homeStats?.defensiveRating || 100);
         
         projection = (offensiveDiff + defensiveDiff) / 2 + homeAdv;
         factors.push(`Home advantage: +${homeAdv} points`);
@@ -175,9 +174,9 @@ export class PicksCalculationEngine {
 
       case 'total':
         // Calculate expected total points
-        const avgPace = (homeStats.pace + awayStats.pace) / 2;
-        const avgOffense = (homeStats.offensiveRating + awayStats.offensiveRating) / 2;
-        const avgDefense = (homeStats.defensiveRating + awayStats.defensiveRating) / 2;
+        const avgPace = ((homeStats?.pace || 100) + (awayStats?.pace || 100)) / 2;
+        const avgOffense = ((homeStats?.offensiveRating || 100) + (awayStats?.offensiveRating || 100)) / 2;
+        const avgDefense = ((homeStats?.defensiveRating || 100) + (awayStats?.defensiveRating || 100)) / 2;
         
         projection = (avgPace * avgOffense * 2) / avgDefense;
         factors.push(`Combined pace: ${avgPace.toFixed(1)}`);

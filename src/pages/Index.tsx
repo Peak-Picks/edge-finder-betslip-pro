@@ -45,13 +45,8 @@ const HomeContent = ({ currentView, setCurrentView }: { currentView: string; set
       // Clear any existing cached data
       oddsApiService.clearCache();
       
-      // Trigger fresh API calls for all sports
-      await Promise.all([
-        oddsApiService.getNBAProps(),
-        oddsApiService.getWNBAProps(),
-        oddsApiService.getNFLProps(),
-        oddsApiService.getMLBProps()
-      ]);
+      // Trigger fresh API calls for available sports (currently only WNBA is implemented)
+      await oddsApiService.getWNBAProps();
       
       console.log('API data refreshed successfully');
     } catch (error) {

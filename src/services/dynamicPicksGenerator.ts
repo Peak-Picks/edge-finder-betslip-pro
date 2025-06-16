@@ -1,3 +1,4 @@
+
 import { createOddsApiService } from './oddsApiService';
 import { BestBetOptimizer, enhanceWNBADataProcessing } from './bestBetOptimizer';
 
@@ -286,15 +287,17 @@ export class DynamicPicksGenerator {
     return this.generateFallbackLongShots();
   }
 
-  // Generate player props
-  generatePlayerProps(): GeneratedPick[] {
-    const storedData = window.__wnbaStoredData;
-    if (storedData?.playerProps?.length > 0) {
-      console.log(`📊 Using ${storedData.playerProps.length} stored WNBA player props`);
-      return storedData.playerProps;
+  // Generate player props - now accepts sport parameter
+  generatePlayerProps(sport: string): GeneratedPick[] {
+    if (sport === 'wnba') {
+      const storedData = window.__wnbaStoredData;
+      if (storedData?.playerProps?.length > 0) {
+        console.log(`📊 Using ${storedData.playerProps.length} stored WNBA player props`);
+        return storedData.playerProps;
+      }
     }
 
-    console.log('📊 Using fallback mock data for player props');
+    console.log(`📊 Using fallback mock data for ${sport} player props`);
     return this.generateFallbackPlayerProps();
   }
 

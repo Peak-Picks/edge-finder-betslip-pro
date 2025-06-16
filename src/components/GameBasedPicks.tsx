@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -19,19 +18,21 @@ export const GameBasedPicks = () => {
   const API_KEY = '70f59ac60558d2b4dee1200bdaa2f2f3';
 
   useEffect(() => {
-    // Set API key and load game picks
+    console.log('🔄 GameBasedPicks component initializing...');
     dynamicPicksGenerator.setApiKey(API_KEY);
     loadGamePicks();
   }, []);
 
   const loadGamePicks = async () => {
+    console.log('🔄 GameBasedPicks loadGamePicks called');
     setLoading(true);
     setError(null);
     try {
       const picks = await dynamicPicksGenerator.generateGameBasedPicks();
+      console.log(`📊 GameBasedPicks loaded ${picks.length} picks`);
       setGamePicks(picks);
     } catch (error) {
-      console.error('Error loading game picks:', error);
+      console.error('❌ Error loading game picks:', error);
       setError('Failed to load game picks');
     } finally {
       setLoading(false);
@@ -39,13 +40,15 @@ export const GameBasedPicks = () => {
   };
 
   const handleRefresh = async () => {
+    console.log('🔄 GameBasedPicks handleRefresh called');
     setRefreshing(true);
     setError(null);
     try {
       await dynamicPicksGenerator.refreshWNBAData(true);
+      console.log('✅ GameBasedPicks WNBA data refreshed, reloading picks...');
       await loadGamePicks();
     } catch (error) {
-      console.error('Error refreshing WNBA data:', error);
+      console.error('❌ Error refreshing WNBA data in GameBasedPicks:', error);
       setError('Failed to refresh WNBA data');
     } finally {
       setRefreshing(false);
@@ -141,18 +144,17 @@ export const GameBasedPicks = () => {
           const alreadyAdded = betSlip.some(b => b.id === pick.id);
           
           return (
-            <Card key={pick.id} className="bg-slate-800/50 border-slate-700/50 p-6 hover:bg-slate-800/70 transition-all duration-200">
-              {/* Header Section */}
-              <div className="flex items-start justify-between mb-4">
+            <Card key={pick.id} className="bg-slate-800/50 border-slate-700/50 p-4 hover:bg-slate-800/70 transition-all duration-200">
+              <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <h3 className="font-bold text-white text-xl">{pick.matchup}</h3>
+                    <h3 className="font-bold text-white text-lg">{pick.matchup}</h3>
                     {pick.sport === 'WNBA' && (
                       <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">
                         Live WNBA
                       </Badge>
                     )}
-                    <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
+                    <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs">
                       {pick.edge}% Edge
                     </Badge>
                   </div>
@@ -160,39 +162,31 @@ export const GameBasedPicks = () => {
                     <Clock className="w-3 h-3" />
                     <span>{pick.gameTime}</span>
                   </div>
-                  <p className="text-cyan-300 font-medium text-lg">
+                  <p className="text-cyan-300 font-medium">
                     {pick.type}: {pick.title}
                   </p>
                 </div>
-                <div className="text-right">
-                  <div className={`text-3xl font-bold ${getOddsColor(pick.odds)}`}>
-                    {pick.odds}
-                  </div>
+                <div className={`text-2xl font-bold ${getOddsColor(pick.odds)}`}>
+                  {pick.odds}
                 </div>
               </div>
 
-              {/* Analysis Section */}
-              <div className="bg-slate-700/30 rounded-lg p-4 mb-4">
+              <div className="bg-slate-700/30 rounded-lg p-3 mb-3">
                 <h4 className="text-cyan-400 font-medium text-sm mb-2">Game Analysis:</h4>
-                <p className="text-sm text-slate-300 mb-3">{pick.insights}</p>
-                <div className="text-sm text-slate-400">
-                  Game analysis based on {Math.floor(Math.random() * 15) + 5} player props with {pick.edge}% average edge. Strong correlations detected.
-                </div>
+                <p className="text-xs text-slate-300">{pick.insights}</p>
               </div>
 
-              {/* Platform Info */}
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-3">
                 <div>
-                  <p className="text-slate-400 text-xs mb-1">Sportsbook:</p>
-                  <p className="text-white font-semibold">{pick.platform}</p>
+                  <p className="text-slate-400 text-xs">Sportsbook:</p>
+                  <p className="text-white font-medium text-sm">{pick.platform}</p>
                 </div>
               </div>
 
-              {/* Action Buttons */}
               <div className="flex gap-2">
                 <Button
-                  className="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white font-medium"
-                  size="lg"
+                  className="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white"
+                  size="sm"
                   onClick={() => addToBetSlip({
                     id: pick.id,
                     type: pick.type,
@@ -202,12 +196,12 @@ export const GameBasedPicks = () => {
                   })}
                   disabled={alreadyAdded}
                 >
-                  <Plus className="w-4 h-4 mr-2" />
+                  <Plus className="w-4 h-4 mr-1" />
                   {alreadyAdded ? "Added to Betslip" : "Add to Betslip"}
                 </Button>
                 <Button
                   variant="outline"
-                  size="lg"
+                  size="sm"
                   className="border-slate-600 text-slate-300 hover:bg-slate-700"
                 >
                   <TrendingUp className="w-4 h-4" />

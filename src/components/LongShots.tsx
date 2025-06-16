@@ -18,19 +18,21 @@ export const LongShots = () => {
   const API_KEY = '70f59ac60558d2b4dee1200bdaa2f2f3';
 
   useEffect(() => {
-    // Set API key and load long shots
+    console.log('🔄 LongShots component initializing...');
     dynamicPicksGenerator.setApiKey(API_KEY);
     loadLongShots();
   }, []);
 
   const loadLongShots = () => {
+    console.log('🔄 LongShots loadLongShots called');
     setLoading(true);
     setError(null);
     try {
       const picks = dynamicPicksGenerator.generateLongShots();
+      console.log(`📊 LongShots loaded ${picks.length} picks`);
       setLongShots(picks);
     } catch (error) {
-      console.error('Error loading long shots:', error);
+      console.error('❌ Error loading long shots:', error);
       setError('Failed to load long shots');
     } finally {
       setLoading(false);
@@ -38,13 +40,15 @@ export const LongShots = () => {
   };
 
   const handleRefresh = async () => {
+    console.log('🔄 LongShots handleRefresh called');
     setRefreshing(true);
     setError(null);
     try {
       await dynamicPicksGenerator.refreshWNBAData(true);
+      console.log('✅ LongShots WNBA data refreshed, reloading picks...');
       loadLongShots();
     } catch (error) {
-      console.error('Error refreshing WNBA data:', error);
+      console.error('❌ Error refreshing WNBA data in LongShots:', error);
       setError('Failed to refresh WNBA data');
     } finally {
       setRefreshing(false);

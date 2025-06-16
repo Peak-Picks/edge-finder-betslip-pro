@@ -1,3 +1,4 @@
+
 import { PicksCalculationEngine, PlayerStats, GameData } from './picksCalculation';
 import { mockDataService } from './mockDataService';
 import { createOddsApiService } from './oddsApiService';
@@ -46,40 +47,67 @@ export class DynamicPicksGenerator {
     console.log('🔑 API Key set for WNBA data fetching');
   }
 
-  // Get stored WNBA data from memory (not localStorage due to artifact restrictions)
+  // Get stored WNBA data from memory with validation
   private getStoredWNBAData(): StoredWNBAData | null {
     try {
-      // Using a global variable to simulate persistent storage within the session
       if (window.__wnbaStoredData) {
+        const data = window.__wnbaStoredData;
         console.log('📦 Retrieved stored WNBA data:', {
-          bestBets: window.__wnbaStoredData.bestBets?.length || 0,
-          longShots: window.__wnbaStoredData.longShots?.length || 0,
-          playerProps: window.__wnbaStoredData.playerProps?.length || 0,
-          gamePicks: window.__wnbaStoredData.gamePicks?.length || 0
+          bestBets: data.bestBets?.length || 0,
+          longShots: data.longShots?.length || 0,
+          playerProps: data.playerProps?.length || 0,
+          gamePicks: data.gamePicks?.length || 0,
+          lastUpdated: data.lastUpdated ? new Date(data.lastUpdated).toLocaleString() : 'Unknown'
         });
-        return window.__wnbaStoredData;
+        
+        // Validate that we have meaningful data
+        const totalPicks = (data.bestBets?.length || 0) + (data.longShots?.length || 0) + 
+                          (data.playerProps?.length || 0) + (data.gamePicks?.length || 0);
+        
+        if (totalPicks > 0) {
+          console.log('✅ Valid cached WNBA data found with', totalPicks, 'total picks');
+          return data;
+        } else {
+          console.log('⚠️ Cached data exists but contains no picks');
+          return null;
+        }
       }
-      console.log('📦 No stored WNBA data found');
+      console.log('📦 No stored WNBA data found in window.__wnbaStoredData');
       return null;
     } catch (error) {
-      console.error('Error retrieving stored WNBA data:', error);
+      console.error('❌ Error retrieving stored WNBA data:', error);
       return null;
     }
   }
 
-  // Store WNBA data in memory
+  // Store WNBA data in memory with validation
   private storeWNBAData(data: StoredWNBAData): void {
     try {
-      // Using a global variable to simulate persistent storage within the session
+      // Validate data before storing
+      if (!data.bestBets) data.bestBets = [];
+      if (!data.gamePicks) data.gamePicks = [];
+      if (!data.longShots) data.longShots = [];
+      if (!data.playerProps) data.playerProps = [];
+      
       window.__wnbaStoredData = data;
+      
+      const totalPicks = data.bestBets.length + data.gamePicks.length + 
+                        data.longShots.length + data.playerProps.length;
+      
       console.log('💾 WNBA data stored successfully:', {
-        bestBets: data.bestBets?.length || 0,
-        longShots: data.longShots?.length || 0,
-        playerProps: data.playerProps?.length || 0,
-        gamePicks: data.gamePicks?.length || 0
+        bestBets: data.bestBets.length,
+        longShots: data.longShots.length,
+        playerProps: data.playerProps.length,
+        gamePicks: data.gamePicks.length,
+        totalPicks: totalPicks,
+        timestamp: new Date(data.lastUpdated).toLocaleString()
       });
+      
+      if (totalPicks === 0) {
+        console.log('⚠️ Warning: Stored data contains no picks');
+      }
     } catch (error) {
-      console.error('Error storing WNBA data:', error);
+      console.error('❌ Error storing WNBA data:', error);
     }
   }
 
@@ -98,30 +126,42 @@ export class DynamicPicksGenerator {
       console.log(`📊 Fetched ${wnbaProps.length} WNBA props from API`);
 
       if (wnbaProps.length === 0) {
-        console.log('⚠️ No WNBA props available - keeping existing stored data');
+        console.log('⚠️ No WNBA props available from API - keeping existing stored data');
         return;
       }
 
       // Process the raw API data into different categories
+      console.log('🔄 Processing WNBA props into categories...');
       const processedData = this.processWNBAPropsIntoCategories(wnbaProps);
-      console.log('🔄 Processed WNBA props into categories:', {
+      
+      const totalProcessed = processedData.bestBets.length + processedData.longShots.length + 
+                           processedData.playerProps.length + processedData.gamePicks.length;
+      
+      console.log('✅ Processed WNBA props into categories:', {
         bestBets: processedData.bestBets.length,
         longShots: processedData.longShots.length,
         playerProps: processedData.playerProps.length,
-        gamePicks: processedData.gamePicks.length
+        gamePicks: processedData.gamePicks.length,
+        totalProcessed: totalProcessed
       });
       
-      // Store the processed data
+      if (totalProcessed === 0) {
+        console.log('⚠️ No picks generated from processing - data may be invalid');
+        return;
+      }
+      
+      // Store the processed data with current timestamp
       const storedData: StoredWNBAData = {
         ...processedData,
         lastUpdated: Date.now()
       };
       
       this.storeWNBAData(storedData);
-      console.log('✅ WNBA data refresh completed and stored');
+      console.log('✅ WNBA data refresh completed and stored successfully');
       
     } catch (error) {
       console.error('💥 Error during WNBA data refresh:', error);
+      throw error; // Re-throw so components can handle the error
     }
   }
 
@@ -136,7 +176,6 @@ export class DynamicPicksGenerator {
 
     // Process each prop from the API
     wnbaProps.forEach(prop => {
-      // Convert API prop to GeneratedPick format
       const pick: GeneratedPick = {
         id: prop.id,
         player: prop.player,
@@ -160,31 +199,26 @@ export class DynamicPicksGenerator {
 
       console.log(`📊 Processing prop: ${pick.player} ${pick.title} - Edge: ${pick.edge}%, Odds: ${pick.odds}`);
 
-      // Categorize based on edge levels - UPDATED LOGIC
+      // Categorize based on edge levels
       if (prop.edge >= 8) {
-        // High edge props go to Best Bets
         pick.category = 'Top Prop';
         bestBets.push({...pick});
         console.log(`✅ Added to Best Bets: ${pick.player} ${pick.title} (${pick.edge}% edge)`);
       } 
       else if (prop.edge >= 5) {
-        // Medium-high edge props go to Player Props
         pick.category = 'Best Value';
         playerProps.push({...pick});
         console.log(`✅ Added to Player Props: ${pick.player} ${pick.title} (${pick.edge}% edge)`);
       } 
       else if (prop.edge >= 3) {
-        // Medium edge props - check for long shot potential
         const oddsValue = Math.abs(this.parseOdds(prop.odds));
         
-        // Long shots: either positive odds +150+ OR negative odds with high edge (4.5%+)
         if (oddsValue >= 150 || (prop.edge >= 4.5 && oddsValue >= 110)) {
           const longShotPick = {...pick};
           longShotPick.category = 'Long Shot';
           longShots.push(longShotPick);
           console.log(`✅ Added to Long Shots: ${pick.player} ${pick.title} (${pick.edge}% edge, ${pick.odds} odds)`);
         } else {
-          // Lower edge props go to Player Props
           pick.category = 'Player Prop';
           playerProps.push({...pick});
           console.log(`✅ Added to Player Props: ${pick.player} ${pick.title} (${pick.edge}% edge)`);
@@ -192,7 +226,7 @@ export class DynamicPicksGenerator {
       }
     });
 
-    // Create game-based picks from API data - IMPROVED LOGIC
+    // Create game-based picks from API data
     const gamePicksMap = new Map();
     
     wnbaProps.forEach(prop => {
@@ -218,7 +252,6 @@ export class DynamicPicksGenerator {
       const avgEdge = gameData.totalEdge / gameData.count;
       
       if (avgEdge >= 4 && gameData.count >= 2) {
-        // Create spread pick
         gamePicks.push({
           id: `wnba-game-${index}-spread`,
           matchup: gameKey,
@@ -236,7 +269,6 @@ export class DynamicPicksGenerator {
           gameTime: gameData.props[0]?.gameTime || 'Today'
         });
 
-        // Create total pick if edge is high enough
         if (avgEdge >= 5) {
           gamePicks.push({
             id: `wnba-game-${index}-total`,
@@ -250,7 +282,7 @@ export class DynamicPicksGenerator {
             confidence: Math.min(5, Math.max(2, Math.floor(avgEdge / 2))),
             insights: `Total analysis based on ${gameData.count} player props showing ${avgEdge.toFixed(1)}% average edge.`,
             category: 'Game Pick',
-            edge: Math.round((avgEdge - 1) * 10) / 10, // Slightly lower edge for totals
+            edge: Math.round((avgEdge - 1) * 10) / 10,
             type: 'Total',
             gameTime: gameData.props[0]?.gameTime || 'Today'
           });
@@ -277,18 +309,23 @@ export class DynamicPicksGenerator {
   }
 
   generateBestBets(): GeneratedPick[] {
-    console.log('🎯 generateBestBets called');
+    console.log('🎯 generateBestBets called - checking cache first');
     
-    // Get stored WNBA data first
+    // PRIORITY 1: Use cached WNBA data
     const storedData = this.getStoredWNBAData();
-    const wnbaBestBets = storedData?.bestBets || [];
-    console.log(`📊 Found ${wnbaBestBets.length} stored WNBA best bets`);
-
+    if (storedData?.bestBets && storedData.bestBets.length > 0) {
+      console.log(`✅ Using ${storedData.bestBets.length} cached WNBA best bets`);
+      return storedData.bestBets;
+    }
+    
+    console.log('⚠️ No cached WNBA best bets found, generating fallback picks');
+    
+    // PRIORITY 2: Generate fallback picks (NBA + mock WNBA)
     const picks: GeneratedPick[] = [];
     const games = mockDataService.getGameData();
     const platforms = ['DraftKings', 'FanDuel', 'BetMGM', 'Caesars'];
 
-    // Add existing NBA picks
+    // Add NBA picks
     const lebronData = mockDataService.getPlayerStats('lebron-james');
     const lakersGame = games.find(g => g.homeTeam === 'LAL' || g.awayTeam === 'LAL');
     
@@ -318,51 +355,49 @@ export class DynamicPicksGenerator {
       });
     }
 
-    // Add stored WNBA best bets
-    console.log(`🏀 Adding ${wnbaBestBets.length} WNBA best bets to picks`);
-    picks.push(...wnbaBestBets);
-
-    // Add fallback WNBA picks if no stored data
-    if (wnbaBestBets.length === 0) {
-      console.log('⚠️ No stored WNBA data, adding fallback picks');
-      const wilsonData = mockDataService.getPlayerStats('aja-wilson');
-      if (wilsonData) {
-        const bookLine = 23.5;
-        const edge = 8.2;
-        
-        picks.push({
-          id: 'wilson-points-best-fallback',
-          player: wilsonData.name,
-          team: wilsonData.team,
-          title: `Over ${bookLine} Points`,
-          sport: 'Basketball - WNBA',
-          game: 'Today 9:00 PM ET',
-          description: `${wilsonData.name} to score over ${bookLine} points.`,
-          odds: '+115',
-          platform: platforms[Math.floor(Math.random() * platforms.length)],
-          confidence: 4,
-          insights: `Fallback WNBA data. Refresh to get live data with ${edge}% edge.`,
-          category: 'Top Prop',
-          edge: Math.round(edge * 10) / 10,
-          type: 'Player Prop',
-          line: bookLine,
-          projected: bookLine + 2.1
-        });
-      }
+    // Add fallback WNBA picks
+    const wilsonData = mockDataService.getPlayerStats('aja-wilson');
+    if (wilsonData) {
+      const bookLine = 23.5;
+      const edge = 8.2;
+      
+      picks.push({
+        id: 'wilson-points-best-fallback',
+        player: wilsonData.name,
+        team: wilsonData.team,
+        title: `Over ${bookLine} Points`,
+        sport: 'Basketball - WNBA',
+        game: 'Today 9:00 PM ET',
+        description: `${wilsonData.name} to score over ${bookLine} points.`,
+        odds: '+115',
+        platform: platforms[Math.floor(Math.random() * platforms.length)],
+        confidence: 4,
+        insights: `Mock WNBA data. Use refresh button to fetch live WNBA props for real best bets.`,
+        category: 'Top Prop',
+        edge: Math.round(edge * 10) / 10,
+        type: 'Player Prop',
+        line: bookLine,
+        projected: bookLine + 2.1
+      });
     }
 
-    console.log(`🏆 generateBestBets returning ${picks.length} total picks`);
+    console.log(`🏆 generateBestBets returning ${picks.length} fallback picks`);
     return picks;
   }
 
   generateLongShots(): GeneratedPick[] {
-    console.log('🎯 generateLongShots called');
+    console.log('🎯 generateLongShots called - checking cache first');
     
-    // Get stored WNBA data first
+    // PRIORITY 1: Use cached WNBA data
     const storedData = this.getStoredWNBAData();
-    const wnbaLongShots = storedData?.longShots || [];
-    console.log(`📊 Found ${wnbaLongShots.length} stored WNBA long shots`);
+    if (storedData?.longShots && storedData.longShots.length > 0) {
+      console.log(`✅ Using ${storedData.longShots.length} cached WNBA long shots`);
+      return storedData.longShots;
+    }
+    
+    console.log('⚠️ No cached WNBA long shots found, generating fallback picks');
 
+    // PRIORITY 2: Generate fallback picks
     const picks: GeneratedPick[] = [];
     const games = mockDataService.getGameData();
     const platforms = ['DraftKings', 'FanDuel', 'BetMGM'];
@@ -421,32 +456,33 @@ export class DynamicPicksGenerator {
       }
     });
 
-    // Add stored WNBA long shots
-    console.log(`🏀 Adding ${wnbaLongShots.length} WNBA long shots to picks`);
-    picks.push(...wnbaLongShots);
-
-    console.log(`🏆 generateLongShots returning ${picks.length} total picks`);
+    console.log(`🏆 generateLongShots returning ${picks.length} fallback picks`);
     return picks.slice(0, 6);
   }
 
   async generateGameBasedPicks(): Promise<GeneratedPick[]> {
-    console.log('🎯 generateGameBasedPicks called - checking cached data first...');
+    console.log('🎯 generateGameBasedPicks called - checking cache first');
     
-    // PRIORITY 1: Use cached WNBA data if available
+    // PRIORITY 1: Use cached WNBA game picks
     const storedData = this.getStoredWNBAData();
-    let wnbaGamePicks: GeneratedPick[] = [];
-    
     if (storedData?.gamePicks && storedData.gamePicks.length > 0) {
       console.log(`✅ Using ${storedData.gamePicks.length} cached WNBA game picks`);
-      wnbaGamePicks = storedData.gamePicks;
-    } else if (storedData?.playerProps && storedData.playerProps.length > 0) {
-      console.log(`🔄 Generating game picks from ${storedData.playerProps.length} cached player props`);
-      wnbaGamePicks = this.generateGamePicksFromCachedProps(storedData.playerProps);
-    } else {
-      console.log('⚠️ No cached WNBA data available for game picks');
+      return storedData.gamePicks;
     }
+    
+    // PRIORITY 2: Generate game picks from cached player props
+    if (storedData?.playerProps && storedData.playerProps.length > 0) {
+      console.log(`🔄 Generating game picks from ${storedData.playerProps.length} cached player props`);
+      const generatedGamePicks = this.generateGamePicksFromCachedProps(storedData.playerProps);
+      if (generatedGamePicks.length > 0) {
+        console.log(`✅ Generated ${generatedGamePicks.length} game picks from cached props`);
+        return generatedGamePicks;
+      }
+    }
+    
+    console.log('⚠️ No cached WNBA data available, generating fallback picks');
 
-    // PRIORITY 2: Add mock NBA/NFL picks as fallback
+    // PRIORITY 3: Generate fallback picks from mock data
     const fallbackPicks: GeneratedPick[] = [];
     const games = mockDataService.getGameData();
     const platforms = ['DraftKings', 'FanDuel', 'BetMGM'];
@@ -454,7 +490,6 @@ export class DynamicPicksGenerator {
     games.forEach(game => {
       const spreadCalc = this.calculationEngine.calculateGameProp(game, 'spread');
       const bookSpread = -3.5;
-      const bookTotal = game.sport === 'nba' ? 218.5 : 48.5;
       const sportDisplay = game.sport?.toUpperCase() || 'NBA';
 
       const spreadEdge = this.calculationEngine.calculateEdge(Math.abs(spreadCalc.projection), Math.abs(bookSpread));
@@ -479,20 +514,16 @@ export class DynamicPicksGenerator {
       }
     });
 
-    // Combine WNBA (priority) with fallback picks
-    const allPicks = [...wnbaGamePicks, ...fallbackPicks];
-    console.log(`🏆 generateGameBasedPicks returning ${allPicks.length} total picks (${wnbaGamePicks.length} WNBA, ${fallbackPicks.length} fallback)`);
-    
-    return allPicks.slice(0, 10); // Limit to top 10 picks
+    console.log(`🏆 generateGameBasedPicks returning ${fallbackPicks.length} fallback picks`);
+    return fallbackPicks.slice(0, 10);
   }
 
-  // New method to generate game picks from cached player props
+  // Generate game picks from cached player props
   private generateGamePicksFromCachedProps(playerProps: GeneratedPick[]): GeneratedPick[] {
     console.log('🔄 Generating game picks from cached player props...');
     
     const gamePicksMap = new Map();
     
-    // Group props by game/matchup
     playerProps.forEach(prop => {
       if (!prop.matchup || !prop.edge || prop.edge < 3) return;
       
@@ -515,12 +546,10 @@ export class DynamicPicksGenerator {
 
     const generatedGamePicks: GeneratedPick[] = [];
     
-    // Create game picks from aggregated prop data
     Array.from(gamePicksMap.entries()).forEach(([gameKey, gameData], index) => {
       const avgEdge = gameData.totalEdge / gameData.count;
       
       if (avgEdge >= 4 && gameData.count >= 2) {
-        // Create spread pick
         generatedGamePicks.push({
           id: `wnba-cached-game-${index}-spread`,
           matchup: gameKey,
@@ -538,7 +567,6 @@ export class DynamicPicksGenerator {
           gameTime: gameData.gameTime || 'Today'
         });
 
-        // Create total pick if edge is high enough
         if (avgEdge >= 5) {
           generatedGamePicks.push({
             id: `wnba-cached-game-${index}-total`,
@@ -568,14 +596,17 @@ export class DynamicPicksGenerator {
   }
 
   generatePlayerProps(sport: 'nba' | 'nfl' | 'wnba'): GeneratedPick[] {
-    const storedData = this.getStoredWNBAData();
-    
+    // PRIORITY 1: Use cached WNBA data for WNBA requests
     if (sport === 'wnba') {
-      const wnbaPlayerProps = storedData?.playerProps || [];
+      console.log('🎯 generatePlayerProps(wnba) called - checking cache first');
+      const storedData = this.getStoredWNBAData();
       
-      if (wnbaPlayerProps.length > 0) {
-        return wnbaPlayerProps;
+      if (storedData?.playerProps && storedData.playerProps.length > 0) {
+        console.log(`✅ Using ${storedData.playerProps.length} cached WNBA player props`);
+        return storedData.playerProps;
       }
+      
+      console.log('⚠️ No cached WNBA player props found, generating fallback');
       
       // Fallback WNBA props if no stored data
       const fallbackProps: GeneratedPick[] = [];
@@ -596,7 +627,7 @@ export class DynamicPicksGenerator {
             odds: '+105',
             platform: platforms[Math.floor(Math.random() * platforms.length)],
             confidence: 3,
-            insights: 'Fallback WNBA data. Click refresh to get live props.',
+            insights: 'Mock WNBA data. Use refresh to get live props.',
             category: 'Player Prop',
             edge: 5.5,
             type: 'Player Prop',
@@ -609,6 +640,7 @@ export class DynamicPicksGenerator {
       return fallbackProps;
     }
 
+    // Handle other sports with mock data
     const picks: GeneratedPick[] = [];
     const games = mockDataService.getGameData();
     const platforms = ['DraftKings', 'FanDuel', 'BetMGM'];
@@ -671,7 +703,7 @@ export class DynamicPicksGenerator {
 
   hasStoredWNBAData(): boolean {
     const stored = this.getStoredWNBAData();
-    return stored !== null && stored.bestBets.length > 0;
+    return stored !== null;
   }
 
   getLastUpdateTime(): string | null {

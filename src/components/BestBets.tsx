@@ -18,19 +18,21 @@ export const BestBets = () => {
   const API_KEY = '70f59ac60558d2b4dee1200bdaa2f2f3';
 
   useEffect(() => {
-    // Set API key and load best bets
+    console.log('🔄 BestBets component initializing...');
     dynamicPicksGenerator.setApiKey(API_KEY);
     loadBestBets();
   }, []);
 
   const loadBestBets = () => {
+    console.log('🔄 BestBets loadBestBets called');
     setLoading(true);
     setError(null);
     try {
       const picks = dynamicPicksGenerator.generateBestBets();
+      console.log(`📊 BestBets loaded ${picks.length} picks`);
       setBestBets(picks);
     } catch (error) {
-      console.error('Error loading best bets:', error);
+      console.error('❌ Error loading best bets:', error);
       setError('Failed to load best bets');
     } finally {
       setLoading(false);
@@ -38,13 +40,15 @@ export const BestBets = () => {
   };
 
   const handleRefresh = async () => {
+    console.log('🔄 BestBets handleRefresh called');
     setRefreshing(true);
     setError(null);
     try {
       await dynamicPicksGenerator.refreshWNBAData(true);
+      console.log('✅ BestBets WNBA data refreshed, reloading picks...');
       loadBestBets();
     } catch (error) {
-      console.error('Error refreshing WNBA data:', error);
+      console.error('❌ Error refreshing WNBA data in BestBets:', error);
       setError('Failed to refresh WNBA data');
     } finally {
       setRefreshing(false);

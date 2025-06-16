@@ -114,9 +114,9 @@ export class OddsApiService {
     console.log(`📅 Date range: ${commenceTimeFrom} to ${commenceTimeTo}`);
 
     try {
-      console.log('🔍 Fetching WNBA player props directly...');
+      console.log('🔍 Fetching WNBA player props (points, rebounds, assists only)...');
       
-      // Use a single API call to get all WNBA player props
+      // Single API call for only the three prop types we want - this minimizes token usage
       const propsUrl = `${this.baseUrl}/sports/basketball_wnba/odds?apiKey=${this.apiKey}&regions=us&markets=player_points,player_rebounds,player_assists&oddsFormat=american&bookmakers=draftkings,fanduel,betmgm&commenceTimeFrom=${commenceTimeFrom}&commenceTimeTo=${commenceTimeTo}`;
       
       console.log('📡 Props API URL:', propsUrl.replace(this.apiKey, '[API_KEY_HIDDEN]'));
@@ -139,8 +139,10 @@ export class OddsApiService {
         // Check if it's an API key issue
         if (propsResponse.status === 401) {
           console.error('❌ API authentication failed - check API key');
+        } else if (propsResponse.status === 422) {
+          console.log('ℹ️ WNBA player props not available - API returned validation error (likely player markets not supported for WNBA)');
         } else if (propsResponse.status === 404) {
-          console.log('ℹ️ WNBA player props not available - API may not support player markets for WNBA');
+          console.log('ℹ️ WNBA player props not available - endpoint not found');
         }
         
         return [];

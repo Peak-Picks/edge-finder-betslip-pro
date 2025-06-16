@@ -33,7 +33,9 @@ export const PlayerPropInsights = ({ prop, open, onOpenChange }: PlayerPropInsig
     const variance = Math.abs(prop.projected - prop.line);
     
     // Generate realistic recent performance based on projection and bet type
-    const recentGames = ['vs LAL', 'vs BOS', 'vs MIA', 'vs PHX', 'vs DEN'];
+    // Use actual team names instead of random matchups
+    const opponents = ['LAL', 'BOS', 'MIA', 'PHX', 'DEN'];
+    const recentGames = opponents.map(opponent => `vs ${opponent}`);
     const recentPerformance = recentGames.map(game => {
       // Create more realistic performance around the projection
       const baseVariance = (Math.random() - 0.5) * 4; // Smaller variance for more realistic stats

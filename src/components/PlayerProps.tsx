@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -132,6 +131,24 @@ export const PlayerProps = ({ onRefreshData }: PlayerPropsProps) => {
     setInsightsOpen(true);
   };
 
+  const getGameDetails = (prop: GeneratedPick | ProcessedProp): string => {
+    // For WNBA props with game details
+    if (selectedSport === 'wnba' && 'game' in prop && prop.game) {
+      const gameInfo = prop.game;
+      const isHome = gameInfo.includes('vs');
+      const opponent = isHome ? gameInfo.split(' vs ')[1] : gameInfo.split(' @ ')[1];
+      const location = isHome ? 'vs' : '@';
+      return ` (${location} ${opponent})`;
+    }
+    
+    // For other sports with game property
+    if ('game' in prop && prop.game) {
+      return ` (${prop.game})`;
+    }
+    
+    return '';
+  };
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -210,6 +227,7 @@ export const PlayerProps = ({ onRefreshData }: PlayerPropsProps) => {
                 const alreadyAdded = betSlip.some(b => b.id === betId);
                 const propType = extractPropFromTitle(prop.title);
                 const betType = getBetType(prop);
+                const gameDetails = getGameDetails(prop);
                 const confidence = typeof prop.confidence === 'number' 
                   ? (prop.confidence >= 4 ? 'high' : prop.confidence >= 2 ? 'medium' : 'low')
                   : prop.confidence.toString();
@@ -266,7 +284,7 @@ export const PlayerProps = ({ onRefreshData }: PlayerPropsProps) => {
                           type: 'Player Prop',
                           player: prop.player,
                           team: prop.team,
-                          description: `${prop.player} ${betType} ${prop.line} ${propType}`,
+                          description: `${prop.player} ${betType} ${prop.line} ${propType}${gameDetails}`,
                           odds: prop.odds,
                           edge: prop.edge,
                           line: prop.line,

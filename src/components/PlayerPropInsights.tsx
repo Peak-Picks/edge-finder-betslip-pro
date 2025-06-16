@@ -24,121 +24,6 @@ interface PlayerPropInsightsProps {
 export const PlayerPropInsights = ({ prop, open, onOpenChange }: PlayerPropInsightsProps) => {
   if (!prop) return null;
 
-  // Generate realistic insights based on the prop data
-  const generateRealisticInsights = () => {
-    const confidencePercentage = prop.confidence === 'high' ? 85 + Math.floor(Math.random() * 10) : 
-                                prop.confidence === 'medium' ? 70 + Math.floor(Math.random() * 10) : 
-                                55 + Math.floor(Math.random() * 10);
-
-    const isOver = prop.type === 'Over';
-    
-    // Generate realistic performance data
-    const recentPerformance = getFallbackPerformance();
-
-    // Calculate hit rate for recent games
-    const hits = recentPerformance.filter(game => game.result === 'hit').length;
-    const hitRate = `${hits}/${recentPerformance.length}`;
-
-    // Generate key factors based on actual performance
-    const avgStat = recentPerformance.reduce((sum, game) => sum + game.stat, 0) / recentPerformance.length;
-    const keyFactors = [
-      `${prop.player} averaging ${avgStat.toFixed(1)} ${prop.prop.toLowerCase()} over last ${recentPerformance.length} games`,
-      isOver ? 
-        `Recent performance trend favors over ${prop.line} ${prop.prop.toLowerCase()}` :
-        `Recent performance suggests under ${prop.line} ${prop.prop.toLowerCase()}`,
-      `Hit rate on ${prop.type.toLowerCase()} bets: ${hitRate} in recent games`
-    ];
-
-    const matchupAnalysis = {
-      opponentRank: Math.floor(Math.random() * 30) + 1,
-      allowedAverage: isOver ? prop.line + 1.2 : prop.line - 1.2,
-      defenseRating: prop.edge > 8 ? 'Below Average' : prop.edge > 4 ? 'Average' : 'Above Average'
-    };
-
-    // Create clean AI recommendation
-    const statType = prop.prop;
-    const recommendation = `${prop.type} ${prop.line} ${statType}`;
-
-    return {
-      aiRecommendation: recommendation,
-      confidence: confidencePercentage,
-      keyFactors,
-      recentPerformance,
-      matchupAnalysis
-    };
-  };
-
-  const getFallbackPerformance = () => {
-    // Generate realistic performance data
-    return Array.from({ length: 5 }, (_, index) => {
-      const stat = prop!.projected + (Math.random() - 0.5) * 4;
-      const finalStat = Math.max(0, Math.round(stat * 10) / 10);
-      const isOver = prop!.type === 'Over';
-      const result = (isOver && finalStat > prop!.line) || (!isOver && finalStat < prop!.line) ? 'hit' : 'miss';
-      return { 
-        game: `Game ${index + 1}`, 
-        stat: finalStat, 
-        result,
-        date: new Date(Date.now() - (index + 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        opponent: `vs OPP${index + 1}`
-      };
-    });
-  };
-
-  // Use React state to handle data loading
-  const [insights, setInsights] = React.useState<any>(null);
-  const [loading, setLoading] = React.useState(true);
-
-  React.useEffect(() => {
-    const loadInsights = () => {
-      setLoading(true);
-      try {
-        const data = generateRealisticInsights();
-        setInsights(data);
-      } catch (error) {
-        console.error('Error loading insights:', error);
-        // Fallback to synchronous mock data
-        setInsights(generateRealisticInsights());
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (open && prop) {
-      loadInsights();
-    }
-  }, [open, prop]);
-
-  const getConfidenceColor = (confidence: string) => {
-    switch (confidence) {
-      case 'high': return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
-      case 'medium': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
-      case 'low': return 'bg-red-500/20 text-red-400 border-red-500/30';
-      default: return 'bg-slate-500/20 text-slate-400 border-slate-500/30';
-    }
-  };
-
-  if (loading) {
-    return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-2xl bg-slate-800 border-slate-700 text-white max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-emerald-400">
-              Loading Analysis...
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400"></div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
-  if (!insights) {
-    return null;
-  }
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl bg-slate-800 border-slate-700 text-white max-h-[90vh] overflow-y-auto">
@@ -149,86 +34,67 @@ export const PlayerPropInsights = ({ prop, open, onOpenChange }: PlayerPropInsig
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* AI Recommendation */}
+          {/* Basic Prop Info */}
           <Card className="bg-slate-700/50 border-slate-600 p-4">
             <div className="flex items-center gap-3 mb-3">
               <Brain className="w-5 h-5 text-emerald-400" />
-              <h3 className="font-semibold text-emerald-400">AI Recommendation</h3>
-              <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
-                {insights.confidence}% Confidence
-              </Badge>
+              <h3 className="font-semibold text-emerald-400">Prop Details</h3>
             </div>
-            <p className="text-lg font-medium text-white mb-2">{insights.aiRecommendation}</p>
-            <p className="text-slate-300 text-sm">
-              {prop.player} shows {prop.edge.toFixed(1)}% edge based on our projections vs. sportsbook line
-            </p>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-slate-300">Player:</span>
+                <span className="text-white font-medium">{prop.player}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-300">Team:</span>
+                <span className="text-white font-medium">{prop.team}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-300">Prop Type:</span>
+                <span className="text-white font-medium">{prop.prop}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-300">Line:</span>
+                <span className="text-white font-medium">{prop.line}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-300">Bet Type:</span>
+                <span className="text-white font-medium">{prop.type}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-300">Odds:</span>
+                <span className="text-white font-medium">{prop.odds}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-300">Edge:</span>
+                <span className="text-emerald-400 font-medium">{prop.edge.toFixed(1)}%</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-300">Projection:</span>
+                <span className="text-emerald-400 font-medium">{prop.projected}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-300">Confidence:</span>
+                <Badge className={
+                  prop.confidence === 'high' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
+                  prop.confidence === 'medium' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
+                  'bg-red-500/20 text-red-400 border-red-500/30'
+                }>
+                  {prop.confidence.toUpperCase()}
+                </Badge>
+              </div>
+            </div>
           </Card>
 
-          {/* Key Factors */}
+          {/* Note about data integration */}
           <Card className="bg-slate-700/50 border-slate-600 p-4">
             <div className="flex items-center gap-3 mb-3">
               <BarChart3 className="w-5 h-5 text-blue-400" />
-              <h3 className="font-semibold text-blue-400">Key Factors</h3>
+              <h3 className="font-semibold text-blue-400">Analysis Status</h3>
             </div>
-            <ul className="space-y-2">
-              {insights.keyFactors.map((factor: string, index: number) => (
-                <li key={index} className="flex items-center gap-2 text-slate-300">
-                  <TrendingUp className="w-4 h-4 text-emerald-400" />
-                  {factor}
-                </li>
-              ))}
-            </ul>
-          </Card>
-
-          {/* Recent Performance */}
-          <Card className="bg-slate-700/50 border-slate-600 p-4">
-            <div className="flex items-center gap-3 mb-3">
-              <Clock className="w-5 h-5 text-purple-400" />
-              <h3 className="font-semibold text-purple-400">Recent Performance (Last {insights.recentPerformance.length} Games)</h3>
-            </div>
-            <div className="space-y-2">
-              {insights.recentPerformance.map((game: any, index: number) => (
-                <div key={index} className="flex justify-between items-center p-2 bg-slate-600/30 rounded">
-                  <span className="text-slate-300">{game.game}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-white font-medium">
-                      {typeof game.stat === 'number' && prop.prop.toLowerCase().includes('points') ? 
-                        game.stat.toFixed(1) : 
-                        game.stat.toString()
-                      }
-                    </span>
-                    <Badge className={game.result === 'hit' ? 
-                      'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 
-                      'bg-red-500/20 text-red-400 border-red-500/30'
-                    }>
-                      {game.result.toUpperCase()}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          {/* Matchup Analysis */}
-          <Card className="bg-slate-700/50 border-slate-600 p-4">
-            <div className="flex items-center gap-3 mb-3">
-              <Target className="w-5 h-5 text-orange-400" />
-              <h3 className="font-semibold text-orange-400">Matchup Analysis</h3>
-            </div>
-            <div className="grid grid-cols-1 gap-3">
-              <div className="flex justify-between items-center">
-                <span className="text-slate-300">Opponent Defense Rank</span>
-                <span className="text-white font-medium">#{insights.matchupAnalysis.opponentRank}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-slate-300">Avg Allowed ({prop.prop})</span>
-                <span className="text-white font-medium">{insights.matchupAnalysis.allowedAverage.toFixed(1)}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-slate-300">Defense Rating</span>
-                <Badge variant="secondary">{insights.matchupAnalysis.defenseRating}</Badge>
-              </div>
-            </div>
+            <p className="text-slate-300 text-sm">
+              Detailed analysis including recent performance, matchup data, and AI insights will be available once real data sources are integrated.
+            </p>
           </Card>
         </div>
       </DialogContent>

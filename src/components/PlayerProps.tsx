@@ -266,7 +266,7 @@ export const PlayerProps = ({ onRefreshData }: PlayerPropsProps) => {
                           type: 'Player Prop',
                           player: prop.player,
                           team: prop.team,
-                          description: `${betType} ${prop.line} ${propType}`,
+                          description: `${prop.player} ${betType} ${prop.line} ${propType}`,
                           odds: prop.odds,
                           edge: prop.edge,
                           line: prop.line,

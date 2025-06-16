@@ -72,6 +72,7 @@ export class OddsApiService {
   private apiKey: string;
   private baseUrl = 'https://api.the-odds-api.com/v4';
   private cachedHistoricalData: Map<string, PlayerHistoricalData> = new Map();
+  private cache = new Map();
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;
@@ -586,9 +587,9 @@ export class OddsApiService {
   }
 
   // Clear cached data method
-  clearCache(): void {
-    // No cached data to clear for WNBA props anymore
-    console.log('Cache cleared');
+  clearCache() {
+    this.cache.clear();
+    console.log('API cache cleared');
   }
 }
 

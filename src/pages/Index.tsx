@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -17,6 +18,7 @@ import { BettingGuide } from '@/components/BettingGuide';
 import { TrendingUp, Target, BarChart3, Wallet, Zap, RefreshCw } from 'lucide-react';
 import TutorialModal from '@/components/TutorialModal';
 import { BetSlipProvider, useBetSlipContext } from "@/components/BetSlipContext";
+import { oddsApiService } from '@/services/oddsApiService';
 
 const THREE_WEEKS_MS = 21 * 24 * 60 * 60 * 1000;
 
@@ -35,10 +37,28 @@ const HomeContent = ({ currentView, setCurrentView }: { currentView: string; set
 
   const handleRefreshData = async () => {
     setRefreshing(true);
-    // Add a small delay to show the loading state
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1000);
+    try {
+      console.log('Refreshing API data...');
+      
+      // Clear any existing cached data
+      oddsApiService.clearCache();
+      
+      // Trigger fresh API calls for all sports
+      await Promise.all([
+        oddsApiService.getNBAProps(),
+        oddsApiService.getWNBAProps(),
+        oddsApiService.getNFLProps(),
+        oddsApiService.getMLBProps()
+      ]);
+      
+      console.log('API data refreshed successfully');
+    } catch (error) {
+      console.error('Error refreshing API data:', error);
+    } finally {
+      setTimeout(() => {
+        setRefreshing(false);
+      }, 1000);
+    }
   };
 
   const roi = calculateROI();

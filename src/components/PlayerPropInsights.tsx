@@ -1,3 +1,5 @@
+
+import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -35,7 +37,8 @@ export const PlayerPropInsights = ({ prop, open, onOpenChange }: PlayerPropInsig
       try {
         // Create a temporary OddsApiService instance
         // In a real app, this would use the same instance as the main app
-        const oddsService = new (await import('../services/oddsApiService')).OddsApiService('temp-key');
+        const { OddsApiService } = await import('../services/oddsApiService');
+        const oddsService = new OddsApiService('temp-key');
         
         // Get real game logs for this player and prop type
         const gameLogs = await oddsService.getPlayerGameLogs(
@@ -49,7 +52,7 @@ export const PlayerPropInsights = ({ prop, open, onOpenChange }: PlayerPropInsig
       } catch (error) {
         console.log('Error fetching real game logs, using fallback data');
         // Fallback to basic mock data if there's an error
-        return this.getFallbackPerformance();
+        return getFallbackPerformance();
       }
     };
 
@@ -88,6 +91,23 @@ export const PlayerPropInsights = ({ prop, open, onOpenChange }: PlayerPropInsig
     };
   };
 
+  const getFallbackPerformance = () => {
+    // Fallback performance data if API fails
+    return Array.from({ length: 5 }, (_, index) => {
+      const stat = prop!.projected + (Math.random() - 0.5) * 4;
+      const finalStat = Math.max(0, Math.round(stat * 10) / 10);
+      const isOver = prop!.type === 'Over';
+      const result = (isOver && finalStat > prop!.line) || (!isOver && finalStat < prop!.line) ? 'hit' : 'miss';
+      return { 
+        game: `Game ${index + 1}`, 
+        stat: finalStat, 
+        result,
+        date: new Date(Date.now() - (index + 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        opponent: `vs OPP${index + 1}`
+      };
+    });
+  };
+
   // Use React state to handle async data loading
   const [insights, setInsights] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
@@ -114,15 +134,15 @@ export const PlayerPropInsights = ({ prop, open, onOpenChange }: PlayerPropInsig
 
   const generateFallbackInsights = () => {
     // Fallback synchronous insights if async loading fails
-    const confidencePercentage = prop.confidence === 'high' ? 85 + Math.floor(Math.random() * 10) : 
-                                prop.confidence === 'medium' ? 70 + Math.floor(Math.random() * 10) : 
+    const confidencePercentage = prop!.confidence === 'high' ? 85 + Math.floor(Math.random() * 10) : 
+                                prop!.confidence === 'medium' ? 70 + Math.floor(Math.random() * 10) : 
                                 55 + Math.floor(Math.random() * 10);
 
-    const isOver = prop.type === 'Over';
+    const isOver = prop!.type === 'Over';
     const mockPerformance = Array.from({ length: 5 }, (_, index) => {
-      const stat = prop.projected + (Math.random() - 0.5) * 4;
+      const stat = prop!.projected + (Math.random() - 0.5) * 4;
       const finalStat = Math.max(0, Math.round(stat * 10) / 10);
-      const result = (isOver && finalStat > prop.line) || (!isOver && finalStat < prop.line) ? 'hit' : 'miss';
+      const result = (isOver && finalStat > prop!.line) || (!isOver && finalStat < prop!.line) ? 'hit' : 'miss';
       return { 
         game: `Game ${index + 1}`, 
         stat: finalStat, 
@@ -133,17 +153,17 @@ export const PlayerPropInsights = ({ prop, open, onOpenChange }: PlayerPropInsig
     });
 
     return {
-      aiRecommendation: `${prop.type} ${prop.line} ${prop.prop}`,
+      aiRecommendation: `${prop!.type} ${prop!.line} ${prop!.prop}`,
       confidence: confidencePercentage,
       keyFactors: [
-        `${prop.player} recent performance analysis`,
-        `${prop.type.toLowerCase()} trend indicators`,
+        `${prop!.player} recent performance analysis`,
+        `${prop!.type.toLowerCase()} trend indicators`,
         `Matchup-based projection`
       ],
       recentPerformance: mockPerformance,
       matchupAnalysis: {
         opponentRank: Math.floor(Math.random() * 30) + 1,
-        allowedAverage: isOver ? prop.line + 1.2 : prop.line - 1.2,
+        allowedAverage: isOver ? prop!.line + 1.2 : prop!.line - 1.2,
         defenseRating: 'Average'
       }
     };
@@ -211,7 +231,7 @@ export const PlayerPropInsights = ({ prop, open, onOpenChange }: PlayerPropInsig
               <h3 className="font-semibold text-blue-400">Key Factors</h3>
             </div>
             <ul className="space-y-2">
-              {insights.keyFactors.map((factor, index) => (
+              {insights.keyFactors.map((factor: string, index: number) => (
                 <li key={index} className="flex items-center gap-2 text-slate-300">
                   <TrendingUp className="w-4 h-4 text-emerald-400" />
                   {factor}
@@ -227,7 +247,7 @@ export const PlayerPropInsights = ({ prop, open, onOpenChange }: PlayerPropInsig
               <h3 className="font-semibold text-purple-400">Recent Performance (Last {insights.recentPerformance.length} Games)</h3>
             </div>
             <div className="space-y-2">
-              {insights.recentPerformance.map((game, index) => (
+              {insights.recentPerformance.map((game: any, index: number) => (
                 <div key={index} className="flex justify-between items-center p-2 bg-slate-600/30 rounded">
                   <span className="text-slate-300">{game.game}</span>
                   <div className="flex items-center gap-2">

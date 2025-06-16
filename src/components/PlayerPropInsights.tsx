@@ -24,39 +24,16 @@ interface PlayerPropInsightsProps {
 export const PlayerPropInsights = ({ prop, open, onOpenChange }: PlayerPropInsightsProps) => {
   if (!prop) return null;
 
-  // Generate realistic insights based on the prop data using real historical data
-  const generateRealisticInsights = async () => {
+  // Generate realistic insights based on the prop data
+  const generateRealisticInsights = () => {
     const confidencePercentage = prop.confidence === 'high' ? 85 + Math.floor(Math.random() * 10) : 
                                 prop.confidence === 'medium' ? 70 + Math.floor(Math.random() * 10) : 
                                 55 + Math.floor(Math.random() * 10);
 
     const isOver = prop.type === 'Over';
     
-    // Use the enhanced OddsApiService to get real historical data
-    const getRealisticPerformance = async () => {
-      try {
-        // Create a temporary OddsApiService instance
-        // In a real app, this would use the same instance as the main app
-        const { OddsApiService } = await import('../services/oddsApiService');
-        const oddsService = new OddsApiService('temp-key');
-        
-        // Get real game logs for this player and prop type
-        const gameLogs = await oddsService.getPlayerGameLogs(
-          prop.player,
-          prop.prop,
-          prop.line,
-          prop.type
-        );
-        
-        return gameLogs;
-      } catch (error) {
-        console.log('Error fetching real game logs, using fallback data');
-        // Fallback to basic mock data if there's an error
-        return getFallbackPerformance();
-      }
-    };
-
-    const recentPerformance = await getRealisticPerformance();
+    // Generate realistic performance data
+    const recentPerformance = getFallbackPerformance();
 
     // Calculate hit rate for recent games
     const hits = recentPerformance.filter(game => game.result === 'hit').length;
@@ -92,7 +69,7 @@ export const PlayerPropInsights = ({ prop, open, onOpenChange }: PlayerPropInsig
   };
 
   const getFallbackPerformance = () => {
-    // Fallback performance data if API fails
+    // Generate realistic performance data
     return Array.from({ length: 5 }, (_, index) => {
       const stat = prop!.projected + (Math.random() - 0.5) * 4;
       const finalStat = Math.max(0, Math.round(stat * 10) / 10);
@@ -108,20 +85,20 @@ export const PlayerPropInsights = ({ prop, open, onOpenChange }: PlayerPropInsig
     });
   };
 
-  // Use React state to handle async data loading
+  // Use React state to handle data loading
   const [insights, setInsights] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    const loadInsights = async () => {
+    const loadInsights = () => {
       setLoading(true);
       try {
-        const data = await generateRealisticInsights();
+        const data = generateRealisticInsights();
         setInsights(data);
       } catch (error) {
         console.error('Error loading insights:', error);
         // Fallback to synchronous mock data
-        setInsights(generateFallbackInsights());
+        setInsights(generateRealisticInsights());
       } finally {
         setLoading(false);
       }
@@ -131,43 +108,6 @@ export const PlayerPropInsights = ({ prop, open, onOpenChange }: PlayerPropInsig
       loadInsights();
     }
   }, [open, prop]);
-
-  const generateFallbackInsights = () => {
-    // Fallback synchronous insights if async loading fails
-    const confidencePercentage = prop!.confidence === 'high' ? 85 + Math.floor(Math.random() * 10) : 
-                                prop!.confidence === 'medium' ? 70 + Math.floor(Math.random() * 10) : 
-                                55 + Math.floor(Math.random() * 10);
-
-    const isOver = prop!.type === 'Over';
-    const mockPerformance = Array.from({ length: 5 }, (_, index) => {
-      const stat = prop!.projected + (Math.random() - 0.5) * 4;
-      const finalStat = Math.max(0, Math.round(stat * 10) / 10);
-      const result = (isOver && finalStat > prop!.line) || (!isOver && finalStat < prop!.line) ? 'hit' : 'miss';
-      return { 
-        game: `Game ${index + 1}`, 
-        stat: finalStat, 
-        result,
-        date: new Date(Date.now() - (index + 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        opponent: `vs OPP${index + 1}`
-      };
-    });
-
-    return {
-      aiRecommendation: `${prop!.type} ${prop!.line} ${prop!.prop}`,
-      confidence: confidencePercentage,
-      keyFactors: [
-        `${prop!.player} recent performance analysis`,
-        `${prop!.type.toLowerCase()} trend indicators`,
-        `Matchup-based projection`
-      ],
-      recentPerformance: mockPerformance,
-      matchupAnalysis: {
-        opponentRank: Math.floor(Math.random() * 30) + 1,
-        allowedAverage: isOver ? prop!.line + 1.2 : prop!.line - 1.2,
-        defenseRating: 'Average'
-      }
-    };
-  };
 
   const getConfidenceColor = (confidence: string) => {
     switch (confidence) {

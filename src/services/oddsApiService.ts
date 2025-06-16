@@ -1,3 +1,4 @@
+
 export interface OddsApiProp {
   id: string;
   sport_key: string;
@@ -68,17 +69,34 @@ export interface PlayerHistoricalData {
   hitRate: number;
 }
 
+interface CachedData {
+  data: ProcessedProp[];
+  timestamp: number;
+  expiresAt: number;
+}
+
 export class OddsApiService {
   private apiKey: string;
   private baseUrl = 'https://api.the-odds-api.com/v4';
   private cachedHistoricalData: Map<string, PlayerHistoricalData> = new Map();
   private cache = new Map();
+  private readonly CACHE_DURATION = 10 * 60 * 1000; // 10 minutes in milliseconds
+  private readonly STORAGE_KEY = 'wnba_props_cache';
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;
   }
 
   async getWNBAProps(forceRefresh: boolean = false): Promise<ProcessedProp[]> {
+    // Check persistent cache first (unless force refresh is requested)
+    if (!forceRefresh) {
+      const cachedData = this.getFromPersistentCache();
+      if (cachedData) {
+        console.log('Returning cached WNBA props from localStorage');
+        return cachedData;
+      }
+    }
+
     console.log('Fetching WNBA props using the events endpoint approach...');
 
     // Calculate date range: today to 7 days from now
@@ -150,6 +168,8 @@ export class OddsApiService {
 
       if (allPlayerProps.length > 0) {
         console.log(`Successfully fetched ${allPlayerProps.length} total WNBA core player props`);
+        // Store in persistent cache
+        this.saveToPersistentCache(allPlayerProps);
         return allPlayerProps;
       } else {
         console.log('No WNBA core player props found across all events');
@@ -159,6 +179,45 @@ export class OddsApiService {
     } catch (error) {
       console.error('Error fetching WNBA core props from live API:', error);
       return [];
+    }
+  }
+
+  private getFromPersistentCache(): ProcessedProp[] | null {
+    try {
+      const cached = localStorage.getItem(this.STORAGE_KEY);
+      if (!cached) return null;
+
+      const cachedData: CachedData = JSON.parse(cached);
+      const now = Date.now();
+
+      if (now > cachedData.expiresAt) {
+        console.log('Cached WNBA props expired, removing from localStorage');
+        localStorage.removeItem(this.STORAGE_KEY);
+        return null;
+      }
+
+      console.log(`Found valid cached WNBA props (expires in ${Math.round((cachedData.expiresAt - now) / 60000)} minutes)`);
+      return cachedData.data;
+    } catch (error) {
+      console.error('Error reading from persistent cache:', error);
+      localStorage.removeItem(this.STORAGE_KEY);
+      return null;
+    }
+  }
+
+  private saveToPersistentCache(data: ProcessedProp[]): void {
+    try {
+      const now = Date.now();
+      const cachedData: CachedData = {
+        data,
+        timestamp: now,
+        expiresAt: now + this.CACHE_DURATION
+      };
+
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(cachedData));
+      console.log(`Cached ${data.length} WNBA props to localStorage (expires in ${this.CACHE_DURATION / 60000} minutes)`);
+    } catch (error) {
+      console.error('Error saving to persistent cache:', error);
     }
   }
 
@@ -370,7 +429,8 @@ export class OddsApiService {
   // Clear cached data method
   clearCache() {
     this.cache.clear();
-    console.log('API cache cleared');
+    localStorage.removeItem(this.STORAGE_KEY);
+    console.log('API cache and persistent storage cleared');
   }
 }
 

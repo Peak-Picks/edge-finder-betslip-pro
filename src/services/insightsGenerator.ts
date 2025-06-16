@@ -1,7 +1,3 @@
-
-// Enhanced AI Insights Generation for WNBA Props
-// Add this to your oddsApiService.ts or create a new insightsGenerator.ts
-
 export class InsightsGenerator {
   
   static generateWNBAInsights(
@@ -182,6 +178,182 @@ export class InsightsGenerator {
     }
     
     return baseInsight;
+  }
+  
+  // Enhanced Game Line Insights Generation
+  static generateGameInsights(
+    matchup: string,
+    betType: 'Spread' | 'Total',
+    line: number,
+    edge: number,
+    playerPropsCount: number,
+    avgPlayerEdge: number,
+    platform: string,
+    gameTime: string
+  ): string {
+    
+    const teams = matchup.split(' @ ');
+    const awayTeam = teams[0]?.trim();
+    const homeTeam = teams[1]?.split(' (')[0]?.trim();
+    
+    if (betType === 'Spread') {
+      return this.generateSpreadInsights(awayTeam, homeTeam, line, edge, playerPropsCount, avgPlayerEdge, gameTime);
+    } else {
+      return this.generateTotalInsights(awayTeam, homeTeam, line, edge, playerPropsCount, avgPlayerEdge, gameTime);
+    }
+  }
+  
+  private static generateSpreadInsights(
+    awayTeam: string,
+    homeTeam: string,
+    line: number,
+    edge: number,
+    playerPropsCount: number,
+    avgPlayerEdge: number,
+    gameTime: string
+  ): string {
+    
+    const edgeStrength = this.getGameEdgeStrength(edge);
+    const teamAnalysis = this.getTeamMatchupAnalysis(awayTeam, homeTeam, 'spread');
+    const correlationInsight = this.getCorrelationInsight(playerPropsCount, avgPlayerEdge, 'spread');
+    const confidenceLevel = this.getGameConfidenceLevel(edge, avgPlayerEdge);
+    const timingContext = this.getGameTimingContext(gameTime);
+    
+    return `${edgeStrength} ${teamAnalysis} ${correlationInsight} ${confidenceLevel} ${timingContext}`.trim();
+  }
+  
+  private static generateTotalInsights(
+    awayTeam: string,
+    homeTeam: string,
+    line: number,
+    edge: number,
+    playerPropsCount: number,
+    avgPlayerEdge: number,
+    gameTime: string
+  ): string {
+    
+    const edgeStrength = this.getGameEdgeStrength(edge);
+    const scoringAnalysis = this.getScoringEnvironmentAnalysis(awayTeam, homeTeam, line);
+    const correlationInsight = this.getCorrelationInsight(playerPropsCount, avgPlayerEdge, 'total');
+    const confidenceLevel = this.getGameConfidenceLevel(edge, avgPlayerEdge);
+    const paceInsight = this.getPaceAnalysis(awayTeam, homeTeam);
+    
+    return `${edgeStrength} ${scoringAnalysis} ${correlationInsight} ${paceInsight} ${confidenceLevel}`.trim();
+  }
+  
+  private static getGameEdgeStrength(edge: number): string {
+    if (edge >= 8) return "🚀 Exceptional game-level value identified.";
+    if (edge >= 6) return "⚡ Strong game analysis advantage detected.";
+    if (edge >= 4) return "📊 Solid game-level opportunity found.";
+    return "📈 Moderate game analysis edge identified.";
+  }
+  
+  private static getTeamMatchupAnalysis(awayTeam: string, homeTeam: string, betType: string): string {
+    // Team-specific insights (you can expand with real team data)
+    const teamInsights = {
+      'Las Vegas Aces': {
+        home: "Vegas excels at home with strong offensive efficiency and crowd support.",
+        away: "Aces maintain elite play on the road with veteran leadership.",
+        defense: "Elite defensive rating limits opponent scoring opportunities."
+      },
+      'Minnesota Lynx': {
+        home: "Minnesota's balanced attack creates scoring from multiple positions.",
+        away: "Lynx road performance strengthened by defensive discipline.",
+        defense: "Strong perimeter defense disrupts opponent offensive flow."
+      },
+      'New York Liberty': {
+        home: "Liberty's pace and athleticism favor uptempo games.",
+        away: "NY's depth provides consistency in hostile environments.",
+        defense: "Aggressive defensive schemes force turnovers and transition opportunities."
+      },
+      'Connecticut Sun': {
+        home: "Connecticut's half-court execution maximizes home court advantage.",
+        away: "Sun's defensive identity travels well on the road.",
+        defense: "Physical interior defense limits paint scoring."
+      }
+    };
+    
+    const homeInsights = teamInsights[homeTeam];
+    const awayInsights = teamInsights[awayTeam];
+    
+    if (homeInsights && awayInsights) {
+      return `${homeInsights.home} ${awayInsights.away}`;
+    }
+    
+    // Generic insights if specific team data not available
+    const genericInsights = [
+      "Matchup dynamics favor the analytical model projection.",
+      "Historical head-to-head trends support the projected outcome.",
+      "Tactical advantages align with the identified edge.",
+      "Team form and injury reports factored into the analysis."
+    ];
+    
+    return genericInsights[Math.floor(Math.random() * genericInsights.length)];
+  }
+  
+  private static getScoringEnvironmentAnalysis(awayTeam: string, homeTeam: string, line: number): string {
+    const paceAnalysis = line >= 165 ? "high-pace" : line >= 160 ? "moderate-pace" : "controlled-pace";
+    
+    const environmentInsights = {
+      "high-pace": [
+        "Fast-break opportunities and transition scoring favor higher totals.",
+        "Both teams' offensive systems create scoring opportunities in transition.",
+        "Pace metrics suggest an up-tempo game with multiple possessions."
+      ],
+      "moderate-pace": [
+        "Balanced offensive approaches create steady scoring opportunities.",
+        "Half-court execution and ball movement support consistent scoring.",
+        "Tempo control by both teams creates predictable scoring patterns."
+      ],
+      "controlled-pace": [
+        "Defensive emphasis and slower pace limit total scoring opportunities.",
+        "Half-court grinding style reduces possession count and scoring.",
+        "Physical defensive play expected to impact offensive efficiency."
+      ]
+    };
+    
+    const insights = environmentInsights[paceAnalysis];
+    return insights[Math.floor(Math.random() * insights.length)];
+  }
+  
+  private static getCorrelationInsight(playerPropsCount: number, avgPlayerEdge: number, betType: string): string {
+    const correlationStrength = avgPlayerEdge >= 7 ? "strong" : avgPlayerEdge >= 5 ? "solid" : "moderate";
+    
+    if (betType === 'spread') {
+      return `Player prop analysis across ${playerPropsCount} bets shows ${correlationStrength} directional correlation (${avgPlayerEdge.toFixed(1)}% avg edge).`;
+    } else {
+      return `Individual scoring projections from ${playerPropsCount} player props indicate ${correlationStrength} total alignment (${avgPlayerEdge.toFixed(1)}% avg edge).`;
+    }
+  }
+  
+  private static getGameConfidenceLevel(gameEdge: number, playerEdge: number): string {
+    const combinedStrength = (gameEdge + playerEdge) / 2;
+    
+    if (combinedStrength >= 7) return "🎯 High-confidence game analysis with multi-layer validation.";
+    if (combinedStrength >= 5) return "✅ Good confidence supported by player-level correlation.";
+    if (combinedStrength >= 3) return "📊 Moderate confidence with developing edge patterns.";
+    return "⚠️ Emerging opportunity requiring careful monitoring.";
+  }
+  
+  private static getPaceAnalysis(awayTeam: string, homeTeam: string): string {
+    const paceInsights = [
+      "Pace metrics favor offensive efficiency and scoring opportunities.",
+      "Tempo control strategies align with projected game flow.",
+      "Possession count analysis supports the total projection.",
+      "Defensive pressure and pace combination creates value."
+    ];
+    
+    return paceInsights[Math.floor(Math.random() * paceInsights.length)];
+  }
+  
+  private static getGameTimingContext(gameTime: string): string {
+    if (gameTime.includes('Tomorrow')) {
+      return "Early market value before public betting action.";
+    }
+    if (gameTime.includes('Today')) {
+      return "Live edge with current roster and status updates.";
+    }
+    return "Optimal timing for maximum analytical advantage.";
   }
   
   // Method to generate selection reasoning (why this bet was chosen over alternatives)

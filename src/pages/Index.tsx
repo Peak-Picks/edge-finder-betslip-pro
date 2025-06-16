@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -18,9 +17,12 @@ import { BettingGuide } from '@/components/BettingGuide';
 import { TrendingUp, Target, BarChart3, Wallet, Zap, RefreshCw } from 'lucide-react';
 import TutorialModal from '@/components/TutorialModal';
 import { BetSlipProvider, useBetSlipContext } from "@/components/BetSlipContext";
-import { oddsApiService } from '@/services/oddsApiService';
+import { createOddsApiService } from '@/services/oddsApiService';
 
 const THREE_WEEKS_MS = 21 * 24 * 60 * 60 * 1000;
+
+// Create an instance of the odds API service
+const oddsApiService = createOddsApiService(import.meta.env.VITE_ODDS_API_KEY || '');
 
 const HomeContent = ({ currentView, setCurrentView }: { currentView: string; setCurrentView: (view: string) => void }) => {
   const { savedBetSlips } = useBetSlipContext();

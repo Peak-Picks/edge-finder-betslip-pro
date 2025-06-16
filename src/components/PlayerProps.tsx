@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +14,7 @@ interface PlayerPropsProps {
   onRefreshData?: () => void;
 }
 
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds (until manual refresh)
 const WNBA_CACHE_KEY = 'wnba_props_cache';
 
 export const PlayerProps = ({ onRefreshData }: PlayerPropsProps) => {
@@ -38,6 +39,7 @@ export const PlayerProps = ({ onRefreshData }: PlayerPropsProps) => {
       const { data, timestamp } = JSON.parse(cached);
       const now = Date.now();
       
+      // Only clear cache if it's older than 24 hours (very long duration)
       if (now - timestamp > CACHE_DURATION) {
         localStorage.removeItem(WNBA_CACHE_KEY);
         return null;

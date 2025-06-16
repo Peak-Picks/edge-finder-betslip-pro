@@ -125,6 +125,36 @@ export class DynamicPicksGenerator {
       });
     }
 
+    // Add WNBA pick - A'ja Wilson points
+    const wilsonData = mockDataService.getPlayerStats('aja-wilson');
+    const acesGame = games.find(g => g.homeTeam === 'LV' || g.awayTeam === 'LV');
+    
+    if (wilsonData && acesGame) {
+      const opponent = acesGame.homeTeam === 'LV' ? acesGame.awayTeam : acesGame.homeTeam;
+      const calculation = this.calculationEngine.calculatePlayerProp(wilsonData, 'points', opponent, acesGame);
+      const bookLine = 23.5;
+      const edge = this.calculationEngine.calculateEdge(calculation.projection, bookLine, 'over');
+      
+      picks.push({
+        id: 'wilson-points-best',
+        player: wilsonData.name,
+        team: wilsonData.team,
+        title: `Over ${bookLine} Points`,
+        sport: 'Basketball - WNBA',
+        game: `${acesGame.gameTime}`,
+        description: `${wilsonData.name} to score over ${bookLine} points against the ${opponent}.`,
+        odds: edge > 8 ? '+115' : '+105',
+        platform: platforms[Math.floor(Math.random() * platforms.length)],
+        confidence: Math.min(5, Math.max(1, Math.floor(calculation.confidence / 2))),
+        insights: this.calculationEngine.generateInsights(calculation.factors, edge, 'high'),
+        category: 'Top Prop',
+        edge: Math.round(edge * 10) / 10,
+        type: 'Player Prop',
+        line: bookLine,
+        projected: calculation.projection
+      });
+    }
+
     return picks;
   }
 
@@ -134,7 +164,7 @@ export class DynamicPicksGenerator {
     const platforms = ['DraftKings', 'FanDuel', 'BetMGM'];
 
     // Generate higher-variance picks with better odds
-    const players = ['lebron-james', 'luka-doncic', 'connor-mcdavid'];
+    const players = ['lebron-james', 'luka-doncic', 'connor-mcdavid', 'breanna-stewart', 'sabrina-ionescu'];
     
     players.forEach(playerId => {
       const playerData = mockDataService.getPlayerStats(playerId);
@@ -155,6 +185,10 @@ export class DynamicPicksGenerator {
         prop = 'shots';
         bookLine = 3.5;
         sportName = 'Hockey - NHL';
+      } else if (playerId === 'breanna-stewart' || playerId === 'sabrina-ionescu') {
+        prop = 'points';
+        bookLine = (playerData.seasonAverages.points || 0) + 3; // Higher line for long shot
+        sportName = 'Basketball - WNBA';
       } else if (playerData.seasonAverages.points) {
         prop = 'points';
         bookLine = (playerData.seasonAverages.points || 0) + 2; // Higher line for long shot
@@ -188,7 +222,7 @@ export class DynamicPicksGenerator {
       }
     });
 
-    return picks.slice(0, 3);
+    return picks.slice(0, 5);
   }
 
   generateGameBasedPicks(): GeneratedPick[] {
@@ -199,7 +233,24 @@ export class DynamicPicksGenerator {
     games.forEach(game => {
       // Generate spread pick
       const spreadCalc = this.calculationEngine.calculateGameProp(game, 'spread');
-      const bookSpread = -3.5;
+      let bookSpread: number;
+      let bookTotal: number;
+      
+      // Set different defaults based on sport
+      if (game.sport === 'wnba') {
+        bookSpread = -2.5;
+        bookTotal = 162.5;
+      } else if (game.sport === 'nba') {
+        bookSpread = -3.5;
+        bookTotal = 218.5;
+      } else if (game.sport === 'nfl') {
+        bookSpread = -3.5;
+        bookTotal = 48.5;
+      } else {
+        bookSpread = -3.5;
+        bookTotal = 218.5;
+      }
+
       const spreadEdge = this.calculationEngine.calculateEdge(Math.abs(spreadCalc.projection), Math.abs(bookSpread));
       
       if (spreadEdge > 3) {
@@ -223,7 +274,6 @@ export class DynamicPicksGenerator {
 
       // Generate total pick
       const totalCalc = this.calculationEngine.calculateGameProp(game, 'total');
-      const bookTotal = game.sport === 'nba' ? 218.5 : 48.5;
       const totalEdge = this.calculationEngine.calculateEdge(totalCalc.projection, bookTotal, 'under');
       
       if (totalEdge > 2) {
@@ -246,17 +296,27 @@ export class DynamicPicksGenerator {
       }
     });
 
-    return picks.slice(0, 3);
+    return picks.slice(0, 6);
   }
 
-  generatePlayerProps(sport: 'nba' | 'nfl'): GeneratedPick[] {
+  generatePlayerProps(sport: 'nba' | 'nfl' | 'wnba'): GeneratedPick[] {
     const picks: GeneratedPick[] = [];
     const games = mockDataService.getGameData().filter(g => g.sport === sport);
     const platforms = ['DraftKings', 'FanDuel', 'BetMGM'];
 
-    const playerIds = sport === 'nba' 
-      ? ['luka-doncic', 'giannis-antetokounmpo'] 
-      : ['josh-allen'];
+    let playerIds: string[];
+    let props: { prop: string; line: number }[];
+
+    if (sport === 'nba') {
+      playerIds = ['luka-doncic', 'giannis-antetokounmpo'];
+      props = [{ prop: 'points', line: 28.5 }, { prop: 'rebounds', line: 11.5 }];
+    } else if (sport === 'nfl') {
+      playerIds = ['josh-allen'];
+      props = [{ prop: 'passing_yards', line: 267.5 }];
+    } else { // wnba
+      playerIds = ['aja-wilson', 'breanna-stewart'];
+      props = [{ prop: 'points', line: 21.5 }, { prop: 'rebounds', line: 9.5 }];
+    }
 
     playerIds.forEach(playerId => {
       const playerData = mockDataService.getPlayerStats(playerId);
@@ -268,10 +328,6 @@ export class DynamicPicksGenerator {
       if (!game) return;
 
       const opponent = game.homeTeam === playerData.team ? game.awayTeam : game.homeTeam;
-      
-      const props = sport === 'nba' 
-        ? [{ prop: 'points', line: 28.5 }, { prop: 'rebounds', line: 11.5 }]
-        : [{ prop: 'passing_yards', line: 267.5 }];
 
       props.forEach(({ prop, line }) => {
         const calculation = this.calculationEngine.calculatePlayerProp(playerData, prop, opponent, game);

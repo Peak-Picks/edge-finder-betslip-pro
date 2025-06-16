@@ -116,7 +116,7 @@ export class DynamicPicksGenerator {
     }
   }
 
-  // Updated processWNBAPropsIntoCategories method for dynamicPicksGenerator.ts
+  // Updated processWNBAPropsIntoCategories method to properly apply optimization
   private processWNBAPropsIntoCategories(wnbaProps: any[]): Omit<StoredWNBAData, 'lastUpdated'> {
     console.log(`🔄 Processing ${wnbaProps.length} raw WNBA props...`);
     
@@ -129,7 +129,7 @@ export class DynamicPicksGenerator {
     const longShots: GeneratedPick[] = [];
     const playerProps: GeneratedPick[] = [];
 
-    // STEP 2: Process optimized props into categories
+    // STEP 2: Process optimized props into categories (no duplicates since already optimized)
     optimizedProps.forEach(prop => {
       const pick: GeneratedPick = {
         id: prop.id,
@@ -169,11 +169,6 @@ export class DynamicPicksGenerator {
           pick.category = 'Player Prop';
           playerProps.push(pick);
         }
-      }
-
-      // All qualifying props go into player props as well
-      if (prop.edge >= 3) {
-        playerProps.push({...pick, category: 'Player Prop'});
       }
     });
 

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -6,11 +5,13 @@ import { Button } from '@/components/ui/button';
 import { TrendingUp, Plus, BarChart3, Clock, RefreshCw } from 'lucide-react';
 import { useBetSlipContext } from './BetSlipContext';
 import { dynamicPicksGenerator, GeneratedPick } from '../services/dynamicPicksGenerator';
+import { LeagueTabsHeader } from './LeagueTabsHeader';
 
 export const GameBasedPicks = () => {
   const { addToBetSlip, betSlip } = useBetSlipContext();
   const [gamePicks, setGamePicks] = useState<GeneratedPick[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedLeague, setSelectedLeague] = useState('nba');
 
   useEffect(() => {
     loadGamePicks();
@@ -42,6 +43,21 @@ export const GameBasedPicks = () => {
     }
   };
 
+  const getLeagueName = (league: string) => {
+    switch (league) {
+      case 'nba': return 'NBA';
+      case 'nfl': return 'NFL';
+      case 'mlb': return 'MLB';
+      case 'wnba': return 'WNBA';
+      default: return league.toUpperCase();
+    }
+  };
+
+  const filteredGamePicks = gamePicks.filter(pick => {
+    const targetLeague = getLeagueName(selectedLeague);
+    return pick.sport === targetLeague;
+  });
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -68,7 +84,7 @@ export const GameBasedPicks = () => {
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="secondary" className="bg-cyan-500/20 text-cyan-300">
-            {gamePicks.length} Available
+            {filteredGamePicks.length} Available
           </Badge>
           <Button 
             variant="outline" 
@@ -80,8 +96,14 @@ export const GameBasedPicks = () => {
           </Button>
         </div>
       </div>
+
+      <LeagueTabsHeader 
+        selectedLeague={selectedLeague}
+        onLeagueChange={setSelectedLeague}
+      />
+
       <div className="space-y-3">
-        {gamePicks.map((pick) => (
+        {filteredGamePicks.map((pick) => (
           <Card key={pick.id} className="bg-slate-800/50 border-slate-700/50 p-4 hover:bg-slate-800/70 transition-all duration-200">
             <div className="flex items-start justify-between mb-2">
               <div>

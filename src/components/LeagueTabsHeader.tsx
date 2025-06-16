@@ -8,11 +8,9 @@ interface LeagueTabsHeaderProps {
 
 export const LeagueTabsHeader = ({ selectedLeague, onLeagueChange }: LeagueTabsHeaderProps) => {
   return (
-    <div className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700/50 p-4">
-      <h1 className="text-xl font-bold mb-4">All Player Props</h1>
-      
+    <div className="mb-4">
       <Tabs value={selectedLeague} onValueChange={onLeagueChange}>
-        <TabsList className="grid w-full grid-cols-3 bg-slate-800/50 border border-slate-700/50">
+        <TabsList className="grid w-full grid-cols-4 bg-slate-800/50 border border-slate-700/50">
           <TabsTrigger 
             value="nba" 
             className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400"
@@ -30,6 +28,12 @@ export const LeagueTabsHeader = ({ selectedLeague, onLeagueChange }: LeagueTabsH
             className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400"
           >
             MLB
+          </TabsTrigger>
+          <TabsTrigger 
+            value="wnba" 
+            className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400"
+          >
+            WNBA
           </TabsTrigger>
         </TabsList>
       </Tabs>

@@ -212,7 +212,7 @@ export const PlayerProps = ({ onRefreshData }: PlayerPropsProps) => {
                           )}
                         </div>
                         <p className="text-emerald-400 font-medium">
-                          {prop.line} {propType}
+                          Over {prop.line} {propType}
                         </p>
                       </div>
                       <div className="text-right">
@@ -244,7 +244,7 @@ export const PlayerProps = ({ onRefreshData }: PlayerPropsProps) => {
                           type: 'Player Prop',
                           player: prop.player,
                           team: prop.team,
-                          description: `${prop.type} ${prop.line} ${propType}`,
+                          description: `Over ${prop.line} ${propType}`,
                           odds: prop.odds,
                           edge: prop.edge,
                           line: prop.line,

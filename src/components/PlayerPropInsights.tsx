@@ -72,7 +72,7 @@ export const PlayerPropInsights = ({ prop, open, onOpenChange }: PlayerPropInsig
     };
 
     return {
-      aiRecommendation: `${prop.type} ${prop.line}`,
+      aiRecommendation: `${prop.type} ${prop.line} ${prop.prop}`,
       confidence: confidencePercentage,
       keyFactors,
       recentPerformance,

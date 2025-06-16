@@ -17,10 +17,10 @@ export const GameBasedPicks = () => {
     loadGamePicks();
   }, []);
 
-  const loadGamePicks = () => {
+  const loadGamePicks = async () => {
     setLoading(true);
     try {
-      const picks = dynamicPicksGenerator.generateGameBasedPicks();
+      const picks = await dynamicPicksGenerator.generateGameBasedPicks();
       setGamePicks(picks);
     } catch (error) {
       console.error('Error loading game picks:', error);
@@ -29,9 +29,9 @@ export const GameBasedPicks = () => {
     }
   };
 
-  const refreshPicks = () => {
+  const refreshPicks = async () => {
     dynamicPicksGenerator.refreshAllPicks();
-    loadGamePicks();
+    await loadGamePicks();
   };
 
   const getConfidenceColor = (confidence: string) => {

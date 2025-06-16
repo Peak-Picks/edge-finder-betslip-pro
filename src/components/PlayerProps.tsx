@@ -52,8 +52,8 @@ export const PlayerProps = ({ onRefreshData }: PlayerPropsProps) => {
       } else {
         setPlayerProps(prev => ({ ...prev, wnba: [] }));
         setWnbaDataSource('unavailable');
-        setError('No WNBA games available today.');
-        console.log('No WNBA games found');
+        setError('WNBA player props are not currently available. The API only provides game lines (spreads, moneylines, totals) for WNBA games at this time.');
+        console.log('No WNBA player props found - only game lines available');
       }
     } catch (error) {
       console.error('Failed to load WNBA props:', error);
@@ -355,14 +355,10 @@ export const PlayerProps = ({ onRefreshData }: PlayerPropsProps) => {
                 <Card className="bg-slate-800/50 border-slate-700/50 p-6 text-center">
                   <div className="space-y-2">
                     <p className="text-slate-400">
-                      {wnbaDataSource === 'unavailable' 
-                        ? 'WNBA data is currently unavailable.' 
-                        : 'No WNBA props available today.'}
+                      No WNBA player props available.
                     </p>
                     <p className="text-slate-500 text-sm">
-                      {wnbaDataSource === 'unavailable' 
-                        ? 'The WNBA season may not be active or API is temporarily down.' 
-                        : 'Check back later for new games.'}
+                      The API currently only provides game lines (spreads, moneylines, totals) for WNBA games. Player props (points, rebounds, assists) are not available at this time.
                     </p>
                   </div>
                 </Card>

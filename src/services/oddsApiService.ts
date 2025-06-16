@@ -91,10 +91,10 @@ export class OddsApiService {
     const commenceTimeTo = sevenDaysFromNow.toISOString().split('.')[0] + 'Z';
 
     try {
-      console.log('Fetching WNBA odds with player props...');
+      console.log('Attempting to fetch WNBA player props...');
       
-      // Use the standard sports endpoint with player prop markets
-      const oddsResponse = await fetch(
+      // Try to get player props first
+      const playerPropsResponse = await fetch(
         `${this.baseUrl}/sports/basketball_wnba/odds?apiKey=${this.apiKey}&regions=us&markets=player_points,player_rebounds,player_assists&oddsFormat=american&bookmakers=draftkings,fanduel,betmgm&commenceTimeFrom=${commenceTimeFrom}&commenceTimeTo=${commenceTimeTo}`,
         {
           method: 'GET',
@@ -104,68 +104,32 @@ export class OddsApiService {
         }
       );
 
-      if (!oddsResponse.ok) {
-        console.error(`WNBA odds API failed with status: ${oddsResponse.status}`);
-        const errorText = await oddsResponse.text();
-        console.error('Error details:', errorText);
+      if (playerPropsResponse.ok) {
+        const playerPropsData: OddsApiProp[] = await playerPropsResponse.json();
         
-        // If player props fail, try game odds as fallback
-        console.log('Player props failed, trying game odds...');
-        const gameOddsResponse = await fetch(
-          `${this.baseUrl}/sports/basketball_wnba/odds?apiKey=${this.apiKey}&regions=us&markets=h2h,spreads,totals&oddsFormat=american&bookmakers=draftkings,fanduel,betmgm&commenceTimeFrom=${commenceTimeFrom}&commenceTimeTo=${commenceTimeTo}`,
-          {
-            method: 'GET',
-            headers: {
-              'Accept': 'application/json',
-            },
-          }
-        );
-
-        if (gameOddsResponse.ok) {
-          const gameOdds: OddsApiProp[] = await gameOddsResponse.json();
-          console.log(`Found ${gameOdds.length} WNBA games with game odds`);
+        if (playerPropsData.length > 0) {
+          console.log(`Found ${playerPropsData.length} WNBA games with player props`);
           
-          const allGameProps: ProcessedProp[] = [];
-          gameOdds.forEach(game => {
-            const gameProps = this.processWNBAgameOddsAsProps(game);
-            allGameProps.push(...gameProps);
+          const allPlayerProps: ProcessedProp[] = [];
+          playerPropsData.forEach(game => {
+            const processedProps = this.processWNBAEventData(game);
+            allPlayerProps.push(...processedProps);
           });
           
-          return allGameProps;
-        } else {
-          throw new Error(`Both player props and game odds failed: ${oddsResponse.status}`);
+          if (allPlayerProps.length > 0) {
+            console.log(`Successfully processed ${allPlayerProps.length} player props`);
+            return allPlayerProps;
+          }
         }
       }
 
-      const oddsData: OddsApiProp[] = await oddsResponse.json();
-      
-      if (oddsData.length === 0) {
-        console.log('No WNBA games found with odds in the next 7 days.');
-        return [];
-      }
-
-      console.log(`Found ${oddsData.length} WNBA games, processing player props...`);
-
-      // Process all games with player props
-      const allPlayerProps: ProcessedProp[] = [];
-      
-      oddsData.forEach(game => {
-        const processedProps = this.processWNBAEventData(game);
-        allPlayerProps.push(...processedProps);
-        console.log(`Found ${processedProps.length} player props for game: ${game.home_team} vs ${game.away_team}`);
-      });
-
-      if (allPlayerProps.length === 0) {
-        console.log('No player props found in any WNBA games.');
-        return [];
-      }
-
-      console.log(`Successfully processed ${allPlayerProps.length} live WNBA props`);
-      return allPlayerProps;
+      // If we get here, player props are not available
+      console.log('WNBA player props are not currently available in the API');
+      return [];
 
     } catch (error) {
       console.error('Error fetching WNBA props from live API:', error);
-      throw error;
+      return [];
     }
   }
 

@@ -1,4 +1,3 @@
-// Updated BestBets.tsx with manual refresh and stored data
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -6,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { TrendingUp, Plus, Star, RefreshCw, AlertCircle, CheckCircle } from 'lucide-react';
 import { useBetSlipContext } from './BetSlipContext';
 import { dynamicPicksGenerator, GeneratedPick } from '../services/dynamicPicksGenerator';
-import { apiManager } from '../services/apiManager';
 import { LeagueTabsHeader } from './LeagueTabsHeader';
 
 export const BestBets = () => {
@@ -15,69 +13,41 @@ export const BestBets = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedLeague, setSelectedLeague] = useState('nba');
-  const [refreshStatus, setRefreshStatus] = useState<{
-    message: string;
-    type: 'success' | 'error' | 'info' | null;
-  }>({ message: '', type: null });
+  const [error, setError] = useState<string | null>(null);
+
+  const API_KEY = '70f59ac60558d2b4dee1200bdaa2f2f3';
 
   useEffect(() => {
+    // Set API key and load best bets
+    dynamicPicksGenerator.setApiKey(API_KEY);
     loadBestBets();
   }, []);
 
   const loadBestBets = () => {
     setLoading(true);
+    setError(null);
     try {
       const picks = dynamicPicksGenerator.generateBestBets();
       setBestBets(picks);
-      
-      // Show data status
-      const status = apiManager.getDataStatus();
-      if (status.hasData) {
-        setRefreshStatus({
-          message: `Using stored data from ${status.lastUpdate} (${status.dataCount} items)`,
-          type: 'info'
-        });
-      }
     } catch (error) {
       console.error('Error loading best bets:', error);
+      setError('Failed to load best bets');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleManualRefresh = async () => {
+  const handleRefresh = async () => {
     setRefreshing(true);
-    setRefreshStatus({ message: 'Fetching fresh WNBA data...', type: 'info' });
-    
+    setError(null);
     try {
-      const result = await apiManager.manualRefresh();
-      
-      if (result.success) {
-        setRefreshStatus({
-          message: `${result.message} (${result.dataCount} items loaded)`,
-          type: 'success'
-        });
-        
-        // Reload the picks to include new WNBA data
-        loadBestBets();
-      } else {
-        setRefreshStatus({
-          message: result.message,
-          type: 'error'
-        });
-      }
+      await dynamicPicksGenerator.refreshWNBAData(true);
+      loadBestBets();
     } catch (error) {
-      setRefreshStatus({
-        message: `Refresh failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        type: 'error'
-      });
+      console.error('Error refreshing WNBA data:', error);
+      setError('Failed to refresh WNBA data');
     } finally {
       setRefreshing(false);
-      
-      // Clear status message after 5 seconds
-      setTimeout(() => {
-        setRefreshStatus({ message: '', type: null });
-      }, 5000);
     }
   };
 
@@ -111,15 +81,6 @@ export const BestBets = () => {
       case 'mlb': return 'Baseball - MLB';
       case 'wnba': return 'Basketball - WNBA';
       default: return league;
-    }
-  };
-
-  const getRefreshStatusIcon = () => {
-    switch (refreshStatus.type) {
-      case 'success': return <CheckCircle className="w-4 h-4 text-emerald-400" />;
-      case 'error': return <AlertCircle className="w-4 h-4 text-red-400" />;
-      case 'info': return <AlertCircle className="w-4 h-4 text-blue-400" />;
-      default: return null;
     }
   };
 
@@ -159,7 +120,7 @@ export const BestBets = () => {
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={handleManualRefresh}
+            onClick={handleRefresh}
             disabled={refreshing}
             className="border-slate-600 text-slate-300 hover:bg-slate-700"
           >
@@ -169,11 +130,12 @@ export const BestBets = () => {
         </div>
       </div>
 
-      {/* Status Message */}
-      {refreshStatus.message && (
-        <div className="flex items-center gap-2 p-2 bg-slate-800/50 border border-slate-700 rounded-lg">
-          {getRefreshStatusIcon()}
-          <span className="text-sm text-slate-300">{refreshStatus.message}</span>
+      {error && (
+        <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-3 mb-4">
+          <div className="flex items-center gap-2 text-red-400">
+            <AlertCircle className="w-4 h-4" />
+            <span className="text-sm">{error}</span>
+          </div>
         </div>
       )}
 
@@ -195,8 +157,7 @@ export const BestBets = () => {
                   <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs">
                     {bet.edge}% Edge
                   </Badge>
-                  {/* Show WNBA badge for live data */}
-                  {bet.sport === 'Basketball - WNBA' && !bet.insights.includes('Fallback') && (
+                  {bet.sport === 'Basketball - WNBA' && (
                     <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">
                       Live WNBA
                     </Badge>
@@ -266,8 +227,7 @@ export const BestBets = () => {
         ))}
       </div>
 
-      {/* Show helpful message if no WNBA data */}
-      {selectedLeague === 'wnba' && filteredBets.length === 0 && (
+      {selectedLeague === 'wnba' && filteredBets.length === 0 && !loading && (
         <div className="text-center p-6 bg-slate-800/30 border border-slate-700 rounded-lg">
           <AlertCircle className="w-8 h-8 text-slate-400 mx-auto mb-2" />
           <p className="text-slate-400 mb-2">No WNBA data available</p>
@@ -275,7 +235,7 @@ export const BestBets = () => {
             Click the refresh button to fetch live WNBA props from the Odds API
           </p>
           <Button 
-            onClick={handleManualRefresh}
+            onClick={handleRefresh}
             disabled={refreshing}
             className="bg-emerald-600 hover:bg-emerald-700"
           >

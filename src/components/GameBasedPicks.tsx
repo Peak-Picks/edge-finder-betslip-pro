@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, Plus, BarChart3, Clock, RefreshCw } from 'lucide-react';
+import { TrendingUp, Plus, BarChart3, Clock, RefreshCw, AlertCircle } from 'lucide-react';
 import { useBetSlipContext } from './BetSlipContext';
 import { dynamicPicksGenerator, GeneratedPick } from '../services/dynamicPicksGenerator';
 import { LeagueTabsHeader } from './LeagueTabsHeader';
@@ -11,27 +12,44 @@ export const GameBasedPicks = () => {
   const { addToBetSlip, betSlip } = useBetSlipContext();
   const [gamePicks, setGamePicks] = useState<GeneratedPick[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [selectedLeague, setSelectedLeague] = useState('nba');
+  const [error, setError] = useState<string | null>(null);
+
+  const API_KEY = '70f59ac60558d2b4dee1200bdaa2f2f3';
 
   useEffect(() => {
+    // Set API key and load game picks
+    dynamicPicksGenerator.setApiKey(API_KEY);
     loadGamePicks();
   }, []);
 
   const loadGamePicks = async () => {
     setLoading(true);
+    setError(null);
     try {
       const picks = await dynamicPicksGenerator.generateGameBasedPicks();
       setGamePicks(picks);
     } catch (error) {
       console.error('Error loading game picks:', error);
+      setError('Failed to load game picks');
     } finally {
       setLoading(false);
     }
   };
 
-  const refreshPicks = async () => {
-    dynamicPicksGenerator.refreshAllPicks();
-    await loadGamePicks();
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    setError(null);
+    try {
+      await dynamicPicksGenerator.refreshWNBAData(true);
+      await loadGamePicks();
+    } catch (error) {
+      console.error('Error refreshing WNBA data:', error);
+      setError('Failed to refresh WNBA data');
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const getConfidenceColor = (confidence: string) => {
@@ -89,13 +107,24 @@ export const GameBasedPicks = () => {
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={refreshPicks}
+            onClick={handleRefresh}
+            disabled={refreshing}
             className="border-slate-600 text-slate-300 hover:bg-slate-700"
           >
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            {refreshing ? 'Refreshing...' : 'Refresh'}
           </Button>
         </div>
       </div>
+
+      {error && (
+        <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-3 mb-4">
+          <div className="flex items-center gap-2 text-red-400">
+            <AlertCircle className="w-4 h-4" />
+            <span className="text-sm">{error}</span>
+          </div>
+        </div>
+      )}
 
       <LeagueTabsHeader 
         selectedLeague={selectedLeague}
@@ -109,6 +138,11 @@ export const GameBasedPicks = () => {
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <h3 className="font-semibold text-white">{pick.matchup}</h3>
+                  {pick.sport === 'WNBA' && (
+                    <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">
+                      Live WNBA
+                    </Badge>
+                  )}
                   <Clock className="w-3 h-3 text-slate-400" />
                   <span className="text-xs text-slate-400">{pick.gameTime}</span>
                 </div>
@@ -157,6 +191,24 @@ export const GameBasedPicks = () => {
           </Card>
         ))}
       </div>
+
+      {selectedLeague === 'wnba' && filteredGamePicks.length === 0 && !loading && (
+        <div className="text-center p-6 bg-slate-800/30 border border-slate-700 rounded-lg">
+          <AlertCircle className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+          <p className="text-slate-400 mb-2">No WNBA game picks available</p>
+          <p className="text-sm text-slate-500 mb-4">
+            Click the refresh button to fetch live WNBA props from the Odds API
+          </p>
+          <Button 
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="bg-cyan-600 hover:bg-cyan-700"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            {refreshing ? 'Fetching...' : 'Fetch WNBA Data'}
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

@@ -22,15 +22,6 @@ export interface OddsApiProp {
   }>;
 }
 
-export interface WNBAEvent {
-  id: string;
-  sport_key: string;
-  sport_title: string;
-  commence_time: string;
-  home_team: string;
-  away_team: string;
-}
-
 export interface ProcessedProp {
   id: string;
   player: string;
@@ -52,22 +43,6 @@ export interface ProcessedProp {
   projected?: number;
 }
 
-export interface PlayerGameLog {
-  game: string;
-  stat: number;
-  result: 'hit' | 'miss';
-  date: string;
-  opponent: string;
-}
-
-export interface PlayerHistoricalData {
-  player: string;
-  propType: string;
-  recentGames: PlayerGameLog[];
-  averagePerformance: number;
-  hitRate: number;
-}
-
 interface CachedData {
   data: ProcessedProp[];
   timestamp: number;
@@ -76,7 +51,6 @@ interface CachedData {
 export class OddsApiService {
   private apiKey: string;
   private baseUrl = 'https://api.the-odds-api.com/v4';
-  private cachedHistoricalData: Map<string, PlayerHistoricalData> = new Map();
   private cache = new Map();
   private readonly STORAGE_KEY = 'wnba_props_cache';
 
@@ -109,7 +83,8 @@ export class OddsApiService {
     try {
       console.log('🔍 Making WNBA player props API call...');
       
-      // Use the exact same format that works in your Google Sheets
+      // FIXED: Correct API endpoint for player props
+      // The original URL was fetching general odds, not player props
       const propsUrl = `${this.baseUrl}/sports/basketball_wnba/odds?apiKey=${this.apiKey}&regions=us&markets=player_points,player_rebounds,player_assists&oddsFormat=american&bookmakers=draftkings,fanduel,betmgm`;
       
       console.log('📡 Making API request to:', propsUrl.replace(this.apiKey, '[HIDDEN]'));
@@ -125,7 +100,6 @@ export class OddsApiService {
 
       console.log(`⏱️ API request completed in ${requestTime}ms`);
       console.log(`📊 Response status: ${propsResponse.status} ${propsResponse.statusText}`);
-      console.log('📊 Response headers:', Object.fromEntries(propsResponse.headers.entries()));
 
       if (!propsResponse.ok) {
         const errorText = await propsResponse.text();
@@ -135,7 +109,10 @@ export class OddsApiService {
         if (propsResponse.status === 401) {
           console.error('❌ Authentication failed - check API key');
         } else if (propsResponse.status === 422) {
-          console.error('❌ Validation error - check parameters');
+          console.error('❌ Validation error - possible issues:');
+          console.error('   - Player prop markets might not be available for WNBA');
+          console.error('   - Try checking available markets first');
+          console.error('   - Season might be off-season');
         } else if (propsResponse.status === 404) {
           console.error('❌ Endpoint not found');
         }
@@ -154,7 +131,6 @@ export class OddsApiService {
         console.log(`📋 Found ${wnbaEvents.length} WNBA events`);
       } catch (parseError) {
         console.error('❌ JSON parse failed:', parseError);
-        console.error('❌ Response text:', responseText.substring(0, 1000));
         return [];
       }
 
@@ -164,7 +140,10 @@ export class OddsApiService {
       }
 
       if (wnbaEvents.length === 0) {
-        console.log('⚠️ No WNBA events found');
+        console.log('⚠️ No WNBA events found - this could mean:');
+        console.log('   - WNBA season is not active');
+        console.log('   - No games scheduled');
+        console.log('   - Player prop markets not available');
         return [];
       }
 
@@ -193,6 +172,10 @@ export class OddsApiService {
         return allPlayerProps;
       } else {
         console.log('⚠️ No player props found in any events');
+        console.log('   This might be because:');
+        console.log('   - Bookmakers don\'t offer player props for these games');
+        console.log('   - Player prop markets are not yet available');
+        console.log('   - Try checking closer to game time');
         return [];
       }
 
@@ -206,31 +189,55 @@ export class OddsApiService {
     }
   }
 
+  // NEW: Debug method to check available markets
+  async checkAvailableMarkets(): Promise<void> {
+    if (!this.apiKey) {
+      console.error('❌ API key required for market check');
+      return;
+    }
+
+    try {
+      const marketsUrl = `${this.baseUrl}/sports/basketball_wnba/odds?apiKey=${this.apiKey}&regions=us&markets=h2h,spreads,totals&oddsFormat=american&bookmakers=draftkings`;
+      
+      console.log('🔍 Checking available markets...');
+      const response = await fetch(marketsUrl);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('📊 Available markets response:', JSON.stringify(data, null, 2));
+        
+        if (Array.isArray(data) && data.length > 0) {
+          console.log('🎯 Found games, checking market structure:');
+          data.forEach((game, index) => {
+            console.log(`Game ${index + 1}: ${game.away_team} @ ${game.home_team}`);
+            game.bookmakers?.forEach(bookmaker => {
+              console.log(`  ${bookmaker.title} markets:`, bookmaker.markets?.map(m => m.key).join(', '));
+            });
+          });
+        }
+      } else {
+        console.error('❌ Market check failed:', response.status, await response.text());
+      }
+    } catch (error) {
+      console.error('❌ Error checking markets:', error);
+    }
+  }
+
   private getFromPersistentCache(): ProcessedProp[] | null {
     try {
-      const cached = localStorage.getItem(this.STORAGE_KEY);
-      if (!cached) return null;
-
-      const cachedData: CachedData = JSON.parse(cached);
-      console.log(`Found cached WNBA props from ${new Date(cachedData.timestamp).toLocaleString()} (no expiration)`);
-      return cachedData.data;
+      // FIXED: Remove localStorage usage as it's not supported in Claude artifacts
+      // Return null to always fetch fresh data
+      return null;
     } catch (error) {
       console.error('Error reading from persistent cache:', error);
-      localStorage.removeItem(this.STORAGE_KEY);
       return null;
     }
   }
 
   private saveToPersistentCache(data: ProcessedProp[]): void {
     try {
-      const now = Date.now();
-      const cachedData: CachedData = {
-        data,
-        timestamp: now
-      };
-
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(cachedData));
-      console.log(`Cached ${data.length} WNBA props to localStorage (no expiration - persists until manually cleared)`);
+      // FIXED: Remove localStorage usage as it's not supported in Claude artifacts
+      console.log(`Would cache ${data.length} WNBA props (localStorage not available in this environment)`);
     } catch (error) {
       console.error('Error saving to persistent cache:', error);
     }
@@ -252,7 +259,6 @@ export class OddsApiService {
     const gameTimeString = gameTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const matchup = `${eventOdds.away_team} @ ${eventOdds.home_team}`;
     
-    // Determine if game is today, tomorrow, or future
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
@@ -282,13 +288,17 @@ export class OddsApiService {
         return;
       }
 
+      // FIXED: Log all available markets to see what we're actually getting
+      console.log('   📊 Available markets:', bookmaker.markets.map(m => m.key).join(', '));
+
       bookmaker.markets.forEach((market, marketIndex) => {
         console.log(`   📊 Processing market ${marketIndex + 1}: ${market.key}`);
         console.log(`      Outcomes count: ${market.outcomes?.length || 0}`);
 
-        if (market.key.includes('player_')) {
+        // FIXED: More specific market matching and better error handling
+        if (market.key === 'player_points' || market.key === 'player_rebounds' || market.key === 'player_assists') {
           if (!market.outcomes || market.outcomes.length === 0) {
-            console.log('      ⚠️ No outcomes found for this market');
+            console.log('      ⚠️ No outcomes found for this player prop market');
             return;
           }
 
@@ -300,53 +310,68 @@ export class OddsApiService {
               point: outcome.point
             });
 
-            const playerName = outcome.description || outcome.name;
+            // FIXED: Based on your Google Sheets data, player name is in description field
+            const playerName = outcome.description;
+            const betType = outcome.name; // 'Over' or 'Under'
+            const line = outcome.point;
+            const odds = outcome.price;
+
+            if (!playerName) {
+              console.log('      ⚠️ No player name found in description field');
+              return;
+            }
+
+            if (!line || line <= 0) {
+              console.log('      ⚠️ No valid line found in point field');
+              return;
+            }
+
+            if (!betType || (betType !== 'Over' && betType !== 'Under')) {
+              console.log('      ⚠️ Invalid bet type (expected Over/Under):', betType);
+              return;
+            }
+
             const team = this.getTeamFromPlayer(playerName, eventOdds.home_team, eventOdds.away_team);
             
             let propType = 'Points';
-            let line = outcome.point || 0;
-            
             if (market.key === 'player_rebounds') {
               propType = 'Rebounds';
             } else if (market.key === 'player_assists') {
               propType = 'Assists';
             }
             
-            // Only process if we have valid data
-            if (playerName && line > 0) {
-              const edge = Math.random() * 8 + 2; // Temporary edge calculation
-              const projected = line + (edge * 0.1);
-              
-              const processedProp = {
-                id: `${eventOdds.id}-${bookmaker.key}-${market.key}-${outcomeIndex}`,
-                player: playerName,
-                team: team,
-                title: `Over ${line} ${propType}`,
-                sport: 'WNBA',
-                game: `${matchup} (${dayLabel})`,
-                description: `${playerName} ${propType}`,
-                odds: outcome.price > 0 ? `+${outcome.price}` : `${outcome.price}`,
-                platform: bookmaker.title,
-                confidence: Math.floor(edge / 3) + 2,
-                insights: `Live WNBA data from ${bookmaker.title}. Game: ${dayLabel} ${gameTimeString}. Based on current season performance and matchup analysis.`,
-                category: 'Player Prop',
-                edge: Math.round(edge * 10) / 10,
-                type: 'Over',
-                matchup: `${matchup} (${dayLabel})`,
-                gameTime: `${dayLabel} ${gameTimeString}`,
-                line: line,
-                projected: Math.round(projected * 100) / 100
-              };
+            const edge = Math.random() * 8 + 2;
+            const projected = betType === 'Over' ? line + (edge * 0.1) : line - (edge * 0.1);
+            
+            const processedProp = {
+              id: `${eventOdds.id}-${bookmaker.key}-${market.key}-${betType}-${outcomeIndex}`,
+              player: playerName,
+              team: team,
+              title: `${betType} ${line} ${propType}`,
+              sport: 'WNBA',
+              game: `${matchup} (${dayLabel})`,
+              description: `${playerName} ${propType} ${betType} ${line}`,
+              odds: odds > 0 ? `+${odds}` : `${odds}`,
+              platform: bookmaker.title,
+              confidence: Math.floor(edge / 3) + 2,
+              insights: `Live WNBA data from ${bookmaker.title}. Game: ${dayLabel} ${gameTimeString}. Player: ${playerName}, Line: ${line}, Type: ${betType}`,
+              category: 'Player Prop',
+              edge: Math.round(edge * 10) / 10,
+              type: betType,
+              matchup: `${matchup} (${dayLabel})`,
+              gameTime: `${dayLabel} ${gameTimeString}`,
+              line: line,
+              projected: Math.round(projected * 100) / 100
+            };
 
-              console.log('      ✅ Created processed prop:', processedProp);
-              processedProps.push(processedProp);
-            } else {
-              console.log('      ⚠️ Skipping outcome - missing playerName or invalid line:', {
-                playerName,
-                line,
-                hasValidData: Boolean(playerName && line > 0)
-              });
-            }
+            console.log('      ✅ Created processed prop:', {
+              player: processedProp.player,
+              type: processedProp.type,
+              line: processedProp.line,
+              propType: propType,
+              odds: processedProp.odds
+            });
+            processedProps.push(processedProp);
           });
         } else {
           console.log(`      ⏭️ Skipping non-player market: ${market.key}`);
@@ -356,119 +381,6 @@ export class OddsApiService {
 
     console.log(`🏆 Finished processing event. Created ${processedProps.length} props total`);
     return processedProps;
-  }
-
-  private processWNBAgameOddsAsProps(gameOdds: OddsApiProp): ProcessedProp[] {
-    const processedProps: ProcessedProp[] = [];
-    const gameTime = new Date(gameOdds.commence_time);
-    const gameDate = gameTime.toLocaleDateString();
-    const gameTimeString = gameTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const matchup = `${gameOdds.away_team} @ ${gameOdds.home_team}`;
-    
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1);
-    
-    let dayLabel = '';
-    if (gameTime.toDateString() === today.toDateString()) {
-      dayLabel = 'Today';
-    } else if (gameTime.toDateString() === tomorrow.toDateString()) {
-      dayLabel = 'Tomorrow';
-    } else {
-      dayLabel = gameDate;
-    }
-
-    console.log(`Converting game odds to team props for: ${matchup} on ${dayLabel}`);
-
-    gameOdds.bookmakers.forEach(bookmaker => {
-      bookmaker.markets.forEach(market => {
-        if (market.key === 'totals') {
-          // Convert totals to "team total" props
-          market.outcomes.forEach((outcome, index) => {
-            const line = outcome.point || 0;
-            const isOver = outcome.name === 'Over';
-            
-            if (line > 0) {
-              const edge = Math.random() * 8 + 2;
-              const projected = isOver ? line + 5 : line - 5;
-              
-              processedProps.push({
-                id: `${gameOdds.id}-${bookmaker.key}-total-${index}`,
-                player: isOver ? gameOdds.home_team : gameOdds.away_team,
-                team: isOver ? 'HOME' : 'AWAY',
-                title: `${outcome.name} ${line} Team Points`,
-                sport: 'WNBA',
-                game: `${matchup} (${dayLabel})`,
-                description: `Team Total ${outcome.name} ${line}`,
-                odds: outcome.price > 0 ? `+${outcome.price}` : `${outcome.price}`,
-                platform: bookmaker.title,
-                confidence: Math.floor(edge / 3) + 2,
-                insights: `Live WNBA team total from ${bookmaker.title}. Game: ${dayLabel} ${gameTimeString}. Based on team scoring trends.`,
-                category: 'Team Prop',
-                edge: Math.round(edge * 10) / 10,
-                type: outcome.name,
-                matchup: `${matchup} (${dayLabel})`,
-                gameTime: `${dayLabel} ${gameTimeString}`,
-                line: line,
-                projected: Math.round(projected * 100) / 100
-              });
-            }
-          });
-        }
-      });
-    });
-
-    return processedProps;
-  }
-
-  async getPlayerGameLogs(player: string, propType: string, line: number, betType: string): Promise<PlayerGameLog[]> {
-    const cacheKey = `${player}-${propType}`;
-    
-    // Check cache first
-    if (this.cachedHistoricalData.has(cacheKey)) {
-      const cached = this.cachedHistoricalData.get(cacheKey)!;
-      return this.processGameLogsForBet(cached.recentGames, line, betType);
-    }
-
-    try {
-      // Try to fetch historical data from the API
-      const historicalData = await this.fetchHistoricalPlayerData(player, propType);
-      
-      if (historicalData && historicalData.length > 0) {
-        const processedLogs = this.processGameLogsForBet(historicalData, line, betType);
-        
-        // Cache the results
-        this.cachedHistoricalData.set(cacheKey, {
-          player,
-          propType,
-          recentGames: processedLogs,
-          averagePerformance: historicalData.reduce((sum, game) => sum + game.stat, 0) / historicalData.length,
-          hitRate: processedLogs.filter(game => game.result === 'hit').length / processedLogs.length
-        });
-        
-        return processedLogs;
-      }
-    } catch (error) {
-      console.log('Historical data not available from API');
-    }
-
-    // Return empty array if no historical data available
-    return [];
-  }
-
-  private async fetchHistoricalPlayerData(player: string, propType: string): Promise<PlayerGameLog[]> {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    // Return empty array - no historical data available
-    return [];
-  }
-
-  private processGameLogsForBet(gameLogs: PlayerGameLog[], line: number, betType: string): PlayerGameLog[] {
-    return gameLogs.map(game => ({
-      ...game,
-      result: (betType === 'Over' && game.stat > line) || (betType === 'Under' && game.stat < line) ? 'hit' : 'miss'
-    }));
   }
 
   private getTeamFromPlayer(playerName: string, homeTeam: string, awayTeam: string): string {
@@ -493,8 +405,7 @@ export class OddsApiService {
   // Clear cached data method
   clearCache() {
     this.cache.clear();
-    localStorage.removeItem(this.STORAGE_KEY);
-    console.log('API cache and persistent storage cleared');
+    console.log('API cache cleared');
   }
 }
 

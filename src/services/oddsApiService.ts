@@ -94,7 +94,7 @@ export class OddsApiService {
       }
     }
 
-    console.log('Fetching WNBA props using the events endpoint approach...');
+    console.log('🏀 Starting WNBA props fetch process...');
 
     // Calculate date range: today to 7 days from now
     const today = new Date();
@@ -105,76 +105,128 @@ export class OddsApiService {
     const commenceTimeFrom = today.toISOString().split('.')[0] + 'Z';
     const commenceTimeTo = sevenDaysFromNow.toISOString().split('.')[0] + 'Z';
 
+    console.log(`📅 Date range: ${commenceTimeFrom} to ${commenceTimeTo}`);
+
     try {
-      console.log('Step 1: Fetching WNBA events...');
+      console.log('🔍 Step 1: Fetching WNBA events...');
       
       // First, get the list of WNBA events
-      const eventsResponse = await fetch(
-        `${this.baseUrl}/sports/basketball_wnba/odds?apiKey=${this.apiKey}&regions=us&markets=h2h&oddsFormat=american&bookmakers=draftkings&commenceTimeFrom=${commenceTimeFrom}&commenceTimeTo=${commenceTimeTo}`,
-        {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-          },
-        }
-      );
+      const eventsUrl = `${this.baseUrl}/sports/basketball_wnba/odds?apiKey=${this.apiKey}&regions=us&markets=h2h&oddsFormat=american&bookmakers=draftkings&commenceTimeFrom=${commenceTimeFrom}&commenceTimeTo=${commenceTimeTo}`;
+      console.log('📡 Events API URL:', eventsUrl.replace(this.apiKey, '[API_KEY_HIDDEN]'));
+      
+      const eventsResponse = await fetch(eventsUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+
+      console.log(`📊 Events response status: ${eventsResponse.status} ${eventsResponse.statusText}`);
+      console.log('📊 Events response headers:', Object.fromEntries(eventsResponse.headers.entries()));
 
       if (!eventsResponse.ok) {
-        console.error('Failed to fetch WNBA events:', eventsResponse.status, eventsResponse.statusText);
+        const errorText = await eventsResponse.text();
+        console.error('❌ Failed to fetch WNBA events:', eventsResponse.status, eventsResponse.statusText);
+        console.error('❌ Error response body:', errorText);
         return [];
       }
 
       const events: WNBAEvent[] = await eventsResponse.json();
-      console.log(`Found ${events.length} WNBA events`);
+      console.log(`✅ Found ${events.length} WNBA events`);
+      console.log('📋 Events data:', JSON.stringify(events, null, 2));
 
       if (events.length === 0) {
-        console.log('No WNBA events found in the next 7 days');
+        console.log('⚠️ No WNBA events found in the next 7 days');
         return [];
       }
 
-      // Step 2: For each event, fetch only core player props (points, assists, rebounds)
-      console.log('Step 2: Fetching core player props (points, assists, rebounds) for each event...');
+      // Step 2: For each event, fetch player props
+      console.log('🔍 Step 2: Fetching player props for each event...');
       const allPlayerProps: ProcessedProp[] = [];
 
-      for (const event of events) {
+      for (const [index, event] of events.entries()) {
         try {
-          console.log(`Fetching core player props for event: ${event.id} (${event.away_team} @ ${event.home_team})`);
+          console.log(`\n🏀 Processing event ${index + 1}/${events.length}:`);
+          console.log(`   Event ID: ${event.id}`);
+          console.log(`   Matchup: ${event.away_team} @ ${event.home_team}`);
+          console.log(`   Game Time: ${event.commence_time}`);
           
-          const propsResponse = await fetch(
-            `${this.baseUrl}/events/${event.id}/odds?apiKey=${this.apiKey}&regions=us&markets=player_points,player_rebounds,player_assists&oddsFormat=american&bookmakers=draftkings,fanduel,betmgm`,
-            {
-              method: 'GET',
-              headers: {
-                'Accept': 'application/json',
-              },
-            }
-          );
+          const propsUrl = `${this.baseUrl}/events/${event.id}/odds?apiKey=${this.apiKey}&regions=us&markets=player_points,player_rebounds,player_assists&oddsFormat=american&bookmakers=draftkings,fanduel,betmgm`;
+          console.log('📡 Props API URL:', propsUrl.replace(this.apiKey, '[API_KEY_HIDDEN]'));
+          
+          const propsResponse = await fetch(propsUrl, {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json',
+            },
+          });
+
+          console.log(`📊 Props response status: ${propsResponse.status} ${propsResponse.statusText}`);
+          console.log('📊 Props response headers:', Object.fromEntries(propsResponse.headers.entries()));
 
           if (propsResponse.ok) {
-            const eventOdds: OddsApiProp = await propsResponse.json();
+            const responseText = await propsResponse.text();
+            console.log('📄 Raw props response:', responseText.substring(0, 500) + (responseText.length > 500 ? '...' : ''));
+            
+            let eventOdds: OddsApiProp;
+            try {
+              eventOdds = JSON.parse(responseText);
+              console.log('✅ Successfully parsed props JSON');
+              console.log('📋 Event odds structure:', {
+                id: eventOdds.id,
+                sport_key: eventOdds.sport_key,
+                bookmakers_count: eventOdds.bookmakers?.length || 0,
+                bookmakers: eventOdds.bookmakers?.map(b => ({
+                  key: b.key,
+                  title: b.title,
+                  markets_count: b.markets?.length || 0,
+                  markets: b.markets?.map(m => ({
+                    key: m.key,
+                    outcomes_count: m.outcomes?.length || 0
+                  }))
+                }))
+              });
+            } catch (parseError) {
+              console.error('❌ Failed to parse props JSON:', parseError);
+              console.error('❌ Response text:', responseText);
+              continue;
+            }
+            
             const processedProps = this.processWNBAEventData(eventOdds);
+            console.log(`✅ Processed ${processedProps.length} props for ${event.away_team} @ ${event.home_team}`);
+            
+            if (processedProps.length > 0) {
+              console.log('📋 Sample processed prop:', processedProps[0]);
+            }
+            
             allPlayerProps.push(...processedProps);
-            console.log(`Successfully processed ${processedProps.length} core props for ${event.away_team} @ ${event.home_team}`);
           } else {
-            console.log(`No core player props available for event ${event.id} (${propsResponse.status})`);
+            const errorText = await propsResponse.text();
+            console.log(`❌ No props available for event ${event.id} (Status: ${propsResponse.status})`);
+            console.log('❌ Error response:', errorText);
           }
         } catch (error) {
-          console.error(`Error fetching core props for event ${event.id}:`, error);
+          console.error(`❌ Error fetching props for event ${event.id}:`, error);
         }
       }
 
+      console.log(`\n🏆 Final results: ${allPlayerProps.length} total WNBA player props processed`);
+
       if (allPlayerProps.length > 0) {
-        console.log(`Successfully fetched ${allPlayerProps.length} total WNBA core player props`);
-        // Store in persistent cache
+        console.log('💾 Saving props to cache...');
         this.saveToPersistentCache(allPlayerProps);
         return allPlayerProps;
       } else {
-        console.log('No WNBA core player props found across all events');
+        console.log('⚠️ No WNBA player props found across all events');
         return [];
       }
 
     } catch (error) {
-      console.error('Error fetching WNBA core props from live API:', error);
+      console.error('💥 Critical error fetching WNBA props:', error);
+      if (error instanceof Error) {
+        console.error('💥 Error message:', error.message);
+        console.error('💥 Error stack:', error.stack);
+      }
       return [];
     }
   }
@@ -210,6 +262,15 @@ export class OddsApiService {
   }
 
   private processWNBAEventData(eventOdds: OddsApiProp): ProcessedProp[] {
+    console.log('🔄 Processing WNBA event data...');
+    console.log('📋 Input event odds:', {
+      id: eventOdds.id,
+      commence_time: eventOdds.commence_time,
+      home_team: eventOdds.home_team,
+      away_team: eventOdds.away_team,
+      bookmakers_count: eventOdds.bookmakers?.length || 0
+    });
+
     const processedProps: ProcessedProp[] = [];
     const gameTime = new Date(eventOdds.commence_time);
     const gameDate = gameTime.toLocaleDateString();
@@ -230,12 +291,40 @@ export class OddsApiService {
       dayLabel = gameDate;
     }
 
-    console.log(`Processing player props for: ${matchup} on ${dayLabel} at ${gameTimeString}`);
+    console.log(`🏀 Processing player props for: ${matchup} on ${dayLabel} at ${gameTimeString}`);
 
-    eventOdds.bookmakers.forEach(bookmaker => {
-      bookmaker.markets.forEach(market => {
+    if (!eventOdds.bookmakers || eventOdds.bookmakers.length === 0) {
+      console.log('⚠️ No bookmakers found in event data');
+      return processedProps;
+    }
+
+    eventOdds.bookmakers.forEach((bookmaker, bookmakerIndex) => {
+      console.log(`📚 Processing bookmaker ${bookmakerIndex + 1}: ${bookmaker.title} (${bookmaker.key})`);
+      console.log(`   Markets count: ${bookmaker.markets?.length || 0}`);
+
+      if (!bookmaker.markets || bookmaker.markets.length === 0) {
+        console.log('   ⚠️ No markets found for this bookmaker');
+        return;
+      }
+
+      bookmaker.markets.forEach((market, marketIndex) => {
+        console.log(`   📊 Processing market ${marketIndex + 1}: ${market.key}`);
+        console.log(`      Outcomes count: ${market.outcomes?.length || 0}`);
+
         if (market.key.includes('player_')) {
-          market.outcomes.forEach((outcome, index) => {
+          if (!market.outcomes || market.outcomes.length === 0) {
+            console.log('      ⚠️ No outcomes found for this market');
+            return;
+          }
+
+          market.outcomes.forEach((outcome, outcomeIndex) => {
+            console.log(`      🎯 Processing outcome ${outcomeIndex + 1}:`, {
+              name: outcome.name,
+              description: outcome.description,
+              price: outcome.price,
+              point: outcome.point
+            });
+
             const playerName = outcome.description || outcome.name;
             const team = this.getTeamFromPlayer(playerName, eventOdds.home_team, eventOdds.away_team);
             
@@ -253,8 +342,8 @@ export class OddsApiService {
               const edge = Math.random() * 8 + 2; // Temporary edge calculation
               const projected = line + (edge * 0.1);
               
-              processedProps.push({
-                id: `${eventOdds.id}-${bookmaker.key}-${market.key}-${index}`,
+              const processedProp = {
+                id: `${eventOdds.id}-${bookmaker.key}-${market.key}-${outcomeIndex}`,
                 player: playerName,
                 team: team,
                 title: `Over ${line} ${propType}`,
@@ -272,13 +361,25 @@ export class OddsApiService {
                 gameTime: `${dayLabel} ${gameTimeString}`,
                 line: line,
                 projected: Math.round(projected * 100) / 100
+              };
+
+              console.log('      ✅ Created processed prop:', processedProp);
+              processedProps.push(processedProp);
+            } else {
+              console.log('      ⚠️ Skipping outcome - missing playerName or invalid line:', {
+                playerName,
+                line,
+                hasValidData: Boolean(playerName && line > 0)
               });
             }
           });
+        } else {
+          console.log(`      ⏭️ Skipping non-player market: ${market.key}`);
         }
       });
     });
 
+    console.log(`🏆 Finished processing event. Created ${processedProps.length} props total`);
     return processedProps;
   }
 

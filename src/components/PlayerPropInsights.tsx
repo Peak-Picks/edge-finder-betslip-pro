@@ -32,14 +32,36 @@ export const PlayerPropInsights = ({ prop, open, onOpenChange }: PlayerPropInsig
     const isOver = prop.type === 'Over';
     const variance = Math.abs(prop.projected - prop.line);
     
-    // Generate realistic recent performance based on projection and bet type
-    // Use actual team names instead of random matchups
-    const opponents = [prop.team === 'LAL' ? 'BOS' : 'LAL', 
-                      prop.team === 'MIA' ? 'PHX' : 'MIA', 
-                      prop.team === 'DEN' ? 'GSW' : 'DEN', 
-                      prop.team === 'BOS' ? 'MIA' : 'BOS', 
-                      prop.team === 'PHX' ? 'LAL' : 'PHX'];
+    // Generate realistic opponents based on the player's team
+    const getOpponentsForTeam = (team: string) => {
+      const teamOpponents: { [key: string]: string[] } = {
+        'DAL': ['LAL', 'BOS', 'MIA', 'PHX', 'DEN'],
+        'BOS': ['MIA', 'PHI', 'NYK', 'MIL', 'TOR'],
+        'MIL': ['PHI', 'BOS', 'CHI', 'IND', 'CLE'],
+        'LAL': ['GSW', 'PHX', 'DEN', 'SAC', 'LAC'],
+        'MIA': ['BOS', 'ATL', 'ORL', 'CHA', 'WAS'],
+        'PHX': ['LAL', 'DEN', 'GSW', 'UTA', 'POR'],
+        'DEN': ['LAL', 'PHX', 'UTA', 'MIN', 'OKC'],
+        'GSW': ['LAL', 'SAC', 'POR', 'LAC', 'PHX'],
+        'LV': ['NY', 'SEA', 'MIN', 'PHX', 'LAS'],
+        'NY': ['LV', 'CONN', 'ATL', 'CHI', 'IND'],
+        'CONN': ['NY', 'BOS', 'WAS', 'ATL', 'IND'],
+        'MIN': ['CHI', 'IND', 'LV', 'SEA', 'DAL'],
+        'IND': ['NY', 'CHI', 'ATL', 'CONN', 'MIN'],
+        'CHI': ['IND', 'MIN', 'NY', 'ATL', 'WAS'],
+        'SEA': ['LV', 'POR', 'PHX', 'MIN', 'LAS'],
+        'ATL': ['NY', 'CONN', 'CHI', 'WAS', 'IND'],
+        'WAS': ['CONN', 'ATL', 'CHI', 'NY', 'IND'],
+        'PHI': ['BOS', 'NYK', 'MIL', 'BRK', 'TOR'],
+        'NYK': ['BOS', 'PHI', 'BRK', 'TOR', 'MIA']
+      };
+      
+      return teamOpponents[team] || ['OPP1', 'OPP2', 'OPP3', 'OPP4', 'OPP5'];
+    };
+
+    const opponents = getOpponentsForTeam(prop.team);
     const recentGames = opponents.map(opponent => `vs ${opponent}`);
+    
     const recentPerformance = recentGames.map(game => {
       // Create more realistic performance around the projection
       const baseVariance = (Math.random() - 0.5) * 4; // Smaller variance for more realistic stats

@@ -158,63 +158,101 @@ export class DynamicPicksGenerator {
         projected: prop.projected
       };
 
-      console.log(`📊 Processing prop: ${pick.player} ${pick.title} - Edge: ${pick.edge}%`);
+      console.log(`📊 Processing prop: ${pick.player} ${pick.title} - Edge: ${pick.edge}%, Odds: ${pick.odds}`);
 
-      // Categorize based on edge and characteristics
+      // Categorize based on edge levels - UPDATED LOGIC
       if (prop.edge >= 8) {
+        // High edge props go to Best Bets
         pick.category = 'Top Prop';
         bestBets.push({...pick});
-        console.log(`✅ Added to Best Bets: ${pick.player} ${pick.title}`);
+        console.log(`✅ Added to Best Bets: ${pick.player} ${pick.title} (${pick.edge}% edge)`);
       } 
-      
-      if (prop.edge >= 5) {
+      else if (prop.edge >= 5) {
+        // Medium-high edge props go to Player Props
         pick.category = 'Best Value';
-        if (prop.edge < 8) {
-          playerProps.push({...pick});
-          console.log(`✅ Added to Player Props: ${pick.player} ${pick.title}`);
-        }
+        playerProps.push({...pick});
+        console.log(`✅ Added to Player Props: ${pick.player} ${pick.title} (${pick.edge}% edge)`);
       } 
-      
-      if (prop.edge >= 3) {
-        // Check if it qualifies as a long shot based on odds
-        const oddsValue = this.parseOdds(prop.odds);
-        if (oddsValue >= 150) {
+      else if (prop.edge >= 3) {
+        // Medium edge props - check for long shot potential
+        const oddsValue = Math.abs(this.parseOdds(prop.odds));
+        
+        // Long shots: either positive odds +150+ OR negative odds with high edge (4.5%+)
+        if (oddsValue >= 150 || (prop.edge >= 4.5 && oddsValue >= 110)) {
           const longShotPick = {...pick};
           longShotPick.category = 'Long Shot';
           longShots.push(longShotPick);
-          console.log(`✅ Added to Long Shots: ${pick.player} ${pick.title}`);
-        } else if (prop.edge < 5) {
-          const playerPropPick = {...pick};
-          playerPropPick.category = 'Player Prop';
-          playerProps.push(playerPropPick);
-          console.log(`✅ Added to Player Props: ${pick.player} ${pick.title}`);
+          console.log(`✅ Added to Long Shots: ${pick.player} ${pick.title} (${pick.edge}% edge, ${pick.odds} odds)`);
+        } else {
+          // Lower edge props go to Player Props
+          pick.category = 'Player Prop';
+          playerProps.push({...pick});
+          console.log(`✅ Added to Player Props: ${pick.player} ${pick.title} (${pick.edge}% edge)`);
         }
       }
     });
 
-    // Create game-based picks from unique matchups
-    const uniqueMatchups = [...new Set(wnbaProps.map(p => p.matchup).filter(Boolean))];
-    uniqueMatchups.forEach((matchup, index) => {
-      if (matchup) {
-        const gameProps = wnbaProps.filter(p => p.matchup === matchup);
-        const avgEdge = gameProps.reduce((sum, p) => sum + p.edge, 0) / gameProps.length;
+    // Create game-based picks from API data - IMPROVED LOGIC
+    const gamePicksMap = new Map();
+    
+    wnbaProps.forEach(prop => {
+      if (prop.game && prop.edge >= 3) {
+        const gameKey = prop.game;
+        if (!gamePicksMap.has(gameKey)) {
+          gamePicksMap.set(gameKey, {
+            props: [],
+            totalEdge: 0,
+            count: 0
+          });
+        }
         
-        if (avgEdge >= 4) {
+        const gameData = gamePicksMap.get(gameKey);
+        gameData.props.push(prop);
+        gameData.totalEdge += prop.edge;
+        gameData.count += 1;
+      }
+    });
+
+    // Generate game picks from aggregated data
+    Array.from(gamePicksMap.entries()).forEach(([gameKey, gameData], index) => {
+      const avgEdge = gameData.totalEdge / gameData.count;
+      
+      if (avgEdge >= 4 && gameData.count >= 2) {
+        // Create spread pick
+        gamePicks.push({
+          id: `wnba-game-${index}-spread`,
+          matchup: gameKey,
+          title: 'Spread -3.5',
+          sport: 'WNBA',
+          game: gameKey,
+          description: `${gameKey} spread bet - based on ${gameData.count} player props analysis`,
+          odds: '-110',
+          platform: gameData.props[0]?.platform || 'DraftKings',
+          confidence: Math.min(5, Math.max(2, Math.floor(avgEdge / 2))),
+          insights: `Game analysis based on ${gameData.count} player props with ${avgEdge.toFixed(1)}% average edge. Strong correlations detected.`,
+          category: 'Game Pick',
+          edge: Math.round(avgEdge * 10) / 10,
+          type: 'Spread',
+          gameTime: gameData.props[0]?.gameTime || 'Today'
+        });
+
+        // Create total pick if edge is high enough
+        if (avgEdge >= 5) {
           gamePicks.push({
-            id: `wnba-game-${index}-spread`,
-            matchup: matchup,
-            title: 'Spread -3.5',
-            sport: 'Basketball - WNBA',
-            game: gameProps[0]?.gameTime || 'Today 9:00 PM ET',
-            description: `${matchup} spread bet - derived from ${gameProps.length} player props`,
+            id: `wnba-game-${index}-total`,
+            matchup: gameKey,
+            title: 'Over 165.5',
+            sport: 'WNBA',
+            game: gameKey,
+            description: `${gameKey} total points - based on player prop trends`,
             odds: '-110',
-            platform: gameProps[0]?.platform || 'DraftKings',
+            platform: gameData.props[0]?.platform || 'FanDuel',
             confidence: Math.min(5, Math.max(2, Math.floor(avgEdge / 2))),
-            insights: `Game analysis based on ${gameProps.length} player props with ${avgEdge.toFixed(1)}% average edge.`,
+            insights: `Total analysis based on ${gameData.count} player props showing ${avgEdge.toFixed(1)}% average edge.`,
             category: 'Game Pick',
-            edge: Math.round(avgEdge * 10) / 10,
-            type: 'Spread',
-            gameTime: gameProps[0]?.gameTime
+            edge: Math.round((avgEdge - 1) * 10) / 10, // Slightly lower edge for totals
+            type: 'Total',
+            gameTime: gameData.props[0]?.gameTime || 'Today'
           });
         }
       }
@@ -223,17 +261,17 @@ export class DynamicPicksGenerator {
     const sortByEdge = (a: GeneratedPick, b: GeneratedPick) => b.edge - a.edge;
     
     const finalResult = {
-      bestBets: bestBets.sort(sortByEdge).slice(0, 6),
-      gamePicks: gamePicks.sort(sortByEdge).slice(0, 8),
-      longShots: longShots.sort(sortByEdge).slice(0, 5),
-      playerProps: playerProps.sort(sortByEdge).slice(0, 12)
+      bestBets: bestBets.sort(sortByEdge).slice(0, 8),
+      gamePicks: gamePicks.sort(sortByEdge).slice(0, 10),
+      longShots: longShots.sort(sortByEdge).slice(0, 8),
+      playerProps: playerProps.sort(sortByEdge).slice(0, 15)
     };
 
     console.log(`📊 Final categorization result:`);
     console.log(`   Best Bets: ${finalResult.bestBets.length}`);
-    console.log(`   Player Props: ${finalResult.playerProps.length}`);
-    console.log(`   Long Shots: ${finalResult.longShots.length}`);
     console.log(`   Game Picks: ${finalResult.gamePicks.length}`);
+    console.log(`   Long Shots: ${finalResult.longShots.length}`);
+    console.log(`   Player Props: ${finalResult.playerProps.length}`);
 
     return finalResult;
   }

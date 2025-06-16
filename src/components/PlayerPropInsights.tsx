@@ -127,7 +127,7 @@ export const PlayerPropInsights = ({ prop, open, onOpenChange }: PlayerPropInsig
             </div>
             <p className="text-lg font-medium text-white mb-2">{insights.aiRecommendation}</p>
             <p className="text-slate-300 text-sm">
-              Best value bet based on {prop.edge}% edge calculation
+              {prop.player} shows {prop.edge.toFixed(1)}% edge based on our projections vs. sportsbook line
             </p>
           </Card>
 

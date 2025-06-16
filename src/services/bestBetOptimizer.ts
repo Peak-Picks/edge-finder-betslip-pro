@@ -13,7 +13,8 @@ export interface BetOption {
 }
 
 export class BestBetOptimizer {
-  private calculateBetStrength(bet: BetOption): number {
+  // Changed from private to public to fix the access error
+  public calculateBetStrength(bet: BetOption): number {
     const { edge, confidence, projection, line, type } = bet;
     
     const edgeScore = edge * 0.4;
@@ -40,7 +41,7 @@ export class BestBetOptimizer {
     return `${bet.player.toLowerCase()}-${bet.stat.toLowerCase()}-${bet.line}`;
   }
   
-  filterToStrongestBets(bets: BetOption[]): BetOption[] {
+  public filterToStrongestBets(bets: BetOption[]): BetOption[] {
     const betGroups = new Map<string, BetOption[]>();
     
     bets.forEach(bet => {
@@ -76,12 +77,12 @@ export class BestBetOptimizer {
     return strongestBets;
   }
   
-  filterToStrongestBetsWithThreshold(bets: BetOption[], minEdge: number = 2): BetOption[] {
+  public filterToStrongestBetsWithThreshold(bets: BetOption[], minEdge: number = 2): BetOption[] {
     const qualifyingBets = bets.filter(bet => bet.edge >= minEdge);
     return this.filterToStrongestBets(qualifyingBets);
   }
   
-  getBetSelectionReason(selectedBet: BetOption, alternativeBets: BetOption[]): string {
+  public getBetSelectionReason(selectedBet: BetOption, alternativeBets: BetOption[]): string {
     const strength = this.calculateBetStrength(selectedBet);
     const { edge, confidence, projection, line, type } = selectedBet;
     

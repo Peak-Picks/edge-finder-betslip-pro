@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -72,7 +71,7 @@ export const PlayerPropInsights = ({ prop, open, onOpenChange }: PlayerPropInsig
     };
 
     return {
-      aiRecommendation: `${prop.type} ${prop.line} ${prop.prop}`, // Only show the actual bet type
+      aiRecommendation: `${prop.type} ${prop.line}`,
       confidence: confidencePercentage,
       keyFactors,
       recentPerformance,

@@ -1,4 +1,3 @@
-
 export interface OddsApiProp {
   id: string;
   sport_key: string;
@@ -80,7 +79,7 @@ export class OddsApiService {
   }
 
   async getWNBAProps(forceRefresh: boolean = false): Promise<ProcessedProp[]> {
-    console.log('Fetching WNBA props using event-specific API endpoint for today + 7 days...');
+    console.log('Fetching WNBA props using standard sports endpoint for today + 7 days...');
 
     // Calculate date range: today to 7 days from now
     const today = new Date();
@@ -92,10 +91,11 @@ export class OddsApiService {
     const commenceTimeTo = sevenDaysFromNow.toISOString().split('.')[0] + 'Z';
 
     try {
-      // Step 1: Get WNBA events for the date range
-      console.log('Step 1: Fetching WNBA events...');
-      const eventsResponse = await fetch(
-        `${this.baseUrl}/sports/basketball_wnba/events?apiKey=${this.apiKey}&commenceTimeFrom=${commenceTimeFrom}&commenceTimeTo=${commenceTimeTo}`,
+      console.log('Fetching WNBA odds with player props...');
+      
+      // Use the standard sports endpoint with player prop markets
+      const oddsResponse = await fetch(
+        `${this.baseUrl}/sports/basketball_wnba/odds?apiKey=${this.apiKey}&regions=us&markets=player_points,player_rebounds,player_assists&oddsFormat=american&bookmakers=draftkings,fanduel,betmgm&commenceTimeFrom=${commenceTimeFrom}&commenceTimeTo=${commenceTimeTo}`,
         {
           method: 'GET',
           headers: {
@@ -104,79 +104,59 @@ export class OddsApiService {
         }
       );
 
-      if (!eventsResponse.ok) {
-        console.error(`WNBA events API failed with status: ${eventsResponse.status}`);
-        const errorText = await eventsResponse.text();
+      if (!oddsResponse.ok) {
+        console.error(`WNBA odds API failed with status: ${oddsResponse.status}`);
+        const errorText = await oddsResponse.text();
         console.error('Error details:', errorText);
-        throw new Error(`WNBA events API failed: ${eventsResponse.status}`);
-      }
-
-      const events: WNBAEvent[] = await eventsResponse.json();
-      
-      if (events.length === 0) {
-        console.log('No WNBA events found in the next 7 days.');
-        return [];
-      }
-
-      console.log(`Found ${events.length} WNBA events, now fetching player props for each...`);
-
-      // Step 2: Get player props for each event
-      const allPlayerProps: ProcessedProp[] = [];
-      
-      for (const event of events.slice(0, 10)) { // Limit to 10 events to avoid rate limits
-        try {
-          console.log(`Fetching player props for event: ${event.home_team} vs ${event.away_team}`);
-          
-          const eventOddsResponse = await fetch(
-            `${this.baseUrl}/events/${event.id}/odds?apiKey=${this.apiKey}&regions=us&markets=player_points,player_rebounds,player_assists&oddsFormat=american&bookmakers=draftkings,fanduel,betmgm`,
-            {
-              method: 'GET',
-              headers: {
-                'Accept': 'application/json',
-              },
-            }
-          );
-
-          if (eventOddsResponse.ok) {
-            const eventOdds: OddsApiProp = await eventOddsResponse.json();
-            const processedProps = this.processWNBAEventData(eventOdds);
-            allPlayerProps.push(...processedProps);
-            console.log(`Found ${processedProps.length} player props for event ${event.id}`);
-          } else {
-            console.log(`No player props available for event ${event.id}, trying game odds...`);
-            
-            // Try game odds as fallback
-            const gameOddsResponse = await fetch(
-              `${this.baseUrl}/events/${event.id}/odds?apiKey=${this.apiKey}&regions=us&markets=h2h,spreads,totals&oddsFormat=american&bookmakers=draftkings,fanduel,betmgm`,
-              {
-                method: 'GET',
-                headers: {
-                  'Accept': 'application/json',
-                },
-              }
-            );
-
-            if (gameOddsResponse.ok) {
-              const gameOdds: OddsApiProp = await gameOddsResponse.json();
-              const gameBasedProps = this.processWNBAgameOddsAsProps(gameOdds);
-              allPlayerProps.push(...gameBasedProps);
-              console.log(`Found ${gameBasedProps.length} game-based props for event ${event.id}`);
-            } else {
-              console.log(`No odds available for event ${event.id}`);
-            }
+        
+        // If player props fail, try game odds as fallback
+        console.log('Player props failed, trying game odds...');
+        const gameOddsResponse = await fetch(
+          `${this.baseUrl}/sports/basketball_wnba/odds?apiKey=${this.apiKey}&regions=us&markets=h2h,spreads,totals&oddsFormat=american&bookmakers=draftkings,fanduel,betmgm&commenceTimeFrom=${commenceTimeFrom}&commenceTimeTo=${commenceTimeTo}`,
+          {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json',
+            },
           }
+        );
 
-          // Small delay to avoid rate limiting
-          await new Promise(resolve => setTimeout(resolve, 100));
-
-        } catch (eventError) {
-          console.error(`Error fetching props for event ${event.id}:`, eventError);
-          continue;
+        if (gameOddsResponse.ok) {
+          const gameOdds: OddsApiProp[] = await gameOddsResponse.json();
+          console.log(`Found ${gameOdds.length} WNBA games with game odds`);
+          
+          const allGameProps: ProcessedProp[] = [];
+          gameOdds.forEach(game => {
+            const gameProps = this.processWNBAgameOddsAsProps(game);
+            allGameProps.push(...gameProps);
+          });
+          
+          return allGameProps;
+        } else {
+          throw new Error(`Both player props and game odds failed: ${oddsResponse.status}`);
         }
       }
 
+      const oddsData: OddsApiProp[] = await oddsResponse.json();
+      
+      if (oddsData.length === 0) {
+        console.log('No WNBA games found with odds in the next 7 days.');
+        return [];
+      }
+
+      console.log(`Found ${oddsData.length} WNBA games, processing player props...`);
+
+      // Process all games with player props
+      const allPlayerProps: ProcessedProp[] = [];
+      
+      oddsData.forEach(game => {
+        const processedProps = this.processWNBAEventData(game);
+        allPlayerProps.push(...processedProps);
+        console.log(`Found ${processedProps.length} player props for game: ${game.home_team} vs ${game.away_team}`);
+      });
+
       if (allPlayerProps.length === 0) {
-        console.log('No live WNBA props or game odds found for any events.');
+        console.log('No player props found in any WNBA games.');
         return [];
       }
 
@@ -184,7 +164,7 @@ export class OddsApiService {
       return allPlayerProps;
 
     } catch (error) {
-      console.error('Error fetching WNBA events/props from live API:', error);
+      console.error('Error fetching WNBA props from live API:', error);
       throw error;
     }
   }

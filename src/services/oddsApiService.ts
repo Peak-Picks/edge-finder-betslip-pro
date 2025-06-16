@@ -1,4 +1,3 @@
-
 export interface OddsApiProp {
   id: string;
   sport_key: string;
@@ -118,16 +117,16 @@ export class OddsApiService {
         return [];
       }
 
-      // Step 2: For each event, fetch the player props
-      console.log('Step 2: Fetching player props for each event...');
+      // Step 2: For each event, fetch only core player props (points, assists, rebounds)
+      console.log('Step 2: Fetching core player props (points, assists, rebounds) for each event...');
       const allPlayerProps: ProcessedProp[] = [];
 
       for (const event of events) {
         try {
-          console.log(`Fetching player props for event: ${event.id} (${event.away_team} @ ${event.home_team})`);
+          console.log(`Fetching core player props for event: ${event.id} (${event.away_team} @ ${event.home_team})`);
           
           const propsResponse = await fetch(
-            `${this.baseUrl}/events/${event.id}/odds?apiKey=${this.apiKey}&regions=us&markets=player_points,player_rebounds,player_assists,player_threes,player_blocks,player_steals&oddsFormat=american&bookmakers=draftkings,fanduel,betmgm`,
+            `${this.baseUrl}/events/${event.id}/odds?apiKey=${this.apiKey}&regions=us&markets=player_points,player_rebounds,player_assists&oddsFormat=american&bookmakers=draftkings,fanduel,betmgm`,
             {
               method: 'GET',
               headers: {
@@ -140,25 +139,25 @@ export class OddsApiService {
             const eventOdds: OddsApiProp = await propsResponse.json();
             const processedProps = this.processWNBAEventData(eventOdds);
             allPlayerProps.push(...processedProps);
-            console.log(`Successfully processed ${processedProps.length} props for ${event.away_team} @ ${event.home_team}`);
+            console.log(`Successfully processed ${processedProps.length} core props for ${event.away_team} @ ${event.home_team}`);
           } else {
-            console.log(`No player props available for event ${event.id} (${propsResponse.status})`);
+            console.log(`No core player props available for event ${event.id} (${propsResponse.status})`);
           }
         } catch (error) {
-          console.error(`Error fetching props for event ${event.id}:`, error);
+          console.error(`Error fetching core props for event ${event.id}:`, error);
         }
       }
 
       if (allPlayerProps.length > 0) {
-        console.log(`Successfully fetched ${allPlayerProps.length} total WNBA player props`);
+        console.log(`Successfully fetched ${allPlayerProps.length} total WNBA core player props`);
         return allPlayerProps;
       } else {
-        console.log('No WNBA player props found across all events');
+        console.log('No WNBA core player props found across all events');
         return [];
       }
 
     } catch (error) {
-      console.error('Error fetching WNBA props from live API:', error);
+      console.error('Error fetching WNBA core props from live API:', error);
       return [];
     }
   }
@@ -200,12 +199,6 @@ export class OddsApiService {
               propType = 'Rebounds';
             } else if (market.key === 'player_assists') {
               propType = 'Assists';
-            } else if (market.key === 'player_threes') {
-              propType = '3-Pointers';
-            } else if (market.key === 'player_blocks') {
-              propType = 'Blocks';
-            } else if (market.key === 'player_steals') {
-              propType = 'Steals';
             }
             
             // Only process if we have valid data

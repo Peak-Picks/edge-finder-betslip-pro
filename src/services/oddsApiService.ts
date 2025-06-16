@@ -1,4 +1,3 @@
-
 export interface OddsApiProp {
   id: string;
   sport_key: string;
@@ -72,7 +71,6 @@ export interface PlayerHistoricalData {
 interface CachedData {
   data: ProcessedProp[];
   timestamp: number;
-  expiresAt: number;
 }
 
 export class OddsApiService {
@@ -80,7 +78,6 @@ export class OddsApiService {
   private baseUrl = 'https://api.the-odds-api.com/v4';
   private cachedHistoricalData: Map<string, PlayerHistoricalData> = new Map();
   private cache = new Map();
-  private readonly CACHE_DURATION = 10 * 60 * 1000; // 10 minutes in milliseconds
   private readonly STORAGE_KEY = 'wnba_props_cache';
 
   constructor(apiKey: string) {
@@ -92,7 +89,7 @@ export class OddsApiService {
     if (!forceRefresh) {
       const cachedData = this.getFromPersistentCache();
       if (cachedData) {
-        console.log('Returning cached WNBA props from localStorage');
+        console.log('Returning cached WNBA props from localStorage (no expiration)');
         return cachedData;
       }
     }
@@ -188,15 +185,7 @@ export class OddsApiService {
       if (!cached) return null;
 
       const cachedData: CachedData = JSON.parse(cached);
-      const now = Date.now();
-
-      if (now > cachedData.expiresAt) {
-        console.log('Cached WNBA props expired, removing from localStorage');
-        localStorage.removeItem(this.STORAGE_KEY);
-        return null;
-      }
-
-      console.log(`Found valid cached WNBA props (expires in ${Math.round((cachedData.expiresAt - now) / 60000)} minutes)`);
+      console.log(`Found cached WNBA props from ${new Date(cachedData.timestamp).toLocaleString()} (no expiration)`);
       return cachedData.data;
     } catch (error) {
       console.error('Error reading from persistent cache:', error);
@@ -210,12 +199,11 @@ export class OddsApiService {
       const now = Date.now();
       const cachedData: CachedData = {
         data,
-        timestamp: now,
-        expiresAt: now + this.CACHE_DURATION
+        timestamp: now
       };
 
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(cachedData));
-      console.log(`Cached ${data.length} WNBA props to localStorage (expires in ${this.CACHE_DURATION / 60000} minutes)`);
+      console.log(`Cached ${data.length} WNBA props to localStorage (no expiration - persists until manually cleared)`);
     } catch (error) {
       console.error('Error saving to persistent cache:', error);
     }

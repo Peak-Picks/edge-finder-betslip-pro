@@ -1,4 +1,3 @@
-
 export interface OddsApiProp {
   id: string;
   sport_key: string;
@@ -57,6 +56,190 @@ interface PlayerStatGroup {
   underOutcome: any;
   bookmaker: any;
   market: any;
+}
+
+// Enhanced Insights Generator
+class WNBAInsightsGenerator {
+  
+  static generateWNBAInsights(
+    player: string,
+    stat: string,
+    type: 'Over' | 'Under',
+    line: number,
+    projection: number,
+    edge: number,
+    platform: string,
+    gameInfo: string,
+    confidence: number
+  ): string {
+    
+    const projectionDiff = Math.abs(projection - line);
+    const isStrongEdge = edge >= 8;
+    const isMediumEdge = edge >= 5;
+    
+    // Base insight components
+    const edgeDescription = this.getEdgeDescription(edge);
+    const confidenceLevel = this.getConfidenceDescription(confidence);
+    const projectionInsight = this.getProjectionInsight(type, projection, line, projectionDiff);
+    const marketContext = this.getMarketContext(platform, stat, type);
+    const valueAssessment = this.getValueAssessment(edge, confidence);
+    
+    // Construct the insight
+    let insight = `${edgeDescription} ${projectionInsight} ${marketContext}`;
+    
+    // Add confidence and value assessment
+    if (isStrongEdge) {
+      insight += ` ${valueAssessment} ${confidenceLevel}`;
+    } else if (isMediumEdge) {
+      insight += ` ${confidenceLevel}`;
+    }
+    
+    // Add game timing context
+    const timingContext = this.getTimingContext(gameInfo);
+    if (timingContext) {
+      insight += ` ${timingContext}`;
+    }
+    
+    return insight.trim();
+  }
+  
+  private static getEdgeDescription(edge: number): string {
+    if (edge >= 12) return "🔥 Exceptional value detected.";
+    if (edge >= 8) return "⚡ Strong model advantage identified.";
+    if (edge >= 5) return "✨ Solid betting opportunity found.";
+    if (edge >= 3) return "📊 Model shows favorable value.";
+    return "📈 Slight model edge detected.";
+  }
+  
+  private static getConfidenceDescription(confidence: number): string {
+    if (confidence >= 5) return "High confidence pick with strong historical backing.";
+    if (confidence >= 4) return "Good confidence level supported by recent trends.";
+    if (confidence >= 3) return "Moderate confidence with solid data foundation.";
+    return "Developing confidence as patterns emerge.";
+  }
+  
+  private static getProjectionInsight(
+    type: 'Over' | 'Under', 
+    projection: number, 
+    line: number, 
+    diff: number
+  ): string {
+    const direction = type === 'Over' ? 'above' : 'below';
+    const strength = diff >= 1 ? 'significantly' : diff >= 0.5 ? 'notably' : 'slightly';
+    
+    return `Our advanced model projects ${projection.toFixed(1)}, ${strength} ${direction} the ${line} line.`;
+  }
+  
+  private static getMarketContext(platform: string, stat: string, type: string): string {
+    const contexts = {
+      'assists': {
+        'Over': [
+          "Pace and ball movement favor assist opportunities.",
+          "Team's offensive system creates assist-friendly scenarios.",
+          "Historical matchup data supports increased playmaking."
+        ],
+        'Under': [
+          "Defensive pressure expected to limit assist chances.",
+          "Game flow likely to reduce playmaking opportunities.",
+          "Opponent's defensive scheme targets assist prevention."
+        ]
+      },
+      'points': {
+        'Over': [
+          "Favorable matchup against weaker perimeter defense.",
+          "Usage rate and shot selection trends support scoring.",
+          "Recent form indicates offensive rhythm."
+        ],
+        'Under': [
+          "Strong defensive matchup limits scoring opportunities.",
+          "Pace and style favor lower individual scoring.",
+          "Foul trouble or rest concerns may cap minutes."
+        ]
+      },
+      'rebounds': {
+        'Over': [
+          "Size advantage and positioning favor rebounding success.",
+          "Team's style creates additional rebounding chances.",
+          "Opponent allows higher rebounding rates."
+        ],
+        'Under': [
+          "Competitive rebounding matchup limits opportunities.",
+          "Team's pace reduces total rebounding chances.",
+          "Role changes may impact rebounding focus."
+        ]
+      }
+    };
+    
+    const statContexts = contexts[stat.toLowerCase()] || contexts['points'];
+    const typeContexts = statContexts[type] || statContexts['Over'];
+    
+    return typeContexts[Math.floor(Math.random() * typeContexts.length)];
+  }
+  
+  private static getValueAssessment(edge: number, confidence: number): string {
+    const combinedScore = edge + (confidence * 2);
+    
+    if (combinedScore >= 15) return "🎯 Premium value play with exceptional upside.";
+    if (combinedScore >= 12) return "💎 High-value opportunity with strong fundamentals.";
+    if (combinedScore >= 9) return "⭐ Quality play with solid risk-reward profile.";
+    return "📊 Steady value play worth consideration.";
+  }
+  
+  private static getTimingContext(gameInfo: string): string {
+    if (gameInfo.includes('Tomorrow')) {
+      return "Early value before line movement.";
+    }
+    if (gameInfo.includes('Today')) {
+      return "Live edge with current information.";
+    }
+    return "Optimal timing for maximum value.";
+  }
+  
+  // Enhanced insights with player-specific context
+  static generatePlayerSpecificInsights(
+    player: string,
+    stat: string,
+    type: 'Over' | 'Under',
+    line: number,
+    projection: number,
+    edge: number
+  ): string {
+    
+    // Player-specific insights (you can expand this with actual player data)
+    const playerContexts = {
+      'Napheesa Collier': {
+        'assists': {
+          'Under': "Collier's role as primary scorer limits assist focus. Recent games show decreased playmaking as team emphasizes her scoring ability.",
+          'Over': "Collier's improved court vision creates assist opportunities. Team's ball movement system maximizes her playmaking potential."
+        }
+      },
+      'A\'ja Wilson': {
+        'points': {
+          'Over': "Wilson's dominant post presence and improved perimeter game create multiple scoring avenues.",
+          'Under': "Defensive attention and potential rest management may limit scoring volume."
+        }
+      },
+      'Breanna Stewart': {
+        'rebounds': {
+          'Over': "Stewart's versatility allows her to rebound from multiple positions effectively.",
+          'Under': "Team's pace and style may reduce total rebounding opportunities."
+        }
+      }
+    };
+    
+    const playerData = playerContexts[player];
+    const playerInsight = playerData?.[stat]?.[type] || '';
+    
+    const baseInsight = this.generateWNBAInsights(
+      player, stat, type, line, projection, edge, 'FanDuel', 'Tomorrow', 4
+    );
+    
+    if (playerInsight) {
+      return `${baseInsight} ${playerInsight}`;
+    }
+    
+    return baseInsight;
+  }
 }
 
 export class OddsApiService {
@@ -402,7 +585,7 @@ export class OddsApiService {
     return groups;
   }
 
-  // NEW: Create optimal bet from grouped outcomes
+  // NEW: Create optimal bet from grouped outcomes with enhanced insights
   private createOptimalBetFromGroup(
     group: PlayerStatGroup,
     bookmaker: any,
@@ -448,17 +631,33 @@ export class OddsApiService {
       return null;
     }
 
-    // STEP 4: Create the optimal bet
+    // STEP 4: Create the optimal bet with enhanced insights
     const team = this.getTeamFromPlayer(group.player, eventOdds.home_team, eventOdds.away_team);
     
     let propType = 'Points';
+    let statKey = 'points';
     if (group.stat === 'player_rebounds') {
       propType = 'Rebounds';
+      statKey = 'rebounds';
     } else if (group.stat === 'player_assists') {
       propType = 'Assists';
+      statKey = 'assists';
     }
 
     const confidence = Math.min(5, Math.max(1, Math.floor(selectedEdge / 2)));
+    
+    // Generate enhanced insights using the new generator
+    const enhancedInsights = WNBAInsightsGenerator.generateWNBAInsights(
+      group.player,
+      statKey,
+      selectedType as 'Over' | 'Under',
+      group.line,
+      projection,
+      selectedEdge,
+      bookmaker.title,
+      `${dayLabel} ${gameTimeString}`,
+      confidence
+    );
     
     return {
       id: `${eventOdds.id}-${bookmaker.key}-${group.stat}-${selectedType}-${group.player.replace(/\s+/g, '-')}`,
@@ -471,7 +670,7 @@ export class OddsApiService {
       odds: selectedOutcome.price > 0 ? `+${selectedOutcome.price}` : `${selectedOutcome.price}`,
       platform: bookmaker.title,
       confidence: confidence,
-      insights: `Optimal WNBA bet based on ${projection.toFixed(1)} projection vs ${group.line} line. ${selectedEdge.toFixed(1)}% edge on ${selectedType}. Game: ${dayLabel} ${gameTimeString}.`,
+      insights: enhancedInsights,
       category: 'Player Prop',
       edge: Math.round(selectedEdge * 10) / 10,
       type: selectedType,

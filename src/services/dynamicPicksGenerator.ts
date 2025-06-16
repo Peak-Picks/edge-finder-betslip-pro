@@ -1,4 +1,3 @@
-
 import { createOddsApiService } from './oddsApiService';
 import { BestBetOptimizer, enhanceWNBADataProcessing } from './bestBetOptimizer';
 
@@ -93,8 +92,8 @@ export class DynamicPicksGenerator {
     try {
       console.log('🔄 Fetching fresh WNBA data from API...');
       
-      // Fetch WNBA props from API
-      const wnbaProps = await this.oddsApiService.getWNBAPlayerProps();
+      // Fetch WNBA props from API - FIXED: changed from getWNBAPlayerProps to getWNBAProps
+      const wnbaProps = await this.oddsApiService.getWNBAProps();
       
       if (wnbaProps && wnbaProps.length > 0) {
         console.log(`📥 Received ${wnbaProps.length} raw WNBA props`);

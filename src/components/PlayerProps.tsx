@@ -28,39 +28,50 @@ export const PlayerProps = ({ onRefreshData }: PlayerPropsProps) => {
 
   // Initialize with NBA/NFL data only on first load
   useEffect(() => {
+    console.log('🎬 PlayerProps component initialized');
     const nbaProps = dynamicPicksGenerator.generatePlayerProps('nba');
     const nflProps = dynamicPicksGenerator.generatePlayerProps('nfl');
     setPlayerProps({ nba: nbaProps, nfl: nflProps, wnba: [] });
     
     // Load WNBA data separately
+    console.log('🚀 Initiating WNBA props load...');
     loadWNBAProps();
   }, []);
 
   const loadWNBAProps = async () => {
+    console.log('🎯 loadWNBAProps function called');
     setLoading(true);
     setError(null);
     console.log('Loading WNBA props from live API...');
+    console.log('🔑 Using API key:', API_KEY ? `Present (${API_KEY.length} chars)` : 'Missing');
     
     try {
+      console.log('🏗️ Creating OddsApiService instance...');
       const oddsService = createOddsApiService(API_KEY);
+      console.log('✅ OddsApiService created, calling getWNBAProps...');
+      
       const wnbaProps = await oddsService.getWNBAProps();
+      console.log('📬 getWNBAProps returned:', wnbaProps.length, 'props');
       
       if (wnbaProps.length > 0) {
+        console.log('✅ Successfully received WNBA props, updating state...');
         setPlayerProps(prev => ({ ...prev, wnba: wnbaProps }));
         setWnbaDataSource('live');
         console.log(`Successfully loaded ${wnbaProps.length} live WNBA props`);
       } else {
+        console.log('⚠️ No WNBA props returned from API');
         setPlayerProps(prev => ({ ...prev, wnba: [] }));
         setWnbaDataSource('unavailable');
-        setError('WNBA player props are not currently available. The API only provides game lines (spreads, moneylines, totals) for WNBA games at this time.');
-        console.log('No WNBA player props found - only game lines available');
+        setError('No WNBA player props found. This could be due to no games today or props not yet available.');
+        console.log('No WNBA player props found');
       }
     } catch (error) {
-      console.error('Failed to load WNBA props:', error);
+      console.error('💥 Failed to load WNBA props:', error);
       setError('WNBA data is currently unavailable. Please try again later.');
       setPlayerProps(prev => ({ ...prev, wnba: [] }));
       setWnbaDataSource('unavailable');
     } finally {
+      console.log('🏁 WNBA props loading complete, setting loading to false');
       setLoading(false);
     }
   };

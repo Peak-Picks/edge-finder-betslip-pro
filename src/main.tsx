@@ -6,7 +6,7 @@ import { apiManager } from './services/apiManager'
 
 // Initialize API Manager with Odds API key
 // Replace with your actual Odds API key from https://the-odds-api.com/
-const ODDS_API_KEY = '70f59ac60558d2b4dee1200bdaa2f2f3';
+const ODDS_API_KEY = '15439ae06549fa60c219cc8dd7bf8cc6';
 apiManager.initialize(ODDS_API_KEY);
 
 createRoot(document.getElementById("root")!).render(<App />);

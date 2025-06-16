@@ -15,7 +15,7 @@ export const GameBasedPicks = () => {
   const [selectedLeague, setSelectedLeague] = useState('nba');
   const [error, setError] = useState<string | null>(null);
 
-  const API_KEY = '70f59ac60558d2b4dee1200bdaa2f2f3';
+  const API_KEY = '15439ae06549fa60c219cc8dd7bf8cc6';
 
   useEffect(() => {
     console.log('🔄 GameBasedPicks component initializing...');

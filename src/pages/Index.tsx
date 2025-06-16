@@ -17,6 +17,7 @@ import { BettingGuide } from '@/components/BettingGuide';
 import { TrendingUp, Target, BarChart3, Wallet, Zap, RefreshCw } from 'lucide-react';
 import TutorialModal from '@/components/TutorialModal';
 import { BetSlipProvider, useBetSlipContext } from "@/components/BetSlipContext";
+import { apiManager } from '@/services/apiManager';
 import { createOddsApiService } from '@/services/oddsApiService';
 
 const THREE_WEEKS_MS = 21 * 24 * 60 * 60 * 1000;
@@ -40,15 +41,17 @@ const HomeContent = ({ currentView, setCurrentView }: { currentView: string; set
   const handleRefreshData = async () => {
     setRefreshing(true);
     try {
-      console.log('Refreshing API data...');
+      console.log('Refreshing API data using apiManager...');
       
-      // Clear any existing cached data
-      oddsApiService.clearCache();
+      // Use the new apiManager for refreshing data
+      const result = await apiManager.manualRefresh();
       
-      // Trigger fresh API calls for available sports (currently only WNBA is implemented)
-      await oddsApiService.getWNBAProps();
+      if (result.success) {
+        console.log(`✅ ${result.message} (${result.dataCount} items)`);
+      } else {
+        console.error(`❌ ${result.message}`);
+      }
       
-      console.log('API data refreshed successfully');
     } catch (error) {
       console.error('Error refreshing API data:', error);
     } finally {

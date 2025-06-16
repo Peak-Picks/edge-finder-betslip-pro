@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Filter, TrendingUp, RefreshCw, AlertCircle } from 'lucide-react';
+import { Plus, Filter, TrendingUp, RefreshCw, AlertCircle, Star } from 'lucide-react';
 import { PlayerPropInsights } from './PlayerPropInsights';
 import { useBetSlipContext } from './BetSlipContext';
 import { dynamicPicksGenerator, GeneratedPick } from '../services/dynamicPicksGenerator';
@@ -168,6 +167,45 @@ export const PlayerProps = ({ onRefreshData }: PlayerPropsProps) => {
       const nbaProps = dynamicPicksGenerator.generatePlayerProps('nba');
       const nflProps = dynamicPicksGenerator.generatePlayerProps('nfl');
       setPlayerProps(prev => ({ ...prev, nba: nbaProps, nfl: nflProps }));
+    }
+  };
+
+  const getWinPercentage = (edge: number, odds: string): number => {
+    // Convert odds to implied probability
+    const oddsNumber = parseInt(odds.replace(/[+-]/g, ''));
+    let impliedProb = 0;
+    
+    if (odds.startsWith('+')) {
+      impliedProb = 100 / (oddsNumber + 100);
+    } else {
+      impliedProb = oddsNumber / (oddsNumber + 100);
+    }
+    
+    // Add edge to get our estimated win probability
+    const adjustedProb = impliedProb + (edge / 100);
+    return Math.min(95, Math.max(5, Math.round(adjustedProb * 100)));
+  };
+
+  const getConfidenceStars = (confidence: number) => {
+    return Array.from({ length: 5 }, (_, i) => (
+      <Star 
+        key={i} 
+        className={`w-3 h-3 ${i < confidence ? 'text-yellow-400 fill-yellow-400' : 'text-gray-400'}`} 
+      />
+    ));
+  };
+
+  const getOddsColor = (odds: string) => {
+    const isPositive = odds.startsWith('+');
+    return isPositive ? 'text-emerald-400' : 'text-red-400';
+  };
+
+  const getCategoryColor = (category: string) => {
+    switch (category) {
+      case 'Top Prop': return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
+      case 'Best Value': return 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30';
+      case 'Player Prop': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+      default: return 'bg-slate-500/20 text-slate-400 border-slate-500/30';
     }
   };
 
@@ -346,55 +384,85 @@ export const PlayerProps = ({ onRefreshData }: PlayerPropsProps) => {
                 const betType = getBetType(prop);
                 const gameDetails = getGameDetails(prop);
                 const confidence = typeof prop.confidence === 'number' 
-                  ? (prop.confidence >= 4 ? 'high' : prop.confidence >= 2 ? 'medium' : 'low')
-                  : prop.confidence.toString();
+                  ? Math.min(5, Math.max(1, Math.floor(prop.confidence)))
+                  : 3;
+                const winPercentage = getWinPercentage(prop.edge, prop.odds);
                 
                 return (
                   <Card 
                     key={index} 
-                    className="bg-slate-800/50 border-slate-700/50 p-4 cursor-pointer hover:bg-slate-800/70 transition-colors"
+                    className="bg-slate-800/50 border-slate-700/50 p-6 cursor-pointer hover:bg-slate-800/70 transition-colors"
                     onClick={() => handlePropClick(prop)}
                   >
-                    <div className="flex items-start justify-between mb-3">
+                    {/* Header with player name, badges, and odds */}
+                    <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold text-white">{prop.player}</h3>
-                          <Badge variant="secondary" className="bg-slate-700 text-slate-300 text-xs">
-                            {prop.team}
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="font-bold text-white text-xl">
+                            {prop.player} {betType} {prop.line} {propType}
+                          </h3>
+                          <Badge className={getCategoryColor(prop.category || 'Player Prop')}>
+                            {prop.category || 'Player Prop'}
+                          </Badge>
+                          <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
+                            {prop.edge}% Edge
                           </Badge>
                           {selectedSport === 'wnba' && wnbaDataSource === 'live' && (
-                            <Badge className="bg-emerald-500/20 text-emerald-400 text-xs">
-                              Live API Data
+                            <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+                              Live WNBA
                             </Badge>
                           )}
                         </div>
-                        <p className="text-emerald-400 font-medium">
-                          {betType} {prop.line} {propType}
-                        </p>
+                        <div className="text-sm text-slate-400 mb-1">
+                          {prop.sport || selectedSport.toUpperCase()} | Game: {gameDetails || prop.game || 'Today'}
+                        </div>
+                        <p className="text-slate-300 text-sm">{prop.description}</p>
                       </div>
                       <div className="text-right">
-                        <Badge className={getConfidenceColor(confidence)}>
-                          {prop.edge}% Edge
-                        </Badge>
-                        <div className="text-lg font-bold text-white mt-1">{prop.odds}</div>
+                        <div className={`text-3xl font-bold ${getOddsColor(prop.odds)}`}>
+                          {prop.odds}
+                        </div>
+                        <div className="text-sm text-slate-400 mt-1">
+                          {winPercentage}% Win Prob
+                        </div>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-                      <div>
-                        <p className="text-slate-400">Our Projection</p>
-                        <p className="text-white font-medium">{prop.projected}</p>
-                      </div>
-                      <div>
-                        <p className="text-slate-400">Book Line</p>
-                        <p className="text-white font-medium">{prop.line}</p>
+                    {/* AI Insights Section */}
+                    <div className="bg-slate-700/30 rounded-lg p-4 mb-4">
+                      <h4 className="text-emerald-400 font-medium text-sm mb-2">AI Insights:</h4>
+                      <p className="text-sm text-slate-300 mb-3">
+                        {prop.insights || `Optimal ${selectedSport.toUpperCase()} bet based on ${prop.projected} projection vs ${prop.line} line. ${prop.edge}% edge on ${betType}.`}
+                      </p>
+                      {prop.projected && prop.line && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-slate-400">Our Projection: <span className="text-emerald-400 font-medium">{prop.projected}</span></span>
+                          <span className="text-slate-400">Book Line: <span className="text-white font-medium">{prop.line}</span></span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Platform and Confidence */}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-6">
+                        <div>
+                          <p className="text-slate-400 text-xs mb-1">Platform:</p>
+                          <p className="text-white font-semibold">{prop.platform}</p>
+                        </div>
+                        <div>
+                          <p className="text-slate-400 text-xs mb-1">Confidence:</p>
+                          <div className="flex items-center gap-1">
+                            {getConfidenceStars(confidence)}
+                          </div>
+                        </div>
                       </div>
                     </div>
 
+                    {/* Action Buttons */}
                     <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                       <Button 
-                        className="flex-1 bg-emerald-600 hover:bg-emerald-700"
-                        size="sm"
+                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
+                        size="lg"
                         disabled={alreadyAdded}
                         onClick={() => addToBetSlip({
                           id: betId,
@@ -407,12 +475,12 @@ export const PlayerProps = ({ onRefreshData }: PlayerPropsProps) => {
                           line: prop.line,
                         })}
                       >
-                        <Plus className="w-4 h-4 mr-1" />
-                        {alreadyAdded ? "Added" : "Add to Betslip"}
+                        <Plus className="w-4 h-4 mr-2" />
+                        {alreadyAdded ? "Added to Betslip" : "Add to Betslip"}
                       </Button>
                       <Button 
                         variant="outline" 
-                        size="sm"
+                        size="lg"
                         className="border-slate-600 text-slate-300 hover:bg-slate-700"
                       >
                         <TrendingUp className="w-4 h-4" />

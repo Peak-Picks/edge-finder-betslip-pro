@@ -20,19 +20,50 @@ export const PlayerProps = ({ onRefreshData }: PlayerPropsProps) => {
   const [playerProps, setPlayerProps] = useState<{nba: GeneratedPick[], nfl: GeneratedPick[], wnba: ProcessedProp[]}>({nba: [], nfl: [], wnba: []});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [wnbaDataSource, setWnbaDataSource] = useState<'live' | 'unavailable'>('unavailable');
 
   const { addToBetSlip, betSlip } = useBetSlipContext();
 
   const API_KEY = '70f59ac60558d2b4dee1200bdaa2f2f3';
 
-  // Initialize with mock data on first load
+  // Initialize with NBA/NFL data only on first load
   useEffect(() => {
     const nbaProps = dynamicPicksGenerator.generatePlayerProps('nba');
     const nflProps = dynamicPicksGenerator.generatePlayerProps('nfl');
-    const oddsService = createOddsApiService(API_KEY);
-    const mockWnbaProps = oddsService.generateMockWNBAProps();
-    setPlayerProps({ nba: nbaProps, nfl: nflProps, wnba: mockWnbaProps });
+    setPlayerProps({ nba: nbaProps, nfl: nflProps, wnba: [] });
+    
+    // Load WNBA data separately
+    loadWNBAProps();
   }, []);
+
+  const loadWNBAProps = async () => {
+    setLoading(true);
+    setError(null);
+    console.log('Loading WNBA props from live API...');
+    
+    try {
+      const oddsService = createOddsApiService(API_KEY);
+      const wnbaProps = await oddsService.getWNBAProps();
+      
+      if (wnbaProps.length > 0) {
+        setPlayerProps(prev => ({ ...prev, wnba: wnbaProps }));
+        setWnbaDataSource('live');
+        console.log(`Successfully loaded ${wnbaProps.length} live WNBA props`);
+      } else {
+        setPlayerProps(prev => ({ ...prev, wnba: [] }));
+        setWnbaDataSource('unavailable');
+        setError('No WNBA games available today.');
+        console.log('No WNBA games found');
+      }
+    } catch (error) {
+      console.error('Failed to load WNBA props:', error);
+      setError('WNBA data is currently unavailable. Please try again later.');
+      setPlayerProps(prev => ({ ...prev, wnba: [] }));
+      setWnbaDataSource('unavailable');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadPlayerProps = async () => {
     setLoading(true);
@@ -41,11 +72,10 @@ export const PlayerProps = ({ onRefreshData }: PlayerPropsProps) => {
       const nbaProps = dynamicPicksGenerator.generatePlayerProps('nba');
       const nflProps = dynamicPicksGenerator.generatePlayerProps('nfl');
       
-      // Fetch real WNBA props
-      const oddsService = createOddsApiService(API_KEY);
-      const wnbaProps = await oddsService.getWNBAProps();
+      // Load WNBA props separately with proper error handling
+      await loadWNBAProps();
       
-      setPlayerProps({ nba: nbaProps, nfl: nflProps, wnba: wnbaProps });
+      setPlayerProps(prev => ({ ...prev, nba: nbaProps, nfl: nflProps }));
       
       // Call parent refresh callback if provided
       if (onRefreshData) {
@@ -53,11 +83,7 @@ export const PlayerProps = ({ onRefreshData }: PlayerPropsProps) => {
       }
     } catch (error) {
       console.error('Error loading player props:', error);
-      setError('Failed to load WNBA props. Using sample data.');
-      // Fallback to mock data for WNBA
-      const nbaProps = dynamicPicksGenerator.generatePlayerProps('nba');
-      const nflProps = dynamicPicksGenerator.generatePlayerProps('nfl');
-      setPlayerProps({ nba: nbaProps, nfl: nflProps, wnba: [] });
+      setError('Failed to load some player props.');
     } finally {
       setLoading(false);
     }
@@ -65,7 +91,7 @@ export const PlayerProps = ({ onRefreshData }: PlayerPropsProps) => {
 
   const refreshPicks = () => {
     if (selectedSport === 'wnba') {
-      loadPlayerProps();
+      loadWNBAProps();
     } else {
       dynamicPicksGenerator.refreshAllPicks();
       const nbaProps = dynamicPicksGenerator.generatePlayerProps('nba');
@@ -209,7 +235,7 @@ export const PlayerProps = ({ onRefreshData }: PlayerPropsProps) => {
           </div>
         </div>
 
-        {error && (
+        {error && selectedSport === 'wnba' && (
           <div className="bg-yellow-500/20 border border-yellow-500/30 rounded-lg p-3 mb-4">
             <div className="flex items-center gap-2 text-yellow-400">
               <AlertCircle className="w-4 h-4" />
@@ -224,7 +250,7 @@ export const PlayerProps = ({ onRefreshData }: PlayerPropsProps) => {
               value="wnba" 
               className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400"
             >
-              WNBA (Live)
+              WNBA {wnbaDataSource === 'live' ? '(Live)' : '(Unavailable)'}
             </TabsTrigger>
             <TabsTrigger 
               value="nba" 
@@ -265,9 +291,9 @@ export const PlayerProps = ({ onRefreshData }: PlayerPropsProps) => {
                           <Badge variant="secondary" className="bg-slate-700 text-slate-300 text-xs">
                             {prop.team}
                           </Badge>
-                          {selectedSport === 'wnba' && (
+                          {selectedSport === 'wnba' && wnbaDataSource === 'live' && (
                             <Badge className="bg-emerald-500/20 text-emerald-400 text-xs">
-                              Live Data
+                              Live API Data
                             </Badge>
                           )}
                         </div>
@@ -327,7 +353,18 @@ export const PlayerProps = ({ onRefreshData }: PlayerPropsProps) => {
               
               {selectedSport === 'wnba' && playerProps.wnba.length === 0 && !loading && (
                 <Card className="bg-slate-800/50 border-slate-700/50 p-6 text-center">
-                  <p className="text-slate-400">No WNBA props available this week.</p>
+                  <div className="space-y-2">
+                    <p className="text-slate-400">
+                      {wnbaDataSource === 'unavailable' 
+                        ? 'WNBA data is currently unavailable.' 
+                        : 'No WNBA props available today.'}
+                    </p>
+                    <p className="text-slate-500 text-sm">
+                      {wnbaDataSource === 'unavailable' 
+                        ? 'The WNBA season may not be active or API is temporarily down.' 
+                        : 'Check back later for new games.'}
+                    </p>
+                  </div>
                 </Card>
               )}
             </div>

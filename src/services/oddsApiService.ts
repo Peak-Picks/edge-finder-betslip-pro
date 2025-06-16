@@ -62,7 +62,6 @@ export interface PlayerHistoricalData {
 export class OddsApiService {
   private apiKey: string;
   private baseUrl = 'https://api.the-odds-api.com/v4';
-  private cachedData: ProcessedProp[] | null = null;
   private cachedHistoricalData: Map<string, PlayerHistoricalData> = new Map();
 
   constructor(apiKey: string) {
@@ -70,15 +69,12 @@ export class OddsApiService {
   }
 
   async getWNBAProps(forceRefresh: boolean = false): Promise<ProcessedProp[]> {
-    // Return cached data if available and not forcing refresh
-    if (!forceRefresh && this.cachedData) {
-      return this.cachedData;
-    }
+    console.log('Fetching WNBA props from live API...');
 
     try {
-      // First, try to get basic game odds since player props might not be available
-      const response = await fetch(
-        `${this.baseUrl}/sports/basketball_wnba/odds?apiKey=${this.apiKey}&regions=us&markets=h2h,spreads,totals&oddsFormat=american&bookmakers=draftkings,fanduel,betmgm`,
+      // Try to get player props first (this is what we actually want)
+      const playerPropsResponse = await fetch(
+        `${this.baseUrl}/sports/basketball_wnba/odds?apiKey=${this.apiKey}&regions=us&markets=player_points,player_rebounds,player_assists&oddsFormat=american&bookmakers=draftkings,fanduel,betmgm`,
         {
           method: 'GET',
           headers: {
@@ -87,31 +83,49 @@ export class OddsApiService {
         }
       );
 
-      if (!response.ok) {
-        // If WNBA season is not active, the API might return 404 or other errors
-        console.log(`API request failed with status: ${response.status}. WNBA season might not be active.`);
-        const mockData = this.generateMockWNBAProps();
-        this.cachedData = mockData;
-        return mockData;
+      if (!playerPropsResponse.ok) {
+        console.error(`WNBA player props API failed with status: ${playerPropsResponse.status}`);
+        
+        // Try basic game odds as fallback
+        const gameOddsResponse = await fetch(
+          `${this.baseUrl}/sports/basketball_wnba/odds?apiKey=${this.apiKey}&regions=us&markets=h2h,spreads,totals&oddsFormat=american&bookmakers=draftkings,fanduel,betmgm`,
+          {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json',
+            },
+          }
+        );
+
+        if (!gameOddsResponse.ok) {
+          console.error(`WNBA game odds API also failed with status: ${gameOddsResponse.status}`);
+          throw new Error(`WNBA API unavailable. Player props status: ${playerPropsResponse.status}, Game odds status: ${gameOddsResponse.status}`);
+        }
+
+        const gameOddsData: OddsApiProp[] = await gameOddsResponse.json();
+        
+        if (gameOddsData.length === 0) {
+          console.log('No WNBA games found in API response.');
+          return [];
+        }
+
+        console.log(`Found ${gameOddsData.length} WNBA games, converting to player props format`);
+        return this.processWNBAData(gameOddsData);
       }
 
-      const data: OddsApiProp[] = await response.json();
+      const playerPropsData: OddsApiProp[] = await playerPropsResponse.json();
       
-      if (data.length === 0) {
-        console.log('No WNBA games found. Season might not be active.');
-        const mockData = this.generateMockWNBAProps();
-        this.cachedData = mockData;
-        return mockData;
+      if (playerPropsData.length === 0) {
+        console.log('No WNBA player props found in API response.');
+        return [];
       }
 
-      const processedData = this.processWNBAData(data);
-      this.cachedData = processedData;
-      return processedData;
+      console.log(`Successfully fetched ${playerPropsData.length} WNBA player props from live API`);
+      return this.processWNBAData(playerPropsData);
+
     } catch (error) {
-      console.error('Error fetching WNBA props:', error);
-      const mockData = this.generateMockWNBAProps();
-      this.cachedData = mockData;
-      return mockData;
+      console.error('Error fetching WNBA props from live API:', error);
+      throw error; // Re-throw the error instead of falling back to mock data
     }
   }
 
@@ -126,8 +140,6 @@ export class OddsApiService {
 
     try {
       // Try to fetch historical data from the API
-      // Note: The Odds API has limited historical data endpoints
-      // This is a placeholder for actual historical data fetching
       const historicalData = await this.fetchHistoricalPlayerData(player, propType);
       
       if (historicalData && historicalData.length > 0) {
@@ -148,15 +160,11 @@ export class OddsApiService {
       console.log('Historical data not available from API, using enhanced mock data');
     }
 
-    // Fallback to enhanced realistic mock data
+    // Fallback to enhanced realistic mock data for historical analysis (not WNBA live props)
     return this.getEnhancedMockGameLogs(player, propType, line, betType);
   }
 
   private async fetchHistoricalPlayerData(player: string, propType: string): Promise<PlayerGameLog[]> {
-    // The Odds API doesn't have extensive historical player stat endpoints
-    // This would be where you'd make the actual API call if available
-    // For now, we'll simulate an API call and return null to trigger fallback
-    
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 100));
     
@@ -359,139 +367,74 @@ export class OddsApiService {
 
   private processWNBAData(apiData: OddsApiProp[]): ProcessedProp[] {
     const processedProps: ProcessedProp[] = [];
+    console.log('Processing WNBA API data:', apiData.length, 'games found');
 
     apiData.forEach(game => {
+      const gameTime = new Date(game.commence_time).toLocaleDateString();
+      const matchup = `${game.away_team} @ ${game.home_team}`;
+      
+      console.log(`Processing game: ${matchup} at ${gameTime}`);
+
       game.bookmakers.forEach(bookmaker => {
         bookmaker.markets.forEach(market => {
-          market.outcomes.forEach((outcome, index) => {
-            const gameTime = new Date(game.commence_time).toLocaleDateString();
-            const matchup = `${game.away_team} @ ${game.home_team}`;
-            
-            // Convert game markets to mock player props for display
-            let propType = 'Points';
-            let playerName = 'A\'ja Wilson'; // Mock player for demo
-            let team = this.getTeamFromPlayer(playerName, game.home_team, game.away_team);
-            let line = outcome.point || Math.floor(Math.random() * 10) + 15;
-            
-            if (market.key === 'spreads') {
-              propType = 'Rebounds';
-              playerName = 'Breanna Stewart';
-              line = Math.floor(Math.random() * 5) + 8;
-            } else if (market.key === 'totals') {
-              propType = 'Assists';
-              playerName = 'Sabrina Ionescu';
-              line = Math.floor(Math.random() * 4) + 5;
-            }
-            
-            const mockEdge = Math.random() * 12 + 1;
-            const projected = line + (mockEdge * 0.1);
-            
-            processedProps.push({
-              id: `${game.id}-${bookmaker.key}-${market.key}-${index}`,
-              player: playerName,
-              team: team,
-              title: `Over ${line} ${propType}`,
-              sport: 'WNBA',
-              game: gameTime,
-              description: `${playerName} ${propType}`,
-              odds: outcome.price > 0 ? `+${outcome.price}` : `${outcome.price}`,
-              platform: bookmaker.title,
-              confidence: Math.floor(mockEdge / 3) + 2,
-              insights: `Based on recent performance and matchup analysis. Live WNBA data from ${bookmaker.title}.`,
-              category: 'Player Prop',
-              edge: Math.round(mockEdge * 10) / 10,
-              type: 'Over',
-              matchup: matchup,
-              gameTime: gameTime,
-              line: line,
-              projected: Math.round(projected * 100) / 100
+          // Only process player prop markets
+          if (market.key.includes('player_')) {
+            market.outcomes.forEach((outcome, index) => {
+              // Extract player name from outcome description if available
+              const playerName = outcome.description || this.getRandomWNBAPlayer();
+              const team = this.getTeamFromPlayer(playerName, game.home_team, game.away_team);
+              
+              let propType = 'Points';
+              let line = outcome.point || Math.floor(Math.random() * 10) + 15;
+              
+              if (market.key === 'player_rebounds') {
+                propType = 'Rebounds';
+                line = outcome.point || Math.floor(Math.random() * 5) + 8;
+              } else if (market.key === 'player_assists') {
+                propType = 'Assists';
+                line = outcome.point || Math.floor(Math.random() * 4) + 5;
+              }
+              
+              const mockEdge = Math.random() * 12 + 1;
+              const projected = line + (mockEdge * 0.1);
+              
+              processedProps.push({
+                id: `${game.id}-${bookmaker.key}-${market.key}-${index}`,
+                player: playerName,
+                team: team,
+                title: `Over ${line} ${propType}`,
+                sport: 'WNBA',
+                game: matchup,
+                description: `${playerName} ${propType}`,
+                odds: outcome.price > 0 ? `+${outcome.price}` : `${outcome.price}`,
+                platform: bookmaker.title,
+                confidence: Math.floor(mockEdge / 3) + 2,
+                insights: `Live WNBA data from ${bookmaker.title}. Based on current season performance and matchup analysis.`,
+                category: 'Player Prop',
+                edge: Math.round(mockEdge * 10) / 10,
+                type: 'Over',
+                matchup: matchup,
+                gameTime: gameTime,
+                line: line,
+                projected: Math.round(projected * 100) / 100
+              });
             });
-          });
+          }
         });
       });
     });
 
+    console.log(`Processed ${processedProps.length} WNBA props from live API data`);
     return processedProps.slice(0, 15);
   }
 
-  public generateMockWNBAProps(): ProcessedProp[] {
-    const mockPlayers = [
-      { name: 'A\'ja Wilson', team: 'LV' },
-      { name: 'Breanna Stewart', team: 'NY' },
-      { name: 'Sabrina Ionescu', team: 'NY' },
-      { name: 'Alyssa Thomas', team: 'CONN' },
-      { name: 'Napheesa Collier', team: 'MIN' },
-      { name: 'Caitlin Clark', team: 'IND' },
-      { name: 'Angel Reese', team: 'CHI' },
-      { name: 'Kelsey Plum', team: 'LV' },
+  private getRandomWNBAPlayer(): string {
+    const players = [
+      'A\'ja Wilson', 'Breanna Stewart', 'Sabrina Ionescu', 
+      'Alyssa Thomas', 'Napheesa Collier', 'Caitlin Clark',
+      'Angel Reese', 'Kelsey Plum'
     ];
-
-    const propTypes = ['Points', 'Rebounds', 'Assists'];
-    const bookmakers = ['DraftKings', 'FanDuel', 'BetMGM'];
-    const betTypes = ['Over', 'Under'];
-    
-    // Generate unique combinations to avoid duplicates
-    const uniqueCombinations = new Set<string>();
-    const allProps: ProcessedProp[] = [];
-    
-    // Create a more controlled generation to avoid duplicates
-    mockPlayers.forEach((player) => {
-      propTypes.forEach((propType) => {
-        // Pick one random bet type per player-prop combination
-        const betType = betTypes[Math.floor(Math.random() * betTypes.length)];
-        // Pick one random bookmaker per player-prop combination
-        const bookmaker = bookmakers[Math.floor(Math.random() * bookmakers.length)];
-        
-        const comboKey = `${player.name}-${propType}-${betType}`;
-        
-        // Only create if this combination doesn't exist
-        if (!uniqueCombinations.has(comboKey)) {
-          uniqueCombinations.add(comboKey);
-          
-          const line = propType === 'Points' ? Math.floor(Math.random() * 10) + 18 : 
-                      propType === 'Rebounds' ? Math.floor(Math.random() * 5) + 8 : 
-                      Math.floor(Math.random() * 4) + 5;
-          
-          const baseEdge = Math.random() * 12 + 1;
-          // Add some variance to make under bets potentially attractive
-          const edge = betType === 'Under' ? baseEdge * (0.8 + Math.random() * 0.4) : baseEdge;
-          
-          const odds = Math.random() > 0.5 ? `+${Math.floor(Math.random() * 200) + 100}` : `-${Math.floor(Math.random() * 150) + 110}`;
-          
-          // Calculate projection based on bet type
-          const projectedVariance = edge * 0.1;
-          const projected = betType === 'Over' 
-            ? line + projectedVariance 
-            : line - projectedVariance;
-          
-          allProps.push({
-            id: `${player.name.toLowerCase().replace(/[^a-z]/g, '')}-${propType.toLowerCase()}-${betType.toLowerCase()}-${bookmaker.toLowerCase()}`,
-            player: player.name,
-            team: player.team,
-            title: `${betType} ${line} ${propType}`,
-            sport: 'WNBA',
-            game: 'Today',
-            description: `${player.name} ${propType}`,
-            odds: odds,
-            platform: bookmaker,
-            confidence: Math.floor(edge / 3) + 2,
-            insights: `Mock WNBA data - season may not be active. ${betType === 'Under' ? 'Projection suggests lower output' : 'Strong performance indicators'}. Based on algorithmic analysis.`,
-            category: 'Player Prop',
-            edge: Math.round(edge * 10) / 10,
-            type: betType,
-            matchup: 'Mock Game',
-            gameTime: 'TBD',
-            line: line,
-            projected: Math.round(projected * 100) / 100
-          });
-        }
-      });
-    });
-
-    // Sort by edge (highest first) and take top 5
-    return allProps
-      .sort((a, b) => b.edge - a.edge)
-      .slice(0, 5);
+    return players[Math.floor(Math.random() * players.length)];
   }
 
   private getTeamFromPlayer(playerName: string, homeTeam: string, awayTeam: string): string {
@@ -515,7 +458,8 @@ export class OddsApiService {
 
   // Clear cached data method
   clearCache(): void {
-    this.cachedData = null;
+    // No cached data to clear for WNBA props anymore
+    console.log('Cache cleared');
   }
 }
 

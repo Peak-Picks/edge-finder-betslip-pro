@@ -1,61 +1,85 @@
+// src/services/apiManager.ts
+import { professionalPicksService } from './professional/picksService';
+import { dataManager } from './professional/dataManager';
 
-// apiManager.ts - Handles API initialization and manual refresh
-import { dynamicPicksGenerator } from './dynamicPicksGenerator';
+interface RefreshResult {
+  success: boolean;
+  message: string;
+  dataCount: number;
+}
 
-export class ApiManager {
-  private apiKey: string | null = null;
+class ApiManager {
+  private apiKey: string = '';
   private isInitialized: boolean = false;
 
-  // Initialize the API service with your Odds API key
+  /**
+   * Initialize the API manager with Odds API key
+   */
   initialize(apiKey: string): void {
+    if (!apiKey) {
+      console.error('❌ No API key provided to ApiManager');
+      return;
+    }
+
     this.apiKey = apiKey;
-    dynamicPicksGenerator.setApiKey(apiKey);
-    this.isInitialized = true;
-    console.log('🚀 API Manager initialized with Odds API');
+    
+    try {
+      // Initialize professional services
+      dataManager.initialize(apiKey);
+      professionalPicksService.initialize(apiKey);
+      
+      this.isInitialized = true;
+      console.log('✅ Professional API Manager initialized successfully');
+    } catch (error) {
+      console.error('❌ Failed to initialize API Manager:', error);
+      this.isInitialized = false;
+    }
   }
 
-  // Check if API is properly initialized
+  /**
+   * Check if API manager is ready
+   */
   isReady(): boolean {
-    return this.isInitialized && this.apiKey !== null;
+    return this.isInitialized && this.apiKey !== '';
   }
 
-  // Manual refresh function to be called by the refresh button
-  async manualRefresh(): Promise<{success: boolean; message: string; dataCount: number}> {
+  /**
+   * Manual refresh of all data
+   */
+  async manualRefresh(): Promise<RefreshResult> {
     if (!this.isReady()) {
       return {
         success: false,
-        message: 'API not initialized. Please set your Odds API key first.',
+        message: 'API Manager not initialized. Please check your API key.',
         dataCount: 0
       };
     }
 
     try {
-      console.log('🔄 Starting manual refresh of WNBA data...');
+      console.log('🔄 Starting professional data refresh...');
       
-      // Force refresh WNBA data from API
-      await dynamicPicksGenerator.refreshWNBAData(true);
+      // Clear cache for fresh data
+      dataManager.clearCache(/sports/);
       
-      // Check if we have data now
-      const hasData = dynamicPicksGenerator.hasStoredWNBAData();
-      const lastUpdate = dynamicPicksGenerator.getLastUpdateTime();
+      // Fetch new picks for all enabled sports
+      const picks = await professionalPicksService.getBestBets();
+      const playerProps = await professionalPicksService.getPlayerProps();
+      const gameLines = await professionalPicksService.getGameLines();
       
-      if (hasData) {
-        console.log('✅ Manual refresh completed successfully');
-        return {
-          success: true,
-          message: `WNBA data refreshed at ${lastUpdate}`,
-          dataCount: this.getStoredDataCount()
-        };
-      } else {
-        console.log('⚠️ No WNBA data available after refresh');
-        return {
-          success: false,
-          message: 'No WNBA games or props currently available. Try again later.',
-          dataCount: 0
-        };
-      }
+      const totalPicks = picks.length + playerProps.length + gameLines.length;
+      
+      console.log(`✅ Refresh complete: ${totalPicks} total picks`);
+      console.log(`   - Best Bets: ${picks.length}`);
+      console.log(`   - Player Props: ${playerProps.length}`);
+      console.log(`   - Game Lines: ${gameLines.length}`);
+      
+      return {
+        success: true,
+        message: `Successfully refreshed ${totalPicks} picks`,
+        dataCount: totalPicks
+      };
     } catch (error) {
-      console.error('💥 Error during manual refresh:', error);
+      console.error('💥 Error during refresh:', error);
       return {
         success: false,
         message: `Refresh failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -64,41 +88,36 @@ export class ApiManager {
     }
   }
 
-  // Get count of stored data for display
-  private getStoredDataCount(): number {
-    try {
-      const stored = window.__wnbaStoredData;
-      if (!stored) return 0;
-      
-      return (stored.bestBets?.length || 0) + 
-             (stored.gamePicks?.length || 0) + 
-             (stored.longShots?.length || 0) + 
-             (stored.playerProps?.length || 0);
-    } catch {
-      return 0;
-    }
-  }
-
-  // Get data status for UI display
+  /**
+   * Get data status for UI display
+   */
   getDataStatus(): {
     hasData: boolean;
     lastUpdate: string | null;
     dataCount: number;
+    cacheStats: any;
   } {
+    const cacheStats = dataManager.getCacheStats();
+    
     return {
-      hasData: dynamicPicksGenerator.hasStoredWNBAData(),
-      lastUpdate: dynamicPicksGenerator.getLastUpdateTime(),
-      dataCount: this.getStoredDataCount()
+      hasData: cacheStats.cache.size > 0,
+      lastUpdate: new Date().toLocaleString(),
+      dataCount: cacheStats.cache.size,
+      cacheStats: cacheStats
     };
   }
 
-  // Clear all stored data
+  /**
+   * Clear all cached data
+   */
   clearData(): void {
-    dynamicPicksGenerator.clearStoredData();
-    console.log('🗑️ All stored WNBA data cleared');
+    dataManager.clearCache();
+    console.log('🗑️ All cached data cleared');
   }
 
-  // Test API connection without storing data
+  /**
+   * Test API connection
+   */
   async testConnection(): Promise<{success: boolean; message: string}> {
     if (!this.isReady()) {
       return {
@@ -108,20 +127,17 @@ export class ApiManager {
     }
 
     try {
-      // Test by checking upcoming games without storing
-      const oddsService = dynamicPicksGenerator['oddsApiService'];
-      if (oddsService) {
-        await oddsService.checkUpcomingGames();
-        return {
-          success: true,
-          message: 'API connection successful'
-        };
-      } else {
-        return {
-          success: false,
-          message: 'Odds service not available'
-        };
-      }
+      // Test by fetching minimal data
+      const testData = await dataManager.fetchSportsData(
+        'basketball_wnba',
+        ['spreads'],
+        ['draftkings']
+      );
+      
+      return {
+        success: true,
+        message: `API connection successful. Found ${testData.length} games.`
+      };
     } catch (error) {
       return {
         success: false,
@@ -129,30 +145,24 @@ export class ApiManager {
       };
     }
   }
+
+  /**
+   * Get API usage statistics
+   */
+  getApiUsage(): {
+    requestsRemaining: number | null;
+    cacheHitRate: number;
+    activeSports: string[];
+  } {
+    const cacheStats = dataManager.getCacheStats();
+    
+    return {
+      requestsRemaining: null, // Would be populated from API response headers
+      cacheHitRate: cacheStats.cache.hitRate,
+      activeSports: ['basketball_wnba', 'baseball_mlb']
+    };
+  }
 }
 
 // Create singleton instance
 export const apiManager = new ApiManager();
-
-// Usage instructions:
-/*
-1. In your app initialization (e.g., App.tsx or main component):
-   import { apiManager } from './services/apiManager';
-   apiManager.initialize('YOUR_ODDS_API_KEY_HERE');
-
-2. For the refresh button in your UI components:
-   const handleRefresh = async () => {
-     const result = await apiManager.manualRefresh();
-     if (result.success) {
-       console.log(result.message);
-       // Update UI state to show new data
-     } else {
-       console.error(result.message);
-       // Show error to user
-     }
-   };
-
-3. To check data status in your components:
-   const status = apiManager.getDataStatus();
-   console.log(`Has data: ${status.hasData}, Last update: ${status.lastUpdate}`);
-*/

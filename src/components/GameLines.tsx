@@ -1,203 +1,138 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Plus, TrendingUp } from 'lucide-react';
-import { GameInsights } from './GameInsights';
+import { Activity, TrendingUp, Target } from 'lucide-react';
+import { professionalPicksService } from '@/services/professional/picksService';
+import { FormatAdapter } from '@/services/professional/adapter';
 
-export const GameLines = () => {
-  const [selectedGame, setSelectedGame] = useState<any>(null);
-  const [insightsOpen, setInsightsOpen] = useState(false);
+interface GameLinesProps {
+  sport?: string;
+  onPickSelect?: (pick: any) => void;
+}
 
-  const gameLines = [
-    {
-      id: 1,
-      homeTeam: "Lakers",
-      awayTeam: "Warriors",
-      time: "8:00 PM ET",
-      homeSpread: "-3.5",
-      awaySpread: "+3.5",
-      homeML: "-165",
-      awayML: "+145",
-      total: "225.5",
-      overOdds: "-110",
-      underOdds: "-110",
-      edge: {
-        spread: 4.2,
-        moneyline: 2.8,
-        total: 3.5
-      }
-    },
-    {
-      id: 2,
-      homeTeam: "Celtics",
-      awayTeam: "Heat",
-      time: "7:30 PM ET",
-      homeSpread: "-7.5",
-      awaySpread: "+7.5",
-      homeML: "-320",
-      awayML: "+260",
-      total: "218.5",
-      overOdds: "-105",
-      underOdds: "-115",
-      edge: {
-        spread: 6.1,
-        moneyline: 1.9,
-        total: 5.7
-      }
-    },
-    {
-      id: 3,
-      homeTeam: "Chiefs",
-      awayTeam: "Bills",
-      time: "4:25 PM ET",
-      homeSpread: "-2.5",
-      awaySpread: "+2.5",
-      homeML: "-130",
-      awayML: "+110",
-      total: "47.5",
-      overOdds: "-110",
-      underOdds: "-110",
-      edge: {
-        spread: 7.3,
-        moneyline: 4.1,
-        total: 2.4
-      }
-    }
-  ];
+export function GameLines({ sport = 'all', onPickSelect }: GameLinesProps) {
+  const [games, setGames] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'spread' | 'total'>('spread');
 
-  const handleGameClick = (game: any) => {
-    setSelectedGame(game);
-    setInsightsOpen(true);
-  };
+  useEffect(() => {
+    const loadGameLines = async () => {
+      try {
+        setLoading(true);
+        const lines = await professionalPicksService.getGameLines(
+          sport === 'all' ? undefined : sport
+        );
+        const convertedLines = FormatAdapter.toGeneratedPicks(lines);
+        setGames(convertedLines);
+      } catch (error) {
+        console.error('Error loading game lines:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadGameLines();
+  }, [sport]);
+
+  const filteredGames = games.filter(game => 
+    activeTab === 'spread' ? game.type === 'spread' : game.type === 'total'
+  );
+
+  if (loading) {
+    return (
+      <Card className="p-6 bg-slate-800/50 border-slate-700">
+        <div className="animate-pulse text-center text-slate-400">
+          Loading game lines...
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Game Lines</h2>
-        <Badge variant="secondary" className="bg-blue-500/20 text-blue-400">
-          Live Lines
-        </Badge>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Activity className="w-5 h-5 text-purple-400" />
+          <h2 className="text-lg font-semibold">Game Lines</h2>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant={activeTab === 'spread' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('spread')}
+          >
+            Spread
+          </Button>
+          <Button
+            size="sm"
+            variant={activeTab === 'total' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('total')}
+          >
+            Total
+          </Button>
+        </div>
       </div>
 
-      <div className="space-y-3">
-        {gameLines.map((game) => (
-          <Card 
-            key={game.id} 
-            className="bg-slate-800/50 border-slate-700/50 p-4 cursor-pointer hover:bg-slate-800/70 transition-colors"
-            onClick={() => handleGameClick(game)}
+      <div className="grid gap-3">
+        {filteredGames.map((game) => (
+          <Card
+            key={game.id}
+            className="p-4 bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 
+                     transition-all cursor-pointer"
+            onClick={() => onPickSelect?.(game)}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="font-semibold text-white">{game.awayTeam} @ {game.homeTeam}</h3>
-                <p className="text-sm text-slate-400">{game.time}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-emerald-400" />
-                <span className="text-xs text-slate-400">Click for insights</span>
-              </div>
-            </div>
-
-            <div className="space-y-4" onClick={(e) => e.stopPropagation()}>
-              {/* Spread */}
-              <div className="bg-slate-700/30 rounded-lg p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-sm font-medium text-slate-300">Spread</h4>
-                  <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">
-                    {game.edge.spread}% Edge
-                  </Badge>
+            <div className="space-y-3">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
+                      {game.sport}
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">
+                      {game.edge.toFixed(1)}% edge
+                    </Badge>
+                  </div>
+                  <h3 className="font-medium text-white">{game.title}</h3>
+                  <p className="text-sm text-slate-400">{game.game}</p>
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-300">{game.awayTeam} {game.awaySpread}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-emerald-400 font-medium">-110</span>
-                      <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 h-6 px-2">
-                        <Plus className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-300">{game.homeTeam} {game.homeSpread}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-emerald-400 font-medium">-110</span>
-                      <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 h-6 px-2">
-                        <Plus className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  </div>
+                <div className="text-right">
+                  <div className="text-lg font-bold text-emerald-400">{game.odds}</div>
+                  <div className="text-xs text-slate-500">{game.platform}</div>
                 </div>
               </div>
-
-              {/* Money Line */}
-              <div className="bg-slate-700/30 rounded-lg p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-sm font-medium text-slate-300">Money Line</h4>
-                  <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">
-                    {game.edge.moneyline}% Edge
-                  </Badge>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-300">{game.awayTeam}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-emerald-400 font-medium">{game.awayML}</span>
-                      <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 h-6 px-2">
-                        <Plus className="w-3 h-3" />
-                      </Button>
-                    </div>
+              
+              <p className="text-sm text-slate-300">{game.insights}</p>
+              
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4 text-sm">
+                  <div>
+                    <span className="text-slate-500">Line:</span>
+                    <span className="text-white ml-1">{game.line}</span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-300">{game.homeTeam}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-emerald-400 font-medium">{game.homeML}</span>
-                      <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 h-6 px-2">
-                        <Plus className="w-3 h-3" />
-                      </Button>
-                    </div>
+                  <div>
+                    <span className="text-slate-500">Proj:</span>
+                    <span className="text-emerald-400 ml-1">{game.projected?.toFixed(1)}</span>
                   </div>
                 </div>
-              </div>
-
-              {/* Total Points */}
-              <div className="bg-slate-700/30 rounded-lg p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-sm font-medium text-slate-300">Total Points</h4>
-                  <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">
-                    {game.edge.total}% Edge
-                  </Badge>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-300">Over {game.total}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-emerald-400 font-medium">{game.overOdds}</span>
-                      <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 h-6 px-2">
-                        <Plus className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-300">Under {game.total}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-emerald-400 font-medium">{game.underOdds}</span>
-                      <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 h-6 px-2">
-                        <Plus className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+                {onPickSelect && (
+                  <Button
+                    size="sm"
+                    className="bg-emerald-600 hover:bg-emerald-700"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onPickSelect(game);
+                    }}
+                  >
+                    <Target className="w-3 h-3 mr-1" />
+                    Add Pick
+                  </Button>
+                )}
               </div>
             </div>
           </Card>
         ))}
       </div>
-
-      <GameInsights 
-        game={selectedGame}
-        open={insightsOpen}
-        onOpenChange={setInsightsOpen}
-      />
     </div>
   );
-};
+}

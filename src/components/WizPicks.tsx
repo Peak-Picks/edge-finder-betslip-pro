@@ -120,4 +120,53 @@ export function WizPicks({ onPickSelect }: WizPicksProps) {
                        transition-all cursor-pointer group"
               onClick={() => onPickSelect(pick)}
             >
-              <div className="space-
+              <div className="space-y-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge className={getCategoryColor(pick.edge)}>
+                        {getCategoryIcon(pick.category)}
+                        <span className="ml-1">{pick.edge.toFixed(1)}% Edge</span>
+                      </Badge>
+                      <Badge variant="outline" className="text-xs">
+                        {pick.sport}
+                      </Badge>
+                    </div>
+                    <h3 className="font-medium text-white group-hover:text-emerald-400 transition-colors">
+                      {pick.title}
+                    </h3>
+                    <p className="text-sm text-slate-400 mt-1">{pick.game}</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-lg font-bold text-emerald-400">{pick.odds}</div>
+                    <div className="text-xs text-slate-500">{pick.platform}</div>
+                  </div>
+                </div>
+                
+                <p className="text-sm text-slate-300 line-clamp-2">{pick.insights}</p>
+                
+                <div className="flex items-center justify-between pt-2 border-t border-slate-700/50">
+                  <div className="flex items-center gap-4 text-xs text-slate-400">
+                    <span>Line: {pick.line}</span>
+                    {pick.projected && <span>Proj: {pick.projected.toFixed(1)}</span>}
+                  </div>
+                  <Button
+                    size="sm"
+                    className="bg-emerald-600 hover:bg-emerald-700"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onPickSelect(pick);
+                    }}
+                  >
+                    <Target className="w-3 h-3 mr-1" />
+                    Add
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

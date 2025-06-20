@@ -1,14 +1,9 @@
-// COMPLETE dynamicPicksGenerator.ts - Copy and paste this entire file
-// Fixed Long Shot Categorization + Deterministic Calculations
+// COMPLETE FIXED dynamicPicksGenerator.ts 
+// Copy and paste this ENTIRE file to replace your current one
 
 import { PicksCalculationEngine, PlayerStats, GameData } from './picksCalculation';
 import { mockDataService } from './mockDataService';
 import { createOddsApiService } from './oddsApiService';
-
-// Import the new categorization service
-interface BettingCategorizationService {
-  categorizePick(edge: number, confidence: number, odds: string, projection?: number, line?: number, player?: string): string;
-}
 
 export interface GeneratedPick {
   id: string;
@@ -54,7 +49,74 @@ export class DynamicPicksGenerator {
     console.log('🔑 API Key set for WNBA data fetching');
   }
 
-  // Get stored WNBA data from memory with validation
+  // ============================================================================
+  // PROPER CATEGORIZATION METHOD - BILLY WALTERS METHODOLOGY
+  // ============================================================================
+
+  private categorizePick(edge: number, confidence: number, odds: string, projection?: number, line?: number, player?: string): string {
+    const numericOdds = parseInt(odds.replace(/[^-\d]/g, ''));
+    const impliedProbability = numericOdds > 0 ? 100 / (numericOdds + 100) : Math.abs(numericOdds) / (Math.abs(numericOdds) + 100);
+    const variance = projection && line ? Math.abs(projection - line) / line : 0;
+    
+    console.log(`🎯 Categorizing ${player}: Edge=${edge}%, Confidence=${confidence}, Odds=${odds}, Variance=${(variance*100).toFixed(1)}%, ImpliedProb=${(impliedProbability*100).toFixed(1)}%`);
+    
+    // LONG SHOT CRITERIA (High Risk, High Reward) - VERY STRICT
+    const isHighOdds = numericOdds >= 200; // +200 or better ONLY
+    const isHighVariance = variance >= 0.25; // 25%+ projection variance ONLY
+    const isLowProbability = impliedProbability <= 0.35; // 35% hit rate or less ONLY
+    const isBoomOrBust = edge >= 15 && confidence <= 3; // High edge, low confidence ONLY
+    const isExtremeEdge = edge >= 25; // Market inefficiency ONLY
+    
+    if (isHighOdds || isHighVariance || isBoomOrBust || isExtremeEdge) {
+      console.log(`🎲 LONG SHOT: HighOdds=${isHighOdds}, HighVariance=${isHighVariance}, BoomBust=${isBoomOrBust}, ExtremeEdge=${isExtremeEdge}`);
+      return 'Long Shot';
+    }
+    
+    // LOCK PICK CRITERIA (95%+ confidence)
+    if (edge >= 8 && confidence >= 4.5 && variance < 0.15 && impliedProbability > 0.4) {
+      console.log(`🔒 LOCK PICK: ${edge}% edge, ${confidence} confidence, low variance`);
+      return 'Lock Pick';
+    }
+    
+    // STRONG PLAY CRITERIA (85-95% confidence)
+    if (edge >= 5 && confidence >= 3.5 && impliedProbability > 0.35) {
+      console.log(`⚡ STRONG PLAY: ${edge}% edge, ${confidence} confidence`);
+      return 'Strong Play';
+    }
+    
+    // VALUE PLAY CRITERIA (70-85% confidence) - DEFAULT FOR MODERATE PICKS
+    console.log(`✨ VALUE PLAY: ${edge}% edge, ${confidence} confidence`);
+    return 'Value Play';
+  }
+
+  // ============================================================================
+  // DETERMINISTIC UTILITY METHODS - NO MORE MATH.RANDOM()
+  // ============================================================================
+
+  private selectDeterministicPlatform(platforms: string[], identifier: string): string {
+    const hash = this.hashString(identifier);
+    const index = hash % platforms.length;
+    return platforms[index];
+  }
+
+  private hashString(str: string): number {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return Math.abs(hash);
+  }
+
+  private parseOdds(odds: string): number {
+    return parseInt(odds.replace(/[^-\d]/g, ''));
+  }
+
+  // ============================================================================
+  // STORED WNBA DATA MANAGEMENT
+  // ============================================================================
+
   private getStoredWNBAData(): StoredWNBAData | null {
     try {
       if (window.__wnbaStoredData) {
@@ -75,7 +137,6 @@ export class DynamicPicksGenerator {
     }
   }
 
-  // Store WNBA data in memory
   private storeWNBAData(data: Omit<StoredWNBAData, 'lastUpdated'>) {
     try {
       const fullData: StoredWNBAData = {
@@ -97,7 +158,7 @@ export class DynamicPicksGenerator {
   }
 
   // ============================================================================
-  // MAIN GENERATION METHODS
+  // BEST PICKS GENERATION
   // ============================================================================
 
   async generateBestPicks(): Promise<GeneratedPick[]> {
@@ -130,8 +191,8 @@ export class DynamicPicksGenerator {
         const bookLine = 25.5;
         const edge = this.calculationEngine.calculateEdge(calculation.projection, bookLine, 'over');
         
-        // FIXED: Use deterministic platform selection
         const platform = this.selectDeterministicPlatform(platforms, lebronData.name + 'bestpick');
+        const category = this.categorizePick(edge, Math.floor(calculation.confidence / 2), edge > 8 ? '+110' : '+105', calculation.projection, bookLine, lebronData.name);
         
         picks.push({
           id: 'lebron-points-best',
@@ -142,10 +203,10 @@ export class DynamicPicksGenerator {
           game: `${lakersGame.gameTime}`,
           description: `${lebronData.name} to score over ${bookLine} points against the ${opponent}.`,
           odds: edge > 8 ? '+110' : '+105',
-          platform: platform, // NO MORE Math.random()!
+          platform: platform,
           confidence: Math.min(5, Math.max(1, Math.floor(calculation.confidence / 2))),
           insights: this.calculationEngine.generateInsights(calculation.factors, edge, 'high'),
-          category: this.categorizePick(edge, Math.floor(calculation.confidence / 2), edge > 8 ? '+110' : '+105', calculation.projection, bookLine),
+          category: category,
           edge: Math.round(edge * 10) / 10,
           type: 'Player Prop',
           line: bookLine,
@@ -162,41 +223,21 @@ export class DynamicPicksGenerator {
     return picks.slice(0, 8);
   }
 
-  async generatePlayerProps(sport: string): Promise<GeneratedPick[]> {
-    console.log(`🎯 generatePlayerProps called for ${sport}`);
-    
-    if (sport === 'wnba') {
-      // Use cached WNBA data if available
-      const storedData = this.getStoredWNBAData();
-      if (storedData?.playerProps && storedData.playerProps.length > 0) {
-        console.log(`✅ Using ${storedData.playerProps.length} cached WNBA props`);
-        return storedData.playerProps;
-      }
-      
-      // Generate deterministic fallback props
-      console.log('🔄 Generating deterministic WNBA fallback props');
-      return this.generateDeterministicWNBAFallbacks();
-    }
-
-    // Handle other sports with deterministic calculations
-    return this.generateDeterministicSportProps(sport);
-  }
-
   // ============================================================================
   // FIXED LONG SHOTS - ONLY TRUE HIGH RISK, HIGH REWARD
   // ============================================================================
 
-  generateLongShots(sport: string): GeneratedPick[] {
+  generateLongShots(sport: string = 'wnba'): GeneratedPick[] {
     console.log(`🎲 generateLongShots called for ${sport} - filtering for TRUE long shots only`);
     
     try {
       // Get all picks first
-      const allPicks = sport === 'wnba' ? this.getStoredWNBAData()?.playerProps || [] : 
-                       this.generateDeterministicSportProps(sport);
+      const storedData = this.getStoredWNBAData();
+      const allPicks = storedData?.playerProps || [];
       
-      console.log(`📊 Got ${allPicks.length} total picks to filter`);
+      console.log(`📊 Got ${allPicks.length} total picks to filter for long shots`);
       
-      // Filter for TRUE long shots only (+200 odds, high variance, etc.)
+      // Filter for TRUE long shots only using STRICT criteria
       const trueLongShots = allPicks.filter(pick => {
         const numericOdds = parseInt(pick.odds?.replace(/[^-\d]/g, '') || '0');
         const variance = pick.projected && pick.line ? 
@@ -204,14 +245,21 @@ export class DynamicPicksGenerator {
         const impliedProb = numericOdds > 0 ? 100 / (numericOdds + 100) : 
                            Math.abs(numericOdds) / (Math.abs(numericOdds) + 100);
         
-        // TRUE long shot criteria
-        const isHighOdds = numericOdds >= 200; // +200 or better
-        const isHighVariance = variance >= 0.25; // 25%+ variance
-        const isLowProbability = impliedProb <= 0.35; // 35% or less hit rate
-        const isBoomOrBust = pick.edge >= 15 && pick.confidence <= 3;
+        // TRUE long shot criteria - VERY STRICT REQUIREMENTS
+        const isHighOdds = numericOdds >= 200; // +200 or better ONLY
+        const isHighVariance = variance >= 0.25; // 25%+ variance ONLY  
+        const isLowProbability = impliedProb <= 0.35; // 35% or less hit rate ONLY
+        const isBoomOrBust = pick.edge >= 15 && pick.confidence <= 3; // High edge, low confidence ONLY
         
-        console.log(`🔍 ${pick.player} ${pick.title}: Odds=${pick.odds}(${numericOdds}), Variance=${(variance*100).toFixed(1)}%, ImpliedProb=${(impliedProb*100).toFixed(1)}%, IsLongShot=${isHighOdds || isHighVariance || isBoomOrBust}`);
+        console.log(`🔍 ${pick.player} ${pick.title}: 
+          Odds=${pick.odds}(${numericOdds}), 
+          Variance=${(variance*100).toFixed(1)}%, 
+          ImpliedProb=${(impliedProb*100).toFixed(1)}%, 
+          Edge=${pick.edge}%, 
+          Confidence=${pick.confidence},
+          IsLongShot=${isHighOdds || isHighVariance || isBoomOrBust}`);
         
+        // ONLY return true if it meets strict long shot criteria
         return isHighOdds || isHighVariance || isBoomOrBust;
       });
       
@@ -223,7 +271,7 @@ export class DynamicPicksGenerator {
         return this.generateProperLongShotExamples(sport);
       }
       
-      // Enhance with proper categorization
+      // Enhance with proper long shot insights
       return trueLongShots.map(pick => ({
         ...pick,
         category: 'Long Shot',
@@ -236,7 +284,7 @@ export class DynamicPicksGenerator {
     }
   }
 
-  // Generate proper long shot examples
+  // Generate proper long shot examples when no real ones exist
   private generateProperLongShotExamples(sport: string): GeneratedPick[] {
     const platforms = ['DraftKings', 'FanDuel', 'BetMGM'];
     
@@ -253,7 +301,7 @@ export class DynamicPicksGenerator {
           odds: '+320', // TRUE long shot odds
           platform: platforms[0],
           confidence: 2, // Low confidence = high risk
-          insights: '🎲 Boom-or-bust play. Clark facing elite defense but has shown explosive scoring ability. High variance - either struggles for 15 points or explodes for 35+. Massive payout potential if she gets hot from three.',
+          insights: '🎲 Boom-or-bust play. Clark facing elite defense but has explosive scoring potential. High variance - either 15 points or 35+ points. Only bet what you can afford to lose completely.',
           category: 'Long Shot',
           edge: 22.8,
           type: 'Player Prop',
@@ -271,7 +319,7 @@ export class DynamicPicksGenerator {
           odds: '+280',
           platform: platforms[1],
           confidence: 2,
-          insights: '🎯 Contrarian garbage-time play. If Fever builds big lead, Smith gets 25+ minutes vs usual 15. Banking on specific game script where starters rest. High risk but excellent edge if blowout materializes.',
+          insights: '🎯 Contrarian garbage-time play. If Fever builds big lead, Smith gets 25+ minutes vs usual 15. High risk but excellent edge if blowout materializes.',
           category: 'Long Shot',
           edge: 19.5,
           type: 'Player Prop',
@@ -289,7 +337,7 @@ export class DynamicPicksGenerator {
           odds: '+450',
           platform: platforms[2],
           confidence: 1, // Very low confidence
-          insights: '🚀 Lottery ticket play. Wilson needs career-high assists while maintaining elite scoring/rebounding. Has hit this exact combo once this season. Massive 5.5x payout but extremely difficult to achieve.',
+          insights: '🚀 Lottery ticket play. Wilson needs career-high assists while maintaining elite scoring/rebounding. Massive 5.5x payout but extremely difficult to achieve.',
           category: 'Long Shot',
           edge: 16.2,
           type: 'Same Game Parlay',
@@ -317,30 +365,6 @@ export class DynamicPicksGenerator {
       ];
     }
     
-    // NBA long shots
-    if (sport === 'nba') {
-      return [
-        {
-          id: 'role-player-explosion',
-          player: 'Austin Reaves',
-          team: 'LAL',
-          title: 'Over 22.5 Points',
-          sport: 'NBA',
-          game: 'Today 10:00 PM ET',
-          description: 'Role player to explode in nationally televised game',
-          odds: '+260',
-          platform: platforms[0],
-          confidence: 2,
-          insights: '🎲 Prime time breakout potential. Reaves has shown flashes but inconsistent. National TV game could be catalyst for career night. High variance role player bet.',
-          category: 'Long Shot',
-          edge: 17.3,
-          type: 'Player Prop',
-          line: 22.5,
-          projected: 28.1
-        }
-      ];
-    }
-    
     return [];
   }
 
@@ -355,21 +379,47 @@ export class DynamicPicksGenerator {
       insight += 'Extreme long shot with massive payout potential. ';
     } else if (numericOdds >= 200) {
       insight += 'High-risk play with excellent reward upside. ';
+    } else {
+      insight += 'High variance scenario with boom-or-bust potential. ';
     }
     
     if (variance >= 0.4) {
-      insight += `Boom-or-bust scenario - model projects ${pick.projected?.toFixed(1)} vs line of ${pick.line}. `;
+      insight += `Huge projection gap - model sees ${pick.projected?.toFixed(1)} vs line of ${pick.line}. `;
     } else if (variance >= 0.25) {
-      insight += `High variance play with significant projection gap. `;
+      insight += `Significant variance play with projection gap. `;
     }
     
     if (pick.edge >= 20) {
       insight += `Massive edge detected (${pick.edge}%) due to market inefficiency. `;
     }
     
-    insight += 'Only bet what you can afford to lose completely. Long shot bankroll should be 1-3% maximum.';
+    insight += 'Only bet 1-3% of bankroll. Long shot = lottery ticket, not steady income.';
     
     return insight;
+  }
+
+  // ============================================================================
+  // PLAYER PROPS GENERATION
+  // ============================================================================
+
+  async generatePlayerProps(sport: string): Promise<GeneratedPick[]> {
+    console.log(`🎯 generatePlayerProps called for ${sport}`);
+    
+    if (sport === 'wnba') {
+      // Use cached WNBA data if available
+      const storedData = this.getStoredWNBAData();
+      if (storedData?.playerProps && storedData.playerProps.length > 0) {
+        console.log(`✅ Using ${storedData.playerProps.length} cached WNBA props`);
+        return storedData.playerProps;
+      }
+      
+      // Generate deterministic fallback props
+      console.log('🔄 Generating deterministic WNBA fallback props');
+      return this.generateDeterministicWNBAFallbacks();
+    }
+
+    // Handle other sports with deterministic calculations
+    return this.generateDeterministicSportProps(sport);
   }
 
   // ============================================================================
@@ -411,8 +461,8 @@ export class DynamicPicksGenerator {
       const spreadEdge = this.calculationEngine.calculateEdge(Math.abs(spreadCalc.projection), Math.abs(bookSpread));
       
       if (spreadEdge > 3) {
-        // FIXED: Use deterministic platform selection
         const platform = this.selectDeterministicPlatform(platforms, game.gameId + 'spread' + index.toString());
+        const category = this.categorizePick(spreadEdge, Math.floor(spreadCalc.confidence / 2), '-110');
 
         fallbackPicks.push({
           id: `${game.gameId}-spread`,
@@ -422,10 +472,10 @@ export class DynamicPicksGenerator {
           game: game.gameTime,
           description: `${game.homeTeam} to cover the ${bookSpread} point spread.`,
           odds: '-110',
-          platform: platform, // NO MORE Math.random()!
+          platform: platform,
           confidence: Math.min(5, Math.max(1, Math.floor(spreadCalc.confidence / 2))),
           insights: this.calculationEngine.generateInsights(spreadCalc.factors, spreadEdge, 'medium'),
-          category: this.categorizePick(spreadEdge, Math.floor(spreadCalc.confidence / 2), '-110'),
+          category: category,
           edge: Math.round(spreadEdge * 10) / 10,
           type: 'Spread',
           gameTime: game.gameTime
@@ -438,7 +488,7 @@ export class DynamicPicksGenerator {
   }
 
   // ============================================================================
-  // WNBA DATA MANAGEMENT
+  // WNBA DATA REFRESH
   // ============================================================================
 
   async refreshWNBAData(forceRefresh: boolean = false): Promise<void> {
@@ -450,13 +500,11 @@ export class DynamicPicksGenerator {
     try {
       console.log('🔄 Refreshing WNBA data from API...');
       
-      // Clear cache if force refresh
       if (forceRefresh) {
         this.oddsApiService.clearCache();
         console.log('🗑️ Cleared API cache for force refresh');
       }
 
-      // Fetch fresh data from API
       const wnbaProps = await this.oddsApiService.getWNBAPlayerProps();
       
       if (wnbaProps.length === 0) {
@@ -466,10 +514,7 @@ export class DynamicPicksGenerator {
 
       console.log(`📊 Got ${wnbaProps.length} WNBA props from API, processing...`);
       
-      // Process into categories
       const processedData = this.processWNBAPropsIntoCategories(wnbaProps);
-      
-      // Store the processed data
       this.storeWNBAData(processedData);
       
       console.log('✅ WNBA data refresh completed successfully');
@@ -480,7 +525,10 @@ export class DynamicPicksGenerator {
     }
   }
 
-  // Process the API data into different pick categories
+  // ============================================================================
+  // FIXED WNBA PROPS PROCESSING - PROPER CATEGORIZATION
+  // ============================================================================
+
   private processWNBAPropsIntoCategories(wnbaProps: any[]): Omit<StoredWNBAData, 'lastUpdated'> {
     console.log(`🔄 Processing ${wnbaProps.length} raw WNBA props into categories...`);
     
@@ -489,7 +537,7 @@ export class DynamicPicksGenerator {
     const longShots: GeneratedPick[] = [];
     const playerProps: GeneratedPick[] = [];
 
-    // Process each prop from the API
+    // Process each prop from the API with PROPER categorization
     wnbaProps.forEach(prop => {
       const pick: GeneratedPick = {
         id: prop.id,
@@ -503,7 +551,7 @@ export class DynamicPicksGenerator {
         platform: prop.platform,
         confidence: prop.confidence,
         insights: prop.insights,
-        category: this.categorizePick(prop.edge, prop.confidence, prop.odds, prop.projected, prop.line, prop.player),
+        category: prop.category,
         edge: prop.edge,
         type: prop.type,
         matchup: prop.matchup,
@@ -512,24 +560,39 @@ export class DynamicPicksGenerator {
         projected: prop.projected
       };
 
-      console.log(`📊 Processing prop: ${pick.player} ${pick.title} - Edge: ${pick.edge}%, Odds: ${pick.odds}, Category: ${pick.category}`);
+      // APPLY PROPER CATEGORIZATION LOGIC - THIS IS THE KEY FIX
+      const properCategory = this.categorizePick(
+        prop.edge, 
+        prop.confidence, 
+        prop.odds, 
+        prop.projected, 
+        prop.line, 
+        prop.player
+      );
 
-      // Categorize based on proper methodology
-      if (pick.category === 'Lock Pick' || (prop.edge >= 8 && pick.category !== 'Long Shot')) {
+      pick.category = properCategory;
+
+      console.log(`📊 Processing prop: ${pick.player} ${pick.title} - Edge: ${pick.edge}%, Odds: ${pick.odds}, Proper Category: ${properCategory}`);
+
+      // Categorize based on PROPER methodology, not random edge thresholds
+      if (properCategory === 'Lock Pick' || (prop.edge >= 8 && properCategory !== 'Long Shot')) {
         pick.category = 'Top Prop';
         bestBets.push({...pick});
         console.log(`✅ Added to Best Bets: ${pick.player} ${pick.title} (${pick.edge}% edge)`);
       } 
-      else if (pick.category === 'Long Shot') {
+      else if (properCategory === 'Long Shot') {
+        // ONLY add to long shots if PROPERLY categorized as long shot
         const longShotPick = {...pick};
         longShotPick.category = 'Long Shot';
+        longShotPick.insights = this.generateLongShotInsights(pick);
         longShots.push(longShotPick);
-        console.log(`✅ Added to Long Shots: ${pick.player} ${pick.title} (${pick.edge}% edge, ${pick.odds} odds)`);
+        console.log(`✅ Added to Long Shots: ${pick.player} ${pick.title} (${pick.edge}% edge, ${pick.odds} odds) - PROPER LONG SHOT`);
       } 
       else {
-        pick.category = 'Player Prop';
+        // Everything else (Value Play, Strong Play) goes to player props
+        pick.category = properCategory; // Keep the proper category
         playerProps.push({...pick});
-        console.log(`✅ Added to Player Props: ${pick.player} ${pick.title} (${pick.edge}% edge)`);
+        console.log(`✅ Added to Player Props: ${pick.player} ${pick.title} (${pick.edge}% edge) - ${properCategory}`);
       }
     });
 
@@ -559,6 +622,8 @@ export class DynamicPicksGenerator {
       const avgEdge = gameData.totalEdge / gameData.count;
       
       if (avgEdge >= 4 && gameData.count >= 2) {
+        const category = this.categorizePick(avgEdge, Math.floor(avgEdge / 2), '-110');
+
         gamePicks.push({
           id: `wnba-game-${index}-spread`,
           matchup: gameKey,
@@ -570,7 +635,7 @@ export class DynamicPicksGenerator {
           platform: gameData.props[0]?.platform || 'DraftKings',
           confidence: Math.min(5, Math.max(2, Math.floor(avgEdge / 2))),
           insights: `Game analysis based on ${gameData.count} player props with ${avgEdge.toFixed(1)}% average edge.`,
-          category: 'Game Pick',
+          category: category,
           edge: Math.round(avgEdge * 10) / 10,
           type: 'Spread',
           gameTime: gameData.props[0]?.gameTime || 'TBD'
@@ -578,7 +643,7 @@ export class DynamicPicksGenerator {
       }
     });
 
-    console.log('📈 Categorization complete:', {
+    console.log('📈 PROPER Categorization complete:', {
       bestBets: bestBets.length,
       playerProps: playerProps.length,
       longShots: longShots.length,
@@ -589,64 +654,9 @@ export class DynamicPicksGenerator {
   }
 
   // ============================================================================
-  // UTILITY METHODS
+  // DETERMINISTIC FALLBACK GENERATION
   // ============================================================================
 
-  // Proper categorization method
-  private categorizePick(edge: number, confidence: number, odds: string, projection?: number, line?: number, player?: string): string {
-    const numericOdds = parseInt(odds.replace(/[^-\d]/g, ''));
-    const impliedProbability = numericOdds > 0 ? 100 / (numericOdds + 100) : Math.abs(numericOdds) / (Math.abs(numericOdds) + 100);
-    const variance = projection && line ? Math.abs(projection - line) / line : 0;
-    
-    // LONG SHOT CRITERIA (High Risk, High Reward)
-    const isHighOdds = numericOdds >= 200; // +200 or better
-    const isHighVariance = variance >= 0.25; // 25%+ projection variance
-    const isLowProbability = impliedProbability <= 0.35; // 35% hit rate or less
-    const isBoomOrBust = edge >= 15 && confidence <= 3; // High edge, low confidence
-    const isExtremeEdge = edge >= 25; // Market inefficiency
-    
-    if (isHighOdds || isHighVariance || isBoomOrBust || isExtremeEdge) {
-      return 'Long Shot';
-    }
-    
-    // LOCK PICK CRITERIA (95%+ confidence)
-    if (edge >= 8 && confidence >= 4.5 && variance < 0.15 && impliedProbability > 0.4) {
-      return 'Lock Pick';
-    }
-    
-    // STRONG PLAY CRITERIA (85-95% confidence)
-    if (edge >= 5 && confidence >= 3.5 && impliedProbability > 0.35) {
-      return 'Strong Play';
-    }
-    
-    // VALUE PLAY CRITERIA (70-85% confidence)
-    return 'Value Play';
-  }
-
-  // Deterministic platform selection
-  private selectDeterministicPlatform(platforms: string[], identifier: string): string {
-    const hash = this.hashString(identifier);
-    const index = hash % platforms.length;
-    return platforms[index];
-  }
-
-  // Hash string for deterministic results
-  private hashString(str: string): number {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32-bit integer
-    }
-    return Math.abs(hash);
-  }
-
-  // Parse odds utility
-  private parseOdds(odds: string): number {
-    return parseInt(odds.replace(/[^-\d]/g, ''));
-  }
-
-  // Generate deterministic WNBA fallbacks
   private generateDeterministicWNBAFallbacks(): GeneratedPick[] {
     const picks: GeneratedPick[] = [];
     const platforms = ['DraftKings', 'FanDuel', 'BetMGM'];
@@ -665,9 +675,7 @@ export class DynamicPicksGenerator {
       const edge = Math.max(3, (this.hashString(player.name + player.stat) % 15) + 3);
       const confidence = Math.max(2, Math.min(5, (this.hashString(player.name + index.toString()) % 4) + 2));
 
-      // Deterministic platform selection
       const platform = this.selectDeterministicPlatform(platforms, player.name + index.toString());
-
       const category = this.categorizePick(edge, confidence, '+115', projectionBase, player.line, player.name);
 
       picks.push({
@@ -693,7 +701,6 @@ export class DynamicPicksGenerator {
     return picks;
   }
 
-  // Generate deterministic sport props for other leagues
   private generateDeterministicSportProps(sport: string): GeneratedPick[] {
     const picks: GeneratedPick[] = [];
     const games = mockDataService.getGameData();
@@ -729,13 +736,10 @@ export class DynamicPicksGenerator {
         
         if (edge > 2) {
           const confidence = this.calculationEngine.calculateConfidence(edge, calculation.confidence, 8);
-          
-          // FIXED: Deterministic platform selection
           const platform = this.selectDeterministicPlatform(
             platforms,
             playerId + prop + playerIndex.toString() + propIndex.toString()
           );
-
           const category = this.categorizePick(
             edge, 
             confidence === 'high' ? 5 : confidence === 'medium' ? 3 : 2, 
@@ -754,7 +758,7 @@ export class DynamicPicksGenerator {
             game: game.gameTime,
             description: `${playerData.name} ${prop} over ${line}`,
             odds: edge > 7 ? '+105' : '-115',
-            platform: platform, // NO MORE Math.random()!
+            platform: platform,
             confidence: confidence === 'high' ? 5 : confidence === 'medium' ? 3 : 2,
             insights: this.calculationEngine.generateInsights(calculation.factors, edge, confidence),
             category: category,
@@ -770,7 +774,6 @@ export class DynamicPicksGenerator {
     return picks;
   }
 
-  // Generate game picks from cached player props
   private generateGamePicksFromCachedProps(playerProps: GeneratedPick[]): GeneratedPick[] {
     console.log('🔄 Generating game picks from cached player props...');
     
